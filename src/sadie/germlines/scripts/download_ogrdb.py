@@ -107,8 +107,149 @@ CHAIN_PATTERNS = {
     "L": re.compile(r"IGL[VJC]", re.IGNORECASE),
 }
 
+# OGRDB REST API base URL
+OGRDB_API_BASE_URL = "https://ogrdb.airr-community.org/api_v2"
 
-class OGRDBDownloader:
+# NCBI Taxonomy ID to internal species name mapping
+TAXONOMY_ID_MAP = {
+    "9606": "human",
+    "10090": "mouse",
+    "9544": "rhesus_macaque",
+}
+TAXONOMY_ID_MAP_REVERSE = {v: k for k, v in TAXONOMY_ID_MAP.items()}
+
+
+class OGRDBApiClient:
+    """Simple REST API client for OGRDB API v2."""
+
+    def __init__(self, base_url: str = OGRDB_API_BASE_URL):
+        """
+        Initialize API client.
+
+        Parameters
+        ----------
+        base_url : str
+            Base URL for OGRDB API
+        """
+        self.base_url = base_url.rstrip("/")
+
+    def _get(self, endpoint: str) -> str:
+        """
+        Make GET request to API endpoint.
+
+        Parameters
+        ----------
+        endpoint : str
+            API endpoint path
+
+        Returns
+        -------
+        str
+            Response text
+        """
+        import urllib.request
+
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        logger.debug(f"API GET: {url}")
+
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                return response.read().decode("utf-8")
+        except Exception as e:
+            logger.error(f"API request failed: {url} - {e}")
+            raise
+
+    def _get_json(self, endpoint: str) -> dict:
+        """Make GET request and parse JSON response."""
+        return json.loads(self._get(endpoint))
+
+    def get_species(self) -> List[Dict[str, str]]:
+        """
+        Get list of available species.
+
+        Returns
+        -------
+        List[Dict[str, str]]
+            List of species with 'id' (taxonomy ID) and 'label' (name)
+        """
+        data = self._get_json("/germline/species")
+        return data.get("species", [])
+
+    def get_germline_sets(self, species_id: str) -> List[Dict]:
+        """
+        Get available germline sets for a species.
+
+        Parameters
+        ----------
+        species_id : str
+            NCBI Taxonomy ID (e.g., "9606" for human)
+
+        Returns
+        -------
+        List[Dict]
+            List of germline sets with metadata
+        """
+        data = self._get_json(f"/germline/sets/{species_id}")
+        return data.get("germline_species", [])
+
+    def get_germline_set_fasta(
+        self, germline_set_id: str, version: str = "latest", gapped: bool = False
+    ) -> str:
+        """
+        Get germline set sequences in FASTA format.
+
+        Parameters
+        ----------
+        germline_set_id : str
+            Germline set ID (e.g., "9606.IGH_VDJ")
+        version : str
+            Version number or "latest"
+        gapped : bool
+            If True, return IMGT-gapped sequences
+
+        Returns
+        -------
+        str
+            FASTA formatted sequences
+        """
+        format_type = "gapped" if gapped else "ungapped"
+        return self._get(f"/germline/set/{germline_set_id}/{version}/{format_type}")
+
+    def parse_fasta(self, fasta_text: str) -> List[Tuple[str, str]]:
+        """
+        Parse FASTA text into list of (name, sequence) tuples.
+
+        Parameters
+        ----------
+        fasta_text : str
+            FASTA formatted text
+
+        Returns
+        -------
+        List[Tuple[str, str]]
+            List of (gene_name, sequence) tuples
+        """
+        sequences = []
+        current_name = None
+        current_seq = []
+
+        for line in fasta_text.strip().split("\n"):
+            line = line.strip()
+            if line.startswith(">"):
+                if current_name:
+                    sequences.append((current_name, "".join(current_seq)))
+                current_name = line[1:].split()[0]
+                current_seq = []
+            elif line:
+                current_seq.append(line)
+
+        if current_name:
+            sequences.append((current_name, "".join(current_seq)))
+
+        return sequences
+
+
+class OGRDBDownloader(OGRDBApiClient):
     """Download and process OGRDB archive from Zenodo."""
 
     def __init__(self, output_dir: Optional[Path] = None, cache_dir: Optional[Path] = None):
@@ -124,6 +265,8 @@ class OGRDBDownloader:
             Cache directory for downloaded archive.
             Defaults to ~/.cache/sadie/ogrdb/
         """
+        super().__init__()
+
         if output_dir is None:
             output_dir = Path(__file__).parent.parent / "sources" / "ogrdb"
 
@@ -175,11 +318,100 @@ class OGRDBDownloader:
                     logger.info(f"Processing SQL file: {sql_file}")
                     self._process_sql_dump(sql_file, species)
 
+        # Supplement missing sequences from API (archive is truth, API fills gaps)
+        self.supplement_from_api(species)
+
         duration_ms = int((time.time() - start_time) * 1000)
         logger.info(
             f"operation=download provider=ogrdb "
             f"species={','.join(species)} duration_ms={duration_ms} status=success"
         )
+
+    def supplement_from_api(self, species: List[str]) -> None:
+        """
+        Supplement archive data with missing sequences from OGRDB API.
+
+        Archive data is treated as truth - API only adds sequences for
+        segments/chains that have no FASTA file from the archive.
+
+        Parameters
+        ----------
+        species : List[str]
+            Species to supplement (e.g., ["human", "mouse"])
+        """
+        logger.info("Checking API for missing sequences...")
+
+        for sp in species:
+            taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(sp)
+            if not taxonomy_id:
+                logger.debug(f"No taxonomy ID for {sp}, skipping API supplement")
+                continue
+
+            species_dir = self.output_dir / sp
+            if not species_dir.exists():
+                species_dir.mkdir(parents=True, exist_ok=True)
+
+            try:
+                germline_sets = self.get_germline_sets(taxonomy_id)
+            except Exception as e:
+                logger.warning(f"Failed to get germline sets for {sp}: {e}")
+                continue
+
+            for gs in germline_sets:
+                set_id = gs.get("germline_set_id")
+                locus = gs.get("locus", "")
+
+                if not set_id:
+                    continue
+
+                # Map locus to chain
+                chain_map = {"IGH": "H", "IGK": "K", "IGL": "L"}
+                chain = chain_map.get(locus)
+                if not chain:
+                    continue
+
+                # Fetch sequences from API
+                try:
+                    ungapped_fasta = self.get_germline_set_fasta(set_id, gapped=False)
+                    gapped_fasta = self.get_germline_set_fasta(set_id, gapped=True)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch {set_id}: {e}")
+                    continue
+
+                ungapped_seqs = self.parse_fasta(ungapped_fasta)
+                gapped_seqs = self.parse_fasta(gapped_fasta)
+
+                # Group by segment (V, D, J, C)
+                for segment in ["V", "D", "J", "C"]:
+                    segment_pattern = re.compile(rf"IG{chain}{segment}", re.IGNORECASE)
+
+                    ungapped_path = species_dir / f"IG{chain}{segment}.fasta"
+                    gapped_path = species_dir / f"IG{chain}{segment}_gapped.fasta"
+
+                    # Skip if archive already has this file (archive is truth)
+                    if ungapped_path.exists():
+                        logger.debug(f"Archive has {ungapped_path.name}, skipping API data")
+                        continue
+
+                    # Filter sequences for this segment
+                    segment_ungapped = [(n, s) for n, s in ungapped_seqs if segment_pattern.match(n)]
+                    segment_gapped = [(n, s) for n, s in gapped_seqs if segment_pattern.match(n)]
+
+                    if not segment_ungapped:
+                        continue
+
+                    # Write ungapped FASTA
+                    with open(ungapped_path, "w") as f:
+                        for name, seq in segment_ungapped:
+                            f.write(f">{name}\n{seq}\n")
+                    logger.info(f"API: Wrote {len(segment_ungapped)} sequences to {ungapped_path}")
+
+                    # Write gapped FASTA (D genes typically have no gaps)
+                    if segment_gapped:
+                        with open(gapped_path, "w") as f:
+                            for name, seq in segment_gapped:
+                                f.write(f">{name}\n{seq}\n")
+                        logger.info(f"API: Wrote {len(segment_gapped)} gapped sequences to {gapped_path}")
 
     def _download_archive(self, force: bool = False) -> Path:
         """
