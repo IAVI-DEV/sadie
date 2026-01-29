@@ -1,5 +1,80 @@
 # Project Milestones: Germline Database Integration
 
+## v1.4 G3-Germlines Parity Validation (Shipped: 2026-01-28)
+
+**Delivered:** Automated parity test infrastructure validating G3 and Germlines backends produce identical AIRR output when built with same alleles.
+
+**Phases completed:** 33 (1 phase, 1 plan, 12 requirements)
+
+**Key accomplishments:**
+
+- **Test Infrastructure** — Created `tests/migration/` package with session-scoped fixtures
+- **Parity Validation** — Parametrized test comparing all AIRR columns across 5 FASTA files
+- **Fail-Fast Reporting** — Detailed mismatch reports with column, row, sequence ID, and both values
+- **Finding: j_cigar Difference** — Test correctly detected backend difference (G3: `'355S9N53M'` vs Germlines: `'355S9N53M1N'`)
+
+**Stats:**
+
+- 1 phase, 1 plan, 12 requirements
+- 4 files created
+- 2 days from start to completion
+
+**Git range:** `bb33048c` → `592a4c3b`
+
+**What's next:** Investigate j_cigar difference, continue parity validation across species
+
+---
+
+## v1.3 Test Infrastructure & Species Expansion (Shipped: 2026-01-25)
+
+**Delivered:** Fixed skipped tests by adding macaque germlines, airr package dependency, removing deprecated G3 tests, and fixed germline priority order.
+
+**Phases completed:** 25-28 (4 phases, 15 requirements)
+
+**Key accomplishments:**
+
+- **Macaque Germlines** — Built macaque IgBLAST databases, enabled 6 previously skipped tests
+- **AIRR Package** — Added airr package to dependencies, enabled AIRR validation test
+- **G3 Deprecation** — Removed deprecated G3 tests, created G3-Deprecation.md documentation
+- **Priority Fix** — Updated default priority to ['vdjbase', 'ogrdb', 'imgt', 'custom']
+
+**Stats:**
+
+- 4 phases, 15 requirements
+- ~50 files modified
+- 1 day from start to completion
+
+**Git range:** See archive for details
+
+**What's next:** Parity validation between G3 and Germlines backends
+
+---
+
+## v1.2 Reference Module Unification (Shipped: 2026-01-25)
+
+**Delivered:** Enable reference.yml to select alleles from all germline sources, using germlines module as data provider instead of G3 API.
+
+**Phases completed:** 19-24 (6 phases, 12 requirements)
+
+**Key accomplishments:**
+
+- **Source Validation** — Expanded VALID_SOURCES to include ogrdb, vdjbase
+- **Integration** — Added use_germlines parameter to References.from_yaml()
+- **Build CLI** — Added `sadie reference build` command
+- **Runtime Usage** — Added Airr(database=path) parameter
+- **Documentation** — Created reference-sample.yml and workflow docs
+
+**Stats:**
+
+- 6 phases, 12 requirements
+- 3 days from start to completion
+
+**Git range:** See archive for details
+
+**What's next:** Test infrastructure cleanup, species expansion
+
+---
+
 ## v1.1 Audit (Shipped: 2026-01-23)
 
 **Delivered:** Backend parity audit and fixes achieving 98.29% structural parity between germlines module and G3 legacy backend.

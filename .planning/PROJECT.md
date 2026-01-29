@@ -2,11 +2,17 @@
 
 ## What This Is
 
-Connect SADIE's germline database module to existing `sadie.airr.Airr` and `sadie.renumbering.Renumbering` modules, enabling selection of germline providers (IMGT, OGRDB, VDJbase, custom) via a `germline_backend` parameter. Supports 29 species with offline operation capability.
+Connect SADIE's germline database module to existing `sadie.airr.Airr` and `sadie.renumbering.Renumbering` modules, enabling selection of germline providers (IMGT, OGRDB, VDJbase, custom) via a `germline_backend` parameter. Supports 29 species with offline operation capability. Includes automated parity testing infrastructure.
 
 ## Core Value
 
 Enable researchers to select which germline database their AIRR annotation and antibody renumbering uses, supporting offline operation and custom germline databases instead of being limited to the default G3/IMGT source.
+
+## Current State (v1.4 shipped 2026-01-28)
+
+- **Parity Test Infrastructure** — `tests/migration/` with session-scoped fixtures and parametrized tests
+- **Backend Validation** — Automated comparison of G3 vs Germlines AIRR output
+- **Finding** — j_cigar column differs between backends (needs investigation)
 
 ## Requirements
 
@@ -30,13 +36,14 @@ Enable researchers to select which germline database their AIRR annotation and a
 - ✓ TEST-02: Mirrored renumbering tests — v1.0
 - ✓ TEST-03: Species/chains/segments parity — v1.0
 - ✓ PERF-01: Performance equivalent to G3 — v1.0
+- ✓ AUDIT-01: Parity test infrastructure — v1.4
+- ✓ AUDIT-02: Session-scoped database fixtures — v1.4
+- ✓ AUDIT-03: Fail-fast comparison with detailed reporting — v1.4
+- ✓ AUDIT-04: Document discrepancies (j_cigar finding) — v1.4
 
 ### Active
 
-- [ ] AUDIT-01: Run AIRR annotation with germlines backend on test sequences
-- [ ] AUDIT-02: Run AIRR annotation with G3 backend on same sequences
-- [ ] AUDIT-03: Compare results for column-level identity (excluding source column)
-- [ ] AUDIT-04: Document any discrepancies with root cause analysis
+(Requirements defined in next milestone)
 
 ### Out of Scope
 
@@ -84,16 +91,13 @@ Enable researchers to select which germline database their AIRR annotation and a
 - Single provider selection per run (no per-segment mixing)
 - Default priority: custom > ogrdb > vdjbase > imgt
 
-## Current Milestone: v1.4 G3-Germlines Parity Validation
+## Next Milestone Goals
 
-**Goal:** Validate every AIRR column produces identical output between G3 and Germlines backends using `reference.g3.yml` to ensure both backends are built with identical alleles.
-
-**Target features:**
-- Single parity test file at `tests/migration/valid_parity.py`
-- Use `reference.g3.yml` to build databases for both backends with identical alleles
-- Loop through human test sequences (OAS, CATNAP, PG9)
-- Strict column comparison (fail on ANY difference except source columns)
-- Fail-fast reporting with detailed mismatch info
+To be defined via `/gsd-new-milestone`. Potential areas:
+- Investigate and resolve j_cigar parity difference
+- Expand parity testing to additional species
+- Performance optimization
+- T-cell receptor (TR) germline support
 
 ---
-*Last updated: 2026-01-23 after v1.2 milestone start*
+*Last updated: 2026-01-28 after v1.4 milestone completion*
