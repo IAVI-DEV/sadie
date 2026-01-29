@@ -329,17 +329,18 @@ class OGRDBDownloader(OGRDBApiClient):
 
     def supplement_from_api(self, species: List[str]) -> None:
         """
-        Supplement archive data with missing sequences from OGRDB API.
+        Supplement archive data with missing alleles from OGRDB API.
 
-        Archive data is treated as truth - API only adds sequences for
-        segments/chains that have no FASTA file from the archive.
+        Archive alleles are treated as truth - if an allele exists in both
+        archive and API, the archive version is kept. API only adds alleles
+        that don't exist in the archive.
 
         Parameters
         ----------
         species : List[str]
             Species to supplement (e.g., ["human", "mouse"])
         """
-        logger.info("Checking API for missing sequences...")
+        logger.info("Checking API for missing alleles...")
 
         for sp in species:
             taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(sp)
@@ -388,30 +389,56 @@ class OGRDBDownloader(OGRDBApiClient):
                     ungapped_path = species_dir / f"IG{chain}{segment}.fasta"
                     gapped_path = species_dir / f"IG{chain}{segment}_gapped.fasta"
 
-                    # Skip if archive already has this file (archive is truth)
+                    # Filter API sequences for this segment
+                    api_ungapped = [(n, s) for n, s in ungapped_seqs if segment_pattern.match(n)]
+                    api_gapped = [(n, s) for n, s in gapped_seqs if segment_pattern.match(n)]
+
+                    if not api_ungapped:
+                        continue
+
+                    # Load existing archive alleles (if file exists)
+                    archive_ungapped = {}
+                    archive_gapped = {}
                     if ungapped_path.exists():
-                        logger.debug(f"Archive has {ungapped_path.name}, skipping API data")
+                        for name, seq in self.parse_fasta(ungapped_path.read_text()):
+                            archive_ungapped[name] = seq
+                    if gapped_path.exists():
+                        for name, seq in self.parse_fasta(gapped_path.read_text()):
+                            archive_gapped[name] = seq
+
+                    # Merge: archive takes priority, API fills gaps
+                    merged_ungapped = dict(archive_ungapped)  # Start with archive
+                    merged_gapped = dict(archive_gapped)
+                    api_added = 0
+
+                    for name, seq in api_ungapped:
+                        if name not in merged_ungapped:
+                            merged_ungapped[name] = seq
+                            api_added += 1
+
+                    for name, seq in api_gapped:
+                        if name not in merged_gapped:
+                            merged_gapped[name] = seq
+
+                    if api_added == 0:
+                        logger.debug(f"No new alleles from API for {ungapped_path.name}")
                         continue
 
-                    # Filter sequences for this segment
-                    segment_ungapped = [(n, s) for n, s in ungapped_seqs if segment_pattern.match(n)]
-                    segment_gapped = [(n, s) for n, s in gapped_seqs if segment_pattern.match(n)]
-
-                    if not segment_ungapped:
-                        continue
-
-                    # Write ungapped FASTA
+                    # Write merged ungapped FASTA
                     with open(ungapped_path, "w") as f:
-                        for name, seq in segment_ungapped:
+                        for name, seq in merged_ungapped.items():
                             f.write(f">{name}\n{seq}\n")
-                    logger.info(f"API: Wrote {len(segment_ungapped)} sequences to {ungapped_path}")
+                    logger.info(
+                        f"Merged {ungapped_path.name}: {len(archive_ungapped)} archive + "
+                        f"{api_added} API = {len(merged_ungapped)} total"
+                    )
 
-                    # Write gapped FASTA (D genes typically have no gaps)
-                    if segment_gapped:
+                    # Write merged gapped FASTA
+                    if merged_gapped:
                         with open(gapped_path, "w") as f:
-                            for name, seq in segment_gapped:
+                            for name, seq in merged_gapped.items():
                                 f.write(f">{name}\n{seq}\n")
-                        logger.info(f"API: Wrote {len(segment_gapped)} gapped sequences to {gapped_path}")
+                        logger.info(f"Merged {gapped_path.name}: {len(merged_gapped)} total")
 
     def _download_archive(self, force: bool = False) -> Path:
         """
