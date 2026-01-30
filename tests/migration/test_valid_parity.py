@@ -21,6 +21,12 @@ EXCLUDED_COLUMNS = frozenset([
     "c_call_source",
 ])
 
+# Columns excluded only for mixed-source tests due to IgBLAST alignment boundary variations
+# These can have 1-2bp differences at sequence ends without affecting biological interpretation
+MIXED_SOURCE_EXCLUDED_COLUMNS = frozenset([
+    "germline_alignment",  # Can vary by 1-2bp at J-region boundary due to database composition
+])
+
 # E-value columns that can have tiny floating-point variations due to
 # IgBLAST's database statistics calculations (not related to sequence data)
 SUPPORT_COLUMNS = frozenset(["v_support", "d_support", "j_support", "c_support"])
@@ -178,5 +184,51 @@ def test_airr_parity(
     compare_airr_outputs(
         pd.DataFrame(g3_result),
         pd.DataFrame(germlines_result),
+        fasta_file.name,
+    )
+
+
+@pytest.mark.parametrize(
+    "fasta_file",
+    HUMAN_TEST_FASTAS,
+    ids=lambda p: p.name,
+)
+def test_mixed_source_parity(
+    germlines_database: Path,
+    mixed_source_database: Path,
+    fasta_file: Path,
+) -> None:
+    """Test that mixed-source database produces identical results to IMGT-only.
+    
+    This test validates that the Germlines backend produces identical annotation
+    results regardless of which provider (IMGT, OGRDB, VDJbase) supplies an allele,
+    as long as the underlying sequences are identical.
+    
+    Mixed source database pulls:
+    - 5 alleles from OGRDB: IGHV1-18*01, IGHV1-2*02, IGHD1-1*01, IGHJ1*01, IGHJ3*02
+    - 5 alleles from VDJbase: IGHV3-30*01, IGHV3-21*01, IGHD2-2*01, IGHJ2*01, IGHJ4*02
+    - Remaining alleles from IMGT
+    
+    Args:
+        germlines_database: Path to IMGT-only Germlines database (session fixture).
+        mixed_source_database: Path to mixed-source database (session fixture).
+        fasta_file: Path to FASTA file to annotate.
+    """
+    # Skip if fixture file doesn't exist
+    if not fasta_file.exists():
+        pytest.skip(f"Test file not found: {fasta_file}")
+
+    # Run annotation with IMGT-only Germlines database
+    imgt_api = Airr("human", database=germlines_database)
+    imgt_result = imgt_api.run_fasta(fasta_file)
+
+    # Run annotation with mixed-source database
+    mixed_api = Airr("human", database=mixed_source_database)
+    mixed_result = mixed_api.run_fasta(fasta_file)
+
+    # Compare outputs - should be identical since sequences are the same
+    compare_airr_outputs(
+        pd.DataFrame(imgt_result),
+        pd.DataFrame(mixed_result),
         fasta_file.name,
     )
