@@ -993,6 +993,21 @@ class IgBLASTN:
         df["v_identity"] = df["v_identity"] / 100
         df["d_identity"] = df["d_identity"] / 100
         df["j_identity"] = df["j_identity"] / 100
+
+        # Derive locus from v_call when IgBLAST leaves it empty (e.g., when J gene not found)
+        # v_call like "IGHV4-NL1*01" -> locus "IGH"
+        def derive_locus(row):
+            if pd.isna(row["locus"]) or row["locus"] == "" or row["locus"] == "nan":
+                v_call = row.get("v_call", "")
+                if pd.notna(v_call) and v_call:
+                    # Take first v_call if multiple, extract first 3 chars (IGH, IGK, IGL)
+                    first_v = str(v_call).split(",")[0]
+                    if first_v.startswith(("IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG")):
+                        return first_v[:3]
+            return row["locus"]
+
+        df["locus"] = df.apply(derive_locus, axis=1)
+
         return df
 
     def __repr__(self) -> str:
