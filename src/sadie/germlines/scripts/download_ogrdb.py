@@ -1253,7 +1253,13 @@ class OGRDBDownloader(OGRDBApiClient):
                     ungapped_count = 0
                     with open(ungapped_path, "w") as f:
                         for gene_name, ungapped, gapped in unique_seqs:
-                            seq = ungapped or (gapped.replace(".", "") if gapped else None)
+                            # For J genes, prefer coding_seq_imgt (gapped) over full sequence
+                            # The 'sequence' column contains full genomic sequence including RSS,
+                            # while 'coding_seq_imgt' contains only the coding region
+                            if segment == "J" and gapped:
+                                seq = gapped.replace(".", "").replace("-", "")
+                            else:
+                                seq = ungapped or (gapped.replace(".", "").replace("-", "") if gapped else None)
                             if seq:
                                 f.write(f">{gene_name}\n")
                                 f.write(f"{seq}\n")
