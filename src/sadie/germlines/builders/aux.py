@@ -4,22 +4,14 @@ Auxiliary File Builder
 
 Generates IgBLAST auxiliary files from gapped germline sequences.
 
-IgBLAST auxiliary files contain two formats:
-
-V genes (10 columns, tab-separated):
-<gene_name>\t<reading_frame>\t<fwr1_end>\t<cdr1_start>\t<cdr1_end>\t<fwr2_start>\t<fwr2_end>\t<cdr2_start>\t<cdr2_end>\t<fwr3_end>
-
-Where all positions are amino acid positions (1-based) in the ungapped sequence.
-Truncated regions use 0 for missing end positions.
-
-Example:
-IGHV1-2*01	1	26	27	38	39	55	56	65	104
-
-J genes (5 columns, tab-separated):
+IgBLAST auxiliary files contain J gene data ONLY (5 columns, tab-separated):
 <gene_name>\t<reading_frame>\t<chain_type>\t<cdr3_end>\t<extra_bps>
 
 Example:
 IGHJ1*01	0	JH	17	1
+
+NOTE: V gene region boundaries belong in .ndm.imgt files (internal_data), NOT in aux files.
+The .ndm.imgt format is handled by the InternalDataBuilder class.
 """
 
 import logging
@@ -61,8 +53,8 @@ class AuxFileBuilder:
         """
         Build auxiliary file for species.
 
-        IgBLAST auxiliary files contain both V-gene region boundaries
-        and J-gene CDR3 end positions.
+        IgBLAST auxiliary files contain J-gene CDR3 end positions ONLY.
+        V-gene region boundaries belong in .ndm.imgt files (internal_data).
 
         Parameters
         ----------
@@ -79,26 +71,25 @@ class AuxFileBuilder:
 
         aux_lines = []
 
-        # Process V segments first (10-column format for region boundaries)
-        for chain in CHAINS:
-            lines = self._process_v_segment(species, chain, source_dir)
-            aux_lines.extend(lines)
-
-        # Process J segments (5-column format for CDR3 end)
+        # Process J segments only (5-column format for CDR3 end)
+        # NOTE: V gene entries do NOT belong in aux files - they go in .ndm.imgt
         for chain in CHAINS:
             lines = self._process_j_segment(species, chain, source_dir)
             aux_lines.extend(lines)
 
-        # Write auxiliary file
+        # Write auxiliary file (always write, even if empty, to clear old buggy files)
+        output_file.write_text("\n".join(aux_lines) + "\n" if aux_lines else "")
         if aux_lines:
-            output_file.write_text("\n".join(aux_lines) + "\n")
             logger.info(f"Wrote {len(aux_lines)} entries to {output_file}")
         else:
-            logger.warning(f"No auxiliary entries generated for {species}")
+            logger.warning(f"No auxiliary entries generated for {species} (file cleared)")
 
     def _process_v_segment(self, species: str, chain: str, source_dir: Path) -> List[str]:
         """
-        Process V segment to generate aux entries with region boundaries.
+        DEPRECATED: V gene entries do NOT belong in aux files.
+        
+        V gene region boundaries should be in .ndm.imgt files (handled by InternalDataBuilder).
+        This method is kept for reference but is no longer called.
 
         Parameters
         ----------
