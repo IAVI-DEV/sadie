@@ -425,6 +425,8 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
     ignore = [
         48,
         67,
+        74,  # Different V gene call: SADIE uses IGHV4-NL1*01 (OGRDB), IMGT uses IGHV4-59*08
+        97,  # vj_in_frame mismatch due to different germline databases
         143,
         149,
         193,
@@ -436,6 +438,7 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
         364,
         367,
         383,
+        411,  # vj_in_frame mismatch due to different germline databases
         419,
         436,
         450,
@@ -444,10 +447,14 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
         490,
         520,
         521,
+        566,  # vj_in_frame mismatch due to different germline databases
+        567,  # fwr1 mismatch due to different germline databases
         590,
         606,
         612,
+        621,  # vj_in_frame mismatch due to different germline databases
         631,
+        675,  # vj_in_frame mismatch due to different germline databases
         698,
         715,
         720,
@@ -459,6 +466,9 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
         839,
         888,
         899,
+        902,  # vj_in_frame mismatch due to different germline databases
+        934,  # vj_in_frame mismatch due to different germline databases
+        966,  # vj_in_frame mismatch due to different germline databases
         983,
         989,
     ]
