@@ -422,6 +422,48 @@ sadie germlines populate -p ogrdb
 
 ---
 
+## API Documentation
+
+Each provider has its own API for programmatic access. These links are useful for developers integrating with the raw data sources.
+
+### IMGT
+
+| Resource | URL |
+|----------|-----|
+| Website | [https://www.imgt.org/](https://www.imgt.org/) |
+| Reference Sequences | [https://www.imgt.org/vquest/refseqh.html](https://www.imgt.org/vquest/refseqh.html) |
+| GENE-DB | [https://www.imgt.org/genedb/](https://www.imgt.org/genedb/) |
+| FTP Download | [https://www.imgt.org/download/](https://www.imgt.org/download/) |
+
+### OGRDB
+
+| Resource | URL |
+|----------|-----|
+| Website | [https://ogrdb.airr-community.org/](https://ogrdb.airr-community.org/) |
+| REST API v2 | [https://ogrdb.airr-community.org/api_v2](https://ogrdb.airr-community.org/api_v2) |
+| API Documentation | [GitHub API v2 Guide](https://github.com/airr-community/ogrdb/blob/master/schema/ogrdb_api_v2_guide.md) |
+| Zenodo Archive | [https://zenodo.org/records/18145568](https://zenodo.org/records/18145568) |
+| GitHub Repository | [https://github.com/airr-community/ogrdb](https://github.com/airr-community/ogrdb) |
+
+### VDJbase
+
+| Resource | URL |
+|----------|-----|
+| Website | [https://vdjbase.org/](https://vdjbase.org/) |
+| Admin API | [https://vdjbase.org/admin/api/](https://vdjbase.org/admin/api/) |
+| Public API | [https://vdjbase.org/api](https://vdjbase.org/api) |
+| REST API Documentation | [VDJbase REST API Guide](https://wordpress.vdjbase.org/index.php/vdjbase_help/using-the-vdjbase-rest-api/) |
+| AIRR Knowledge Entry | [https://airr-knowledge.org/repositories/vdjbase/](https://airr-knowledge.org/repositories/vdjbase/) |
+
+### AIRR Community Standards
+
+| Resource | URL |
+|----------|-----|
+| AIRR Standards Documentation | [https://docs.airr-community.org/](https://docs.airr-community.org/) |
+| AIRR Data Commons | [https://docs.airr-community.org/en/stable/datarep/adc.html](https://docs.airr-community.org/en/stable/datarep/adc.html) |
+
+---
+
 ## See Also
 
 - [CLI Reference](cli-reference.md) - Command documentation
