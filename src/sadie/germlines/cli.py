@@ -459,3 +459,155 @@ def populate_germlines(
     if total_failed > 0:
         console.print(f"\n[red]Warning: {total_failed} species failed to download[/red]")
         console.print("Re-run the command to resume from checkpoint")
+
+
+def get_all_downloaded_species() -> List[str]:
+    """
+    Discover all species with downloaded source data across all providers.
+
+    Returns
+    -------
+    List[str]
+        Sorted unique species names that have data in any provider
+    """
+    species = set()
+    for provider_name in ["imgt", "ogrdb", "vdjbase", "custom"]:
+        data_dir = get_provider_data_dir(provider_name)
+        if not data_dir.exists():
+            continue
+        for d in data_dir.iterdir():
+            if d.is_dir() and not d.name.startswith("."):
+                species.add(d.name)
+    return sorted(species)
+
+
+def rebuild_germlines(
+    species: Optional[List[str]],
+):
+    """
+    Rebuild germline databases from already-downloaded data (no downloading).
+
+    Uses the Reference module to build IgBLAST databases:
+    1. Auto-generates reference YAML config if missing
+    2. Loads reference config via References.from_yaml()
+    3. Builds IgBLAST databases via References.make_airr_database()
+    4. Places output in the germlines/igblast/ directory
+
+    Parameters
+    ----------
+    species : List[str], optional
+        Specific species to rebuild, or None for all downloaded
+    """
+    import tempfile
+
+    import yaml
+
+    from sadie.reference.generate import generate_reference_yaml
+    from sadie.reference.reference import References
+
+    germlines_root = Path(__file__).parent
+    igblast_dir = germlines_root / "igblast"
+
+    all_downloaded = get_all_downloaded_species()
+
+    if species:
+        target = [sp for sp in species if sp in all_downloaded]
+        missing = [sp for sp in species if sp not in all_downloaded]
+        if missing:
+            console.print(f"[yellow]Species not found locally: {', '.join(missing)}[/yellow]")
+    else:
+        target = all_downloaded
+
+    if not target:
+        console.print("[yellow]No downloaded germline data found. Run 'sadie germlines populate' first.[/yellow]")
+        return
+
+    console.print("\n[bold]SADIE Germline Database Rebuild[/bold]")
+    console.print("=" * 50)
+    console.print(f"[dim]Rebuilding {len(target)} species via Reference module (no downloads)[/dim]\n")
+
+    # Step 1: Get or generate reference YAML config
+    yaml_path = Path(__file__).parent.parent / "reference" / "data" / "reference.yml"
+
+    if not yaml_path.exists():
+        console.print("[cyan]Reference config not found, auto-generating...[/cyan]")
+        generate_reference_yaml(output_path=yaml_path)
+        console.print(f"[green]Generated reference config at {yaml_path}[/green]")
+
+    # Step 2: Read the full config to filter by target species
+    with open(yaml_path) as f:
+        full_config = yaml.safe_load(f)
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task("[cyan]Rebuilding germlines...", total=len(target))
+
+        for sp in target:
+            progress.update(task, description=f"[cyan]Rebuilding {sp} via Reference module...")
+            try:
+                # Find the reference name for this species in the config
+                ref_name = _find_reference_name_for_species(full_config, sp)
+                if ref_name is None:
+                    console.print(f"  [yellow]{sp}[/yellow]: not found in reference config, skipping")
+                    progress.advance(task)
+                    continue
+
+                # Build a filtered config for just this species/reference
+                filtered_config = {ref_name: full_config[ref_name]}
+                filtered_yaml_content = yaml.dump(filtered_config, default_flow_style=False, sort_keys=False)
+
+                # Write to a temporary YAML file and build
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as tmp_yaml:
+                    tmp_yaml.write(filtered_yaml_content)
+                    tmp_yaml_path = Path(tmp_yaml.name)
+
+                try:
+                    refs = References.from_yaml(tmp_yaml_path, use_germlines=True)
+                    refs.make_airr_database(igblast_dir)
+                    console.print(f"  [green]{sp}[/green]: rebuilt successfully via Reference module")
+                finally:
+                    tmp_yaml_path.unlink(missing_ok=True)
+
+            except Exception as e:
+                console.print(f"  [red]{sp}[/red]: failed - {e}")
+                logger.error(f"Failed to rebuild {sp}: {e}")
+            progress.advance(task)
+
+    console.print("\n[green]Rebuild complete[/green]")
+
+
+def _find_reference_name_for_species(config: dict, species: str) -> Optional[str]:
+    """Find the reference name that contains data for a given species.
+
+    Searches through the reference config to find a reference name that
+    has the species as a sub-key under any provider.
+
+    Parameters
+    ----------
+    config : dict
+        Full reference YAML config.
+    species : str
+        Species to find.
+
+    Returns
+    -------
+    str or None
+        Reference name if found, None otherwise.
+    """
+    # First check if species name is directly a reference name
+    if species in config:
+        return species
+
+    # Search through all reference names for the species
+    for ref_name in config:
+        for source in config[ref_name]:
+            if species in config[ref_name][source]:
+                return ref_name
+
+    return None

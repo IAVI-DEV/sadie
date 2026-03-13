@@ -876,9 +876,11 @@ def germlines_rebuild(
 ) -> None:
     """Rebuild germline databases from existing data without re-downloading.
 
-    Runs the full build pipeline on already-downloaded sources:
-    1. Normalize: sources/ -> normalized/ (gap, merge, deduplicate across providers)
-    2. Build IgBLAST: normalized/ -> igblast/ (BLAST DBs, aux files, internal_data, NDM)
+    Uses the Reference module to build IgBLAST databases from the reference
+    config (auto-generated if missing). For each species:
+    1. Load reference YAML config (auto-generate if not found)
+    2. Build via References.from_yaml() and make_airr_database()
+    3. Output to germlines/igblast/ directory
 
     \b
     Examples:
