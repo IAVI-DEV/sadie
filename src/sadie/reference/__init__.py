@@ -1,3 +1,4 @@
+from sadie.reference.cache import DatabaseCache, compute_cache_key
 from sadie.reference.generate import generate_reference_yaml, get_g3_curated_species
 from sadie.reference.reference import G3Error, Reference, References
 from sadie.reference.settings import (
@@ -17,6 +18,8 @@ from sadie.reference.settings import (
 from sadie.reference.yaml import YamlRef
 
 __all__ = [
+    "DatabaseCache",
+    "compute_cache_key",
     "References",
     "Reference",
     "RECEPTORS",
