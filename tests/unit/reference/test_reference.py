@@ -23,22 +23,38 @@ from tests.conftest import SadieFixture
 
 
 def test_yaml(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture) -> None:
-    # load the default yaml file
+    # load the default yaml file (auto-generated reference.yml with all available species)
     yaml_object = YamlRef()
-    assert yaml_object.get_names() == {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
+
+    # The auto-generated reference.yml includes all species from germline sources
+    expected_names = {
+        "alpaca", "atlantic_cod", "atlantic_salmon", "camel", "cat", "channel_catfish",
+        "chicken", "clk", "cow", "cynomolgus", "dog", "ferret", "goat", "gorilla",
+        "horse", "human", "lemur", "macaque", "mink", "mouse", "mouse_c57bl6j",
+        "orangutan_bornean", "orangutan_sumatran", "pig", "platypus", "rabbit",
+        "rainbow_trout", "rat", "se09", "sheep", "zebrafish",
+    }
+    assert yaml_object.get_names() == expected_names
+
+    # Human IMGT genes remain curated via reference.g3.yml baseline
     assert len(yaml_object.get_genes("human", "imgt", "human")) == 479
+
     v_genes: List[str] = yaml_object.get_gene_segment("human", "imgt", "human", "V")
     assert all([x[3] == "V" for x in v_genes])
     assert isinstance(yaml_object.get_yaml_as_dataframe(), pd.DataFrame)
     assert yaml_object.__repr__()
-    assert set([i for i in yaml_object]) == {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
+    assert set([i for i in yaml_object]) == expected_names
     assert yaml_object["human"]
-    assert len(yaml_object) == 4977
+    assert len(yaml_object) == 14523
 
+    # Within-source duplicates still raise ValueError
     with pytest.raises(ValueError):
         YamlRef(fixture_setup.get_duplicated_yaml())
-    with pytest.raises(ValueError):
-        YamlRef(fixture_setup.get_duplicated_diff_source_yaml())
+
+    # Cross-provider duplicates are now handled with first-come-first-serve semantics
+    # (no longer raises ValueError)
+    cross_provider_yaml = YamlRef(fixture_setup.get_duplicated_diff_source_yaml())
+    assert cross_provider_yaml is not None
 
 
 def test_check_models(fixture_setup: SadieFixture) -> None:
