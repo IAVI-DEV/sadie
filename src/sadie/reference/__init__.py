@@ -1,3 +1,4 @@
+from sadie.reference.generate import generate_reference_yaml, get_g3_curated_species
 from sadie.reference.reference import G3Error, Reference, References
 from sadie.reference.settings import (
     BLAST_CONVENTION,
@@ -32,4 +33,6 @@ __all__ = [
     "SEGMENTS",
     "SEGMENTS_INTERNAL_DATA",
     "YamlRef",
+    "generate_reference_yaml",
+    "get_g3_curated_species",
 ]
