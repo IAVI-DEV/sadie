@@ -1,0 +1,59 @@
+{
+  "flowId": "auto-generation",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "assertions": {
+    "VAL-GEN-001": {
+      "status": "pass",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt, reference-hardening/auto-generation/test_generate_cli_output.txt",
+      "details": "All relevant tests pass. test_produces_valid_yaml_dict (YAML serializable dict produced), test_species_coverage_matches_imgt (all downloaded species covered), test_output_loadable_by_references_from_yaml (YamlRef loads successfully with >0 reference names). CLI tests: test_generate_produces_yaml (exit code 0, valid YAML file created), test_generate_loadable_by_references (CLI output loadable by YamlRef). Total: 14 tests passed across both test files."
+    },
+    "VAL-GEN-002": {
+      "status": "pass",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt",
+      "details": "test_curated_imgt_filtering_for_human passed. Verifies that for species in reference.g3.yml (human), the generated IMGT alleles exactly match the curated list from g3 — no extra alleles, no missing alleles. Also test_curated_species_preserved_from_g3 passed, confirming clk chimeric reference retains exact curated IMGT alleles from g3."
+    },
+    "VAL-GEN-003": {
+      "status": "pass",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt",
+      "details": "test_all_imgt_alleles_for_uncurated_species passed. For species NOT in reference.g3.yml, the test picks the first uncurated species alphabetically, retrieves ALL IMGT alleles via GermlineManager(providers=['imgt']), and asserts the generated set equals the full set."
+    },
+    "VAL-GEN-004": {
+      "status": "pass",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt",
+      "details": "test_all_ogrdb_alleles_included passed. Iterates over all species with OGRDB data, retrieves ALL OGRDB alleles via GermlineManager(providers=['ogrdb']), and asserts the generated set equals the full provider set for each species."
+    },
+    "VAL-GEN-005": {
+      "status": "pass",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt",
+      "details": "test_all_vdjbase_alleles_included passed. Iterates over all species with VDJbase data, retrieves ALL VDJbase alleles via GermlineManager(providers=['vdjbase']), and asserts the generated set equals the full provider set for each species."
+    },
+    "VAL-GEN-007": {
+      "status": "blocked",
+      "evidence": "reference-hardening/auto-generation/test_auto_generation_output.txt",
+      "details": "No dedicated test exists in test_auto_generation.py for VAL-GEN-007 (database build from generated YAML). The test file tests YAML loading (test_output_loadable_by_references_from_yaml passes — YamlRef loads the generated YAML), but does NOT call make_airr_database() to verify blastdb/aux_db/internal_data subdirectory creation. The closest integration test (test_reference_build_with_germlines) builds a database from YAML and succeeds in building, but fails on an outdated assertion about expected directory contents (extra 'hmms' and 'stockholms' directories now present). The YAML loading portion of the pipeline is verified; the database build portion lacks a unit test."
+    }
+  },
+  "frictions": [
+    {
+      "description": "VAL-GEN-007 is mapped to tests/unit/reference/test_auto_generation.py in user-testing.md, but no test in that file exercises make_airr_database(). The test_output_loadable_by_references_from_yaml only tests YamlRef loading, not the full database build pipeline.",
+      "resolved": false,
+      "resolution": null,
+      "affectedAssertions": ["VAL-GEN-007"]
+    },
+    {
+      "description": "The integration test test_reference_build_with_germlines has an outdated assertion that expects exactly ['.references_dataframe.csv.gz', 'Ig', 'aux_db'] but now also gets 'hmms' and 'stockholms' directories. The database IS built successfully; only the assertion checking directory listing is stale.",
+      "resolved": false,
+      "resolution": null,
+      "affectedAssertions": ["VAL-GEN-007"]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No unit test exists for VAL-GEN-007 in the mapped test file (test_auto_generation.py). A test that calls generate_reference_yaml(), writes to temp file, loads via References.from_yaml(), calls make_airr_database(), and checks for blastdb/aux_db/internal_data subdirectories is needed.",
+      "affectedAssertions": ["VAL-GEN-007"],
+      "quickFixAttempted": "Checked integration test test_reference_build_with_germlines which covers similar ground but fails on outdated directory assertion."
+    }
+  ],
+  "toolsUsed": ["pytest"],
+  "summary": "Tested 6 assertions: 5 passed (VAL-GEN-001 through VAL-GEN-005), 1 blocked (VAL-GEN-007 — no dedicated database build test exists in the mapped test file). All 12 tests in test_auto_generation.py passed, and 2 CLI tests in test_generate_cli.py passed."
+}

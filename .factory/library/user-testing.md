@@ -44,5 +44,42 @@ Testing surface, resource cost classification, and validation approach.
 ## Pre-Existing Test Failures
 
 These failures exist before this mission and should be noted but not fixed:
-- `tests/unit/reference/test_reference.py::test_yaml` - count assertion drift (456 vs 479)
 - `tests/unit/airr/test_airr.py::test_adaptable_correction` - pre-existing assertion failure
+- `tests/unit/airr/test_airr.py::test_hard_igl_seqs` - pre-existing failure
+- `tests/unit/airr/test_airr.py::test_source_lookup_method` - pre-existing cache identity assertion failure
+- `tests/unit/germlines/test_airr_integration.py::test_source_lookup_method` - pre-existing failure
+- `tests/unit/reference/test_reference.py::test_make_from_empty` - pre-existing G3 API unavailable
+- `tests/unit/reference/test_reference.py::test_cli` - pre-existing failure
+- `tests/unit/reference/test_reference.py::test_reference_class` - pre-existing failure
+- `tests/migration/test_valid_parity.py::test_mixed_source_parity` - pre-existing 1-char diff in germline_alignment
+
+## Flow Validator Guidance: pytest-cli
+
+**Surface**: pytest + CLI (shell execution). No web browser or TUI needed.
+
+**Isolation rules**:
+- Each validator should run tests in the same repo checkout (`/Users/tmsincomb/sadie`)
+- pytest tests are read-only against the source code (they use tmp_path for writes)
+- CLI tests use `--output <tmp_path>` flags to avoid writing to the repo
+- Validators can run concurrently safely since tests use isolated tmp dirs
+- Do NOT run `sadie reference generate` without `--output <tmp_path>` to avoid mutating the repo
+
+**Testing approach**:
+- Run specific test files/functions that correspond to the assigned assertion IDs
+- For each assertion, run the corresponding test and check exit code + output
+- Report pass/fail for each assertion based on test results
+- Capture stderr/stdout as evidence
+
+**Test file mapping**:
+- VAL-DUP-001, VAL-DUP-002, VAL-DUP-003 → `tests/unit/reference/test_duplicate_handling.py`
+- VAL-GEN-001 through VAL-GEN-005, VAL-GEN-007 → `tests/unit/reference/test_auto_generation.py`
+- VAL-CLI-003 → `tests/unit/reference/test_generate_cli.py`
+- VAL-CLEAN-001 → `tests/unit/reference/test_generate_cli.py::TestOldReferenceYmlDeleted`
+- VAL-CLEAN-002 → `tests/unit/reference/test_generate_cli.py::TestReferenceG3YmlPreserved`
+- VAL-CLEAN-003 → `tests/migration/test_valid_parity.py::test_airr_parity` (uses reference.g3.yml)
+
+**Known pre-existing failures** (ignore these):
+- `test_mixed_source_parity` - pre-existing 1-char diff in germline_alignment
+- `test_adaptable_correction`, `test_hard_igl_seqs`, `test_source_lookup_method` in airr tests
+
+**IMPORTANT**: Reference tests (auto_generation, generate_cli) can take 30-120 seconds since they exercise the full germline manager loading IMGT/OGRDB/VDJbase data.

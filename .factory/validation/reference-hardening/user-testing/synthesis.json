@@ -1,0 +1,40 @@
+{
+  "milestone": "reference-hardening",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 13,
+    "passed": 12,
+    "failed": 0,
+    "blocked": 1
+  },
+  "passedAssertions": [
+    "VAL-DUP-001",
+    "VAL-DUP-002",
+    "VAL-DUP-003",
+    "VAL-GEN-001",
+    "VAL-GEN-002",
+    "VAL-GEN-003",
+    "VAL-GEN-004",
+    "VAL-GEN-005",
+    "VAL-CLI-003",
+    "VAL-CLEAN-001",
+    "VAL-CLEAN-002",
+    "VAL-CLEAN-003"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [
+    {
+      "id": "VAL-GEN-007",
+      "blockedBy": "No dedicated test for make_airr_database() on auto-generated YAML. YAML loading verified but database build (blastdb/aux_db/internal_data subdirectories) not tested. Integration test test_reference_build_with_germlines exists but has stale assertion about expected directory contents (extra hmms/stockholms directories now present)."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Created initial user-testing.md with testing surface docs, concurrency guidance (3 pytest, 2 CLI), flow validator guidance for pytest and CLI surfaces, pre-existing failures list",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null
+}

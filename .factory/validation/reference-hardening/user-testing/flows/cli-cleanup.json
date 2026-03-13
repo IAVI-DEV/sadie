@@ -1,0 +1,30 @@
+{
+  "flowId": "cli-cleanup",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "assertions": {
+    "VAL-CLI-003": {
+      "status": "pass",
+      "evidence": "reference-hardening/cli-cleanup/VAL-CLI-003-test-output.txt",
+      "details": "All 12 tests in tests/unit/reference/test_generate_cli.py passed (exit code 0). Tests verify: help output, YAML generation, YAML structure validation, human species inclusion, summary output, overwrite protection, force overwrite, default output path, and loadability by References.from_yaml(). The generated config follows generation rules (g3 baseline for curated species, all IMGT for uncurated, all ogrdb/vdjbase)."
+    },
+    "VAL-CLEAN-001": {
+      "status": "pass",
+      "evidence": "reference-hardening/cli-cleanup/VAL-CLEAN-001-file-check.txt",
+      "details": "ls -la /Users/tmsincomb/sadie/reference.yml returns 'No such file or directory' (exit code 1). The dedicated test TestOldReferenceYmlDeleted::test_no_reference_yml_at_repo_root also passes. The old manual reference.yml has been deleted from the repo root."
+    },
+    "VAL-CLEAN-002": {
+      "status": "pass",
+      "evidence": "reference-hardening/cli-cleanup/VAL-CLEAN-002-file-check.txt",
+      "details": "reference.g3.yml exists at repo root (98483 bytes, dated Jan 27 19:33). Loads successfully as valid YAML dict with 8 species keys: clk, dog, human, mouse, rabbit, rat, se09, macaque. Both TestReferenceG3YmlPreserved tests (test_g3_yml_exists, test_g3_yml_loadable) pass."
+    },
+    "VAL-CLEAN-003": {
+      "status": "pass",
+      "evidence": "reference-hardening/cli-cleanup/VAL-CLEAN-003-migration-tests.txt",
+      "details": "All 5 test_airr_parity tests pass (PG9_H, PG9_L, OAS_subsample_1000, catnap_nt_heavy, catnap_nt_light). These tests use reference.g3.yml to build the baseline database and verify annotation parity. The only failure in tests/migration/ is test_mixed_source_parity[OAS_subsample_1000.fasta] which is a documented pre-existing failure (1-char diff in germline_alignment) unrelated to this milestone."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "toolsUsed": ["pytest", "CLI"],
+  "summary": "Tested 4 assertions: all 4 passed. VAL-CLI-003 confirmed via 12 passing CLI generation tests. VAL-CLEAN-001 confirmed reference.yml absent from repo root. VAL-CLEAN-002 confirmed reference.g3.yml exists and loads correctly. VAL-CLEAN-003 confirmed all 5 test_airr_parity migration tests pass (pre-existing test_mixed_source_parity failure excluded per instructions)."
+}

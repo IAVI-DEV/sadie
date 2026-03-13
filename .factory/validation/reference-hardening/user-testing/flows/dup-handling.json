@@ -1,0 +1,30 @@
+{
+  "flowId": "dup-handling",
+  "testedAt": "2026-03-13T09:31:56Z",
+  "isolation": {
+    "workingDirectory": "/Users/tmsincomb/sadie",
+    "testFile": "tests/unit/reference/test_duplicate_handling.py",
+    "testCommand": "poetry run pytest tests/unit/reference/test_duplicate_handling.py -v --tb=long"
+  },
+  "toolsUsed": ["pytest"],
+  "assertions": {
+    "VAL-DUP-001": {
+      "status": "pass",
+      "evidence": "reference-hardening/dup-handling/pytest-output.txt",
+      "details": "test_no_error_on_cross_provider_duplicates PASSED — References.from_yaml() completes successfully when the same allele (IGHV1-2*02) appears under both imgt and ogrdb providers. No exception raised. Additionally test_duplicate_allele_first_provider_wins also implicitly confirms this (loads YAML with duplicates without error)."
+    },
+    "VAL-DUP-002": {
+      "status": "pass",
+      "evidence": "reference-hardening/dup-handling/pytest-output.txt",
+      "details": "test_duplicate_allele_first_provider_wins PASSED — YAML lists ogrdb first then imgt, both containing IGHV1-2*02. After loading, the entry's source field is 'ogrdb' (first provider wins). Duplicate alleles appear exactly once. test_mixed_overlap_dedup also confirms first-come-first-serve with mixed unique/shared alleles."
+    },
+    "VAL-DUP-003": {
+      "status": "pass",
+      "evidence": "reference-hardening/dup-handling/pytest-output.txt",
+      "details": "test_unique_alleles_preserved PASSED — Two providers with completely non-overlapping alleles (5 from imgt, 2 from ogrdb). All 7 alleles present in result, none dropped. test_mixed_overlap_dedup also confirms unique alleles from both providers are preserved even when some alleles overlap (6 total = 3 ogrdb + 5 imgt - 2 duplicates)."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions (VAL-DUP-001, VAL-DUP-002, VAL-DUP-003): all 3 passed. All 5 test functions in test_duplicate_handling.py passed in 0.36s. Duplicate allele handling works correctly: cross-provider duplicates accepted without error, first-come-first-serve priority enforced, and unique alleles from all providers preserved."
+}
