@@ -445,126 +445,88 @@ def build_reference(verbose: int, output: str, use_germlines: bool, force: bool,
     "--output",
     "-o",
     type=click.Path(resolve_path=True),
-    default="reference.yml",
-    help="Output YAML file path (default: reference.yml)",
+    default=os.path.join(os.path.dirname(__file__), "reference/data/reference.yml"),
+    help="Output YAML file path",
     show_default=True,
 )
 @click.option(
-    "--generate-all",
+    "--force",
+    "-f",
     is_flag=True,
-    help="Generate complete reference.yml with all configured references",
+    default=False,
+    help="Overwrite existing output file",
 )
 @click.option(
-    "--name",
-    help="Reference name (e.g., human, mouse, clk)",
-)
-@click.option(
-    "--species",
-    help="Species to query (e.g., human, mouse, macaque)",
-)
-@click.option(
-    "--providers",
-    multiple=True,
-    type=click.Choice(["vdjbase", "ogrdb", "imgt", "custom"]),
-    default=["vdjbase", "ogrdb", "imgt"],
-    help="Germline providers to include (default: vdjbase ogrdb imgt)",
-)
-@click.option(
-    "--functional-only/--include-non-functional",
-    default=True,
-    help="Include only functional genes (default: functional-only)",
-)
-@click.option(
-    "--interactive",
-    "-i",
-    is_flag=True,
-    help="Interactive mode for gene selection",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Show what would be done without making changes",
-)
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Show detailed output",
-)
-@click.option(
-    "--list-species",
-    is_flag=True,
-    help="List available species from germlines module",
+    "--g3-yaml",
+    type=click.Path(exists=True, resolve_path=True),
+    default=None,
+    help="Path to reference.g3.yml baseline (default: repo root reference.g3.yml)",
 )
 def generate_reference(
     output: str,
-    generate_all: bool,
-    name: Optional[str],
-    species: Optional[str],
-    providers: tuple,
-    functional_only: bool,
-    interactive: bool,
-    dry_run: bool,
-    verbose: bool,
-    list_species: bool,
+    force: bool,
+    g3_yaml: Optional[str],
 ) -> None:
-    """Generate reference.yml file using SADIE germlines module.
+    """Auto-generate reference.yml from germline sources.
 
-    This command uses the local germlines database (IMGT, OGRDB, VDJbase) to generate
-    reference.yml files used by 'sadie reference build' command.
+    Uses the curated reference.g3.yml baseline plus all available OGRDB and
+    VDJbase alleles to produce a complete reference YAML config.
+
+    Generation rules:
+      - Species in reference.g3.yml: only curated IMGT alleles
+      - Species NOT in reference.g3.yml: all IMGT alleles
+      - ALL OGRDB alleles for every species with OGRDB data
+      - ALL VDJbase alleles for every species with VDJbase data
 
     \b
     Examples:
-        sadie reference generate --generate-all
-        sadie reference generate --species human --output human.yml
-        sadie reference generate --interactive
-        sadie reference generate --list-species
+        sadie reference generate                         # Generate to default location
+        sadie reference generate -o custom.yml           # Custom output path
+        sadie reference generate --force                 # Overwrite existing
+        sadie reference generate --g3-yaml my_g3.yml     # Custom g3 baseline
     """
     import sys
-    from pathlib import Path
 
-    # Import the script's main functionality
-    script_path = Path(__file__).parent.parent.parent / "scripts" / "generate_reference_yaml_germlines.py"
+    from sadie.reference.generate import generate_reference_yaml
 
-    if not script_path.exists():
-        click.echo("Error: generate_reference_yaml_germlines.py script not found", err=True)
+    output_path = Path(output)
+
+    # Check if output already exists and --force not provided
+    if output_path.exists() and not force:
+        click.echo(f"Error: Output file already exists: {output_path}", err=True)
+        click.echo("Use --force to overwrite.", err=True)
         sys.exit(1)
 
-    # Build command arguments
-    cmd = [sys.executable, str(script_path)]
+    g3_path = Path(g3_yaml) if g3_yaml else None
 
-    if list_species:
-        cmd.append("--list-species")
-    elif interactive:
-        cmd.append("--interactive")
-    elif generate_all:
-        cmd.append("--generate-all")
-    elif species:
-        cmd.extend(["--species", species])
-        if name:
-            cmd.extend(["--name", name])
-    else:
-        click.echo("Error: Specify --generate-all, --species, --interactive, or --list-species", err=True)
+    try:
+        click.echo("Generating reference YAML from germline sources...")
+        config = generate_reference_yaml(
+            g3_yaml_path=g3_path,
+            output_path=output_path,
+        )
+
+        # Print summary of species and allele counts
+        click.echo("")
+        click.echo("Summary:")
+        total_alleles = 0
+        for name in sorted(config.keys()):
+            ref_alleles = 0
+            providers_list = []
+            for source in config[name]:
+                for species in config[name][source]:
+                    count = len(config[name][source][species])
+                    ref_alleles += count
+                providers_list.append(source)
+            total_alleles += ref_alleles
+            click.echo(f"  {name}: {ref_alleles} alleles [{', '.join(providers_list)}]")
+
+        click.echo(f"\nTotal: {len(config)} references, {total_alleles} alleles")
+        click.echo(f"Written to: {output_path}")
+
+    except Exception as e:
+        click.echo(f"Error: {str(e)}", err=True)
         sys.exit(1)
-
-    cmd.extend(["--output", output])
-
-    if providers:
-        cmd.append("--providers")
-        cmd.extend(providers)
-
-    if not functional_only:
-        cmd.append("--include-non-functional")
-
-    if dry_run:
-        cmd.append("--dry-run")
-
-    if verbose:
-        cmd.append("--verbose")
-
-    # Execute the script
-    result = subprocess.run(cmd, capture_output=False, text=True)
-    sys.exit(result.returncode)
 
 
 @sadie.command()
@@ -900,6 +862,33 @@ def germlines_populate(
     from sadie.germlines.cli import populate_germlines
 
     populate_germlines(provider, list(species) if species else None, force, dry_run)
+
+
+@germlines.command("rebuild")
+@click.option(
+    "--species",
+    "-s",
+    multiple=True,
+    help="Specific species to rebuild (can be repeated)",
+)
+def germlines_rebuild(
+    species: tuple,
+) -> None:
+    """Rebuild germline databases from existing data without re-downloading.
+
+    Runs the full build pipeline on already-downloaded sources:
+    1. Normalize: sources/ -> normalized/ (gap, merge, deduplicate across providers)
+    2. Build IgBLAST: normalized/ -> igblast/ (BLAST DBs, aux files, internal_data, NDM)
+
+    \b
+    Examples:
+        sadie germlines rebuild                    # Rebuild all species
+        sadie germlines rebuild -s human           # Rebuild human only
+        sadie germlines rebuild -s human -s mouse  # Rebuild human and mouse
+    """
+    from sadie.germlines.cli import rebuild_germlines
+
+    rebuild_germlines(list(species) if species else None)
 
 
 @germlines.command("status")
