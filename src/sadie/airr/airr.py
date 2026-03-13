@@ -1,4 +1,5 @@
 """SADIE Airr module"""
+
 from __future__ import annotations
 
 # Std library
@@ -26,6 +27,8 @@ from Bio.SeqRecord import SeqRecord
 from sadie.airr.airrtable import AirrTable, LinkedAirrTable
 from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
+from sadie.reference.cache import DatabaseCache, compute_cache_key
+from sadie.reference.generate import generate_reference_yaml
 from sadie.reference.reference import References
 
 logger = logging.getLogger("AIRR")
@@ -287,8 +290,22 @@ class Airr:
             if reference_name not in _available_datasets:
                 raise BadDataSet(reference_name, list(_available_datasets))
 
-            # set the germline data, None will use default germline
-            self.germline_data = GermlineData(self.name, receptor, None, scheme, providers=providers)
+            # Unified pipeline: route through Reference module with caching.
+            # Falls back to direct germlines module path if Reference build fails
+            # (e.g., when IMGT position annotations are incomplete for some alleles).
+            try:
+                db_path = self._resolve_database_via_reference(reference_name, providers or ["imgt"], scheme)
+                self._database_path = db_path
+                self.germline_data = GermlineData(
+                    reference_name, receptor, db_path, scheme, prebuilt=True, providers=providers
+                )
+            except (ValueError, RuntimeError, FileNotFoundError) as e:
+                logger.warning(
+                    f"Reference module build failed for '{reference_name}': {e}. "
+                    f"Falling back to direct germlines module path."
+                )
+                # Fall back to direct germlines module path
+                self.germline_data = GermlineData(self.name, receptor, None, scheme, providers=providers)
         # This will set all the igblast params given the Germline Data class whcih validates them
         self.igblast.igdata = self.germline_data.igdata
         self.igblast.germline_db_v = self.germline_data.v_gene_dir
@@ -317,6 +334,120 @@ class Airr:
         # Init pre run check to make sure everything is good
         # We don't have to do this now as it happens at execution.
         self.igblast.pre_check()
+
+    @staticmethod
+    def _get_reference_yaml_path() -> Path:
+        """Get the path to the module-internal reference.yml.
+
+        Returns
+        -------
+        Path
+            Path to the reference YAML config file inside the reference module data directory.
+        """
+        return Path(__file__).parent.parent / "reference" / "data" / "reference.yml"
+
+    @staticmethod
+    def _resolve_database_via_reference(
+        reference_name: str,
+        providers: List[str],
+        scheme: str = "imgt",
+    ) -> Path:
+        """Resolve IgBLAST database path through the Reference module with caching.
+
+        This implements the unified pipeline:
+        1. Check for reference config; auto-generate if missing.
+        2. Build a filtered YAML config for the requested reference_name and providers.
+        3. Load via References.from_yaml() with only the requested data.
+        4. Compute cache key from (reference_name, providers, config hash).
+        5. On cache hit, return cached database path.
+        6. On cache miss, build via References.make_airr_database() and cache the result.
+
+        Parameters
+        ----------
+        reference_name : str
+            The species/reference name (e.g., "human", "mouse").
+        providers : list of str
+            Ordered list of germline providers (e.g., ["imgt"], ["ogrdb", "imgt"]).
+        scheme : str, optional
+            Numbering scheme, by default "imgt".
+
+        Returns
+        -------
+        Path
+            Path to the compiled IgBLAST database directory.
+
+        Raises
+        ------
+        BadDataSet
+            If the reference_name is not found in the generated reference config.
+        """
+        import tempfile
+
+        import yaml
+
+        yaml_path = Airr._get_reference_yaml_path()
+
+        # Auto-generate reference config if missing
+        if not yaml_path.exists():
+            logger.info(f"Reference config not found at {yaml_path}, auto-generating...")
+            generate_reference_yaml(output_path=yaml_path)
+            logger.info(f"Auto-generated reference config at {yaml_path}")
+
+        # Read the full YAML config
+        with open(yaml_path) as f:
+            full_config = yaml.safe_load(f)
+
+        # Check that the requested reference_name exists in the config
+        if reference_name not in full_config:
+            available_names = list(full_config.keys())
+            raise BadDataSet(reference_name, available_names)
+
+        # Filter the config to only include the requested reference_name and providers
+        ref_config = full_config[reference_name]
+        filtered_ref: Dict[str, Dict[str, List[str]]] = {}
+        for provider in providers:
+            if provider in ref_config:
+                filtered_ref[provider] = ref_config[provider]
+
+        if not filtered_ref:
+            logger.warning(
+                f"No alleles found for reference '{reference_name}' with providers {providers}. "
+                f"Available sources: {list(ref_config.keys())}. Falling back to all providers."
+            )
+            filtered_ref = ref_config
+
+        # Build a single-reference YAML config with only the requested data
+        filtered_config = {reference_name: filtered_ref}
+
+        # Write to a temporary YAML for loading
+        filtered_yaml_content = yaml.dump(filtered_config, default_flow_style=False, sort_keys=False)
+
+        # Compute cache key from the filtered content
+        cache_key = compute_cache_key(reference_name, tuple(providers), filtered_yaml_content)
+
+        # Use cache to get or build the database
+        cache = DatabaseCache()
+        cached = cache.get_cached_path(cache_key)
+        if cached is not None:
+            logger.info(f"Cache hit for '{reference_name}' with providers {providers}: {cached}")
+            return cached
+
+        # Cache miss - build the database
+        logger.info(f"Cache miss for '{reference_name}' with providers {providers}, building...")
+
+        # Write filtered YAML to a temp file and load via References.from_yaml()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as tmp_yaml:
+            tmp_yaml.write(filtered_yaml_content)
+            tmp_yaml_path = Path(tmp_yaml.name)
+
+        try:
+            refs = References.from_yaml(tmp_yaml_path, use_germlines=True)
+            db_path = cache.build_and_cache(cache_key, refs)
+        finally:
+            tmp_yaml_path.unlink(missing_ok=True)
+
+        logger.info(f"Using database at {db_path} for reference '{reference_name}' with providers {providers}")
+        return db_path
 
     @property
     def adapt_penalty(self) -> bool:
