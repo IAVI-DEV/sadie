@@ -27,12 +27,43 @@ from Bio.SeqRecord import SeqRecord
 from sadie.airr.airrtable import AirrTable, LinkedAirrTable
 from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
+from sadie.germlines import get_germlines_base_dir
 from sadie.reference.cache import DatabaseCache, compute_cache_key
 from sadie.reference.generate import generate_reference_yaml
 from sadie.reference.reference import References
 
 logger = logging.getLogger("AIRR")
 warnings.filterwarnings("ignore", "Partial codon")
+
+
+def _check_germlines_populated(reference_name: str) -> None:
+    """Check if germlines are populated and raise a clear error if not.
+
+    Parameters
+    ----------
+    reference_name : str
+        The species/reference name being requested.
+
+    Raises
+    ------
+    BadDataSet
+        If germlines are not populated or the requested species is not available,
+        with a message directing the user to run ``sadie germlines populate``.
+    """
+    germlines_igblast = get_germlines_base_dir() / "igblast"
+    internal_data = germlines_igblast / "Ig" / "internal_data"
+    if not internal_data.exists() or not any(internal_data.iterdir()):
+        raise BadDataSet(
+            f"{reference_name} (germlines not populated – run 'sadie germlines populate')",
+            [],
+        )
+    species_dir = internal_data / reference_name
+    if not species_dir.exists():
+        available = [d.name for d in internal_data.iterdir() if d.is_dir() and not d.name.startswith(".")]
+        raise BadDataSet(
+            f"{reference_name} (not found in populated germlines – run 'sadie germlines populate')",
+            available,
+        )
 
 
 class Airr:
@@ -300,6 +331,11 @@ class Airr:
                     reference_name, receptor, db_path, scheme, prebuilt=True, providers=providers
                 )
             except (ValueError, RuntimeError, FileNotFoundError, BadDataSet) as e:
+                # Before falling back, check if germlines are actually populated.
+                # If not, raise a clear error directing the user to populate them.
+                if isinstance(e, BadDataSet):
+                    _check_germlines_populated(reference_name)
+
                 logger.warning(
                     f"Reference module build failed for '{reference_name}': {e}. "
                     f"Falling back to direct germlines module path."

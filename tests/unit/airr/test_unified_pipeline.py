@@ -328,13 +328,23 @@ class TestErrorHandling:
     def test_unpopulated_germlines_raises_error(self, tmp_path: Path) -> None:
         """VAL-ERR-002: When germlines haven't been populated, a clear error is raised.
 
-        If the unified pipeline can't find germline data (e.g., because from_yaml fails
-        to load alleles), it should raise a clear error.
+        If the unified pipeline can't find germline data (e.g., because germlines
+        haven't been populated), it should raise a clear error directing the user
+        to run 'sadie germlines populate'.
         """
-        # Make _resolve_database_via_reference fail with a clear error
-        with patch.object(Airr, "_resolve_database_via_reference", side_effect=BadDataSet("human", [])):
-            with pytest.raises(BadDataSet):
+        # Simulate unpopulated germlines: _resolve_database_via_reference fails with BadDataSet,
+        # AND the germlines internal_data directory is empty (no species populated).
+        empty_igblast = tmp_path / "igblast" / "Ig" / "internal_data"
+        empty_igblast.mkdir(parents=True)
+
+        with (
+            patch.object(Airr, "_resolve_database_via_reference", side_effect=BadDataSet("human", [])),
+            patch("sadie.airr.airr.get_germlines_base_dir", return_value=tmp_path),
+        ):
+            with pytest.raises(BadDataSet) as exc_info:
                 Airr("human", providers=["imgt"])
+            error_msg = str(exc_info.value)
+            assert "populate" in error_msg.lower() or "human" in error_msg.lower()
 
 
 # --- Cache integration tests ---
