@@ -1,0 +1,12 @@
+commands:
+  install: poetry install --with dev
+  test: poetry run pytest tests/unit/ -x --tb=short -q
+  test_reference: poetry run pytest tests/unit/reference/ -x --tb=short -q
+  test_germlines: poetry run pytest tests/unit/germlines/ -x --tb=short -q
+  test_airr: poetry run pytest tests/unit/airr/ -x --tb=short -q
+  test_integration: poetry run pytest tests/integration/ -x --tb=short -q
+  test_migration: poetry run pytest tests/migration/ -x --tb=short -q
+  typecheck: poetry run pyright src/
+  lint: poetry run black --check src/
+  format: poetry run black src/
+  precommit: poetry run pre-commit run --all-files

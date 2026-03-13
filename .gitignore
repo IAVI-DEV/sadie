@@ -79,4 +79,8 @@ my_database/
 # helpers tailored for user specific needs
 .claude/
 .cursor/
-.factory/
+# .factory/ is committed for mission infrastructure
+# .factory/
+
+# test env
+nb/
