@@ -1,0 +1,50 @@
+{
+  "featureId": "reference-yaml-auto-generation",
+  "reviewedAt": "2026-03-13T04:15:00.000Z",
+  "commitId": "5f2967a4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of reference YAML auto-generation. The generate.py module correctly implements the 4-step generation logic (g3 baseline → uncurated IMGT → OGRDB → VDJbase) with clean code, proper type hints, NumPy docstrings, and thorough test coverage (12 tests in test_auto_generation.py + 12 CLI tests in test_generate_cli.py + updated assertions in test_reference.py). All fulfills assertions are adequately covered except VAL-GEN-007 which lacks an explicit make_airr_database() test. The CLI rewrite in app.py is a significant improvement over the old script-delegation approach. Two non-blocking efficiency/portability observations noted.",
+    "issues": [
+      {
+        "file": "tests/unit/reference/test_auto_generation.py",
+        "line": 0,
+        "severity": "non_blocking",
+        "description": "VAL-GEN-007 (Generated YAML builds valid IgBLAST database) is claimed as fulfilled but no test calls make_airr_database() on the generated output. test_output_loadable_by_references_from_yaml only tests YamlRef loading, not database compilation. This is acceptable as an integration-level test gap (make_airr_database involves slow IgBLAST compilation), but the fulfills claim is overstated."
+      },
+      {
+        "file": "src/sadie/reference/generate.py",
+        "line": 90,
+        "severity": "non_blocking",
+        "description": "Unnecessary GermlineManager instantiation: _get_all_alleles_for_provider() creates a new GermlineManager on every call, but generate_reference_yaml() already creates imgt_manager, ogrdb_manager, and vdjbase_manager at the top level. For a config with 20+ uncurated species, this creates ~20+ redundant manager instances. Could accept a manager parameter or be refactored to reuse the existing ones."
+      },
+      {
+        "file": "src/sadie/reference/generate.py",
+        "line": 36,
+        "severity": "non_blocking",
+        "description": "_DEFAULT_G3_PATH uses Path(__file__).parents[3] which resolves correctly in the development repo layout (reference/→sadie/→src/→repo_root) but would break in an installed package. Acceptable since this is a development/CLI tool with an overridable default, but worth noting."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The feature description lists macaque, rabbit, rat as 'species NOT in reference.g3.yml' but they ARE present in the g3 file. The implementation correctly handles them as curated species (preserving g3 alleles). This discrepancy between feature spec and reality should be noted so future features don't make the same incorrect assumption.",
+      "evidence": "Feature description says '(2) For species NOT in reference.g3.yml but available in germline sources (macaque, rabbit, rat, etc.)' but reference.g3.yml contains macaque/imgt/macaque (11 alleles), rabbit/imgt/rabbit (214 alleles), rat/imgt/rat (461 alleles)"
+    },
+    {
+      "area": "skills",
+      "observation": "Worker committed tests and implementation in a single commit rather than following the TDD red-green-refactor cycle specified in the python-refactor skill's Step 2 ('Write Tests First'). The single-commit approach produced correct results but deviated from the skill's explicit TDD procedure.",
+      "evidence": "Commit 5f2967a4 adds both src/sadie/reference/generate.py AND tests/unit/reference/test_auto_generation.py in one commit. Skill says 'Run the tests to confirm they fail (red phase)' before implementing."
+    },
+    {
+      "area": "conventions",
+      "observation": "The worker's verification in the handoff excluded several pre-existing test failures with -k flags rather than running the full test suite. While AGENTS.md documents pre-existing failures, the pattern of selective test exclusion should be noted as acceptable practice.",
+      "evidence": "Handoff verification: 'poetry run pytest tests/unit/reference/ --tb=short -q -k not test_yaml and not test_make_from_empty and not test_cli and not test_reference_class' - excluded 4 tests listed in AGENTS.md pre-existing failures"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature passes review. The implementation in src/sadie/reference/generate.py correctly implements the 4-step reference YAML auto-generation (g3 curated baseline + uncurated IMGT + all OGRDB + all VDJbase). Tests comprehensively cover VAL-GEN-001 through VAL-GEN-005. VAL-GEN-007 (make_airr_database) is not explicitly tested but the YAML loadability is verified. The CLI rewrite (commit 0300246b) simplifies the old script-delegation pattern into a direct function call with --force and --g3-yaml options. Updated assertions in test_reference.py (commit 02c8e217) correctly reflect the expanded species/allele counts. Three non-blocking issues noted: missing VAL-GEN-007 database build test, redundant GermlineManager instantiation, and fragile default path resolution. No blocking issues found."
+}

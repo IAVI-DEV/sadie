@@ -1,0 +1,39 @@
+{
+  "featureId": "reference-hardening-test-updates",
+  "reviewedAt": "2026-03-13T04:15:00.000Z",
+  "commitId": "02c8e217",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The worker correctly updated test_yaml in test_reference.py to match the new auto-generated reference.yml. All three assertion changes are verified correct: species set expanded from 8 to 31 (verified via YamlRef().get_names()), total allele count updated from 4977 to 14523 (verified via len(YamlRef())), and cross-provider duplicate YAML changed from expecting ValueError to asserting successful first-come-first-serve dedup (matching commit 495ac713's behavior change). Human IMGT gene count correctly remained at 479. No fixture JSON files or other test files required changes, and the worker correctly verified this by running the germlines and migration test suites. The unchanged test_check_default_reference_df (still asserts 4977) is correct because it reads from the pre-built .references_dataframe.csv.gz, not from the YAML.",
+    "issues": [
+      {
+        "file": "tests/unit/reference/test_reference.py",
+        "line": 56,
+        "severity": "non_blocking",
+        "description": "The cross_provider_yaml assertion 'assert cross_provider_yaml is not None' is weak — it only verifies object creation, not that deduplication actually occurred. However, this is acceptable since dedup behavior is thoroughly tested in tests/unit/reference/test_duplicate_handling.py (added in commit 495ac713)."
+      },
+      {
+        "file": "tests/unit/reference/test_reference.py",
+        "line": 201,
+        "severity": "non_blocking",
+        "description": "Consistency gap: test_yaml expects 14523 alleles (from YAML) but test_check_default_reference_df expects 4977 (from pre-built CSV). This is correct for now since the pre-built CSV wasn't regenerated in this mission, but creates a confusing inconsistency. Should be addressed when the pre-built database is regenerated in a future task."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md lists 'tests/unit/reference/test_reference.py::test_yaml - count assertion drift (456 vs 479) and stale cross-provider duplicate ValueError assertion' as a pre-existing failure. This feature specifically fixed that test, so the entry is now stale and should be removed from the Pre-Existing Test Failures section.",
+      "evidence": "AGENTS.md Pre-Existing Test Failures section still lists test_yaml as failing, but commit 02c8e217 updated the assertions to pass."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker's TDD deviation was justified. The python-refactor skill's step 2 ('Write Tests First') doesn't account for test-assertion-update features where the work IS updating existing test assertions to match correct new behavior. The worker's skillFeedback.suggestedChanges recommends adding an exception note for this pattern.",
+      "evidence": "Handoff skillFeedback.deviations[0]: 'Updated existing test assertions rather than writing new failing tests first, since this feature is about updating existing tests to match new reference.yml content.'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The worker correctly identified and updated the three assertions in test_yaml that were affected by the new auto-generated reference.yml: species count (8→31), allele count (4977→14523), and cross-provider duplicate behavior (ValueError→first-come-first-serve). All values verified against actual runtime data. No other test files required changes, correctly confirmed by running germlines and migration test suites. Only file modified was tests/unit/reference/test_reference.py with +22/-6 lines. Two non-blocking observations: weak assertion on cross-provider dedup (mitigated by dedicated test file) and YAML-vs-CSV count inconsistency (expected, to be resolved in future task)."
+}
