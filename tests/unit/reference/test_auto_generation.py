@@ -233,8 +233,7 @@ class TestGenerateReferenceYaml:
 
             generated_ogrdb = set(result[found_ref]["ogrdb"][species])
             assert generated_ogrdb == all_ogrdb_alleles, (
-                f"OGRDB alleles for '{species}' incomplete. "
-                f"Missing: {all_ogrdb_alleles - generated_ogrdb}"
+                f"OGRDB alleles for '{species}' incomplete. " f"Missing: {all_ogrdb_alleles - generated_ogrdb}"
             )
 
     def test_all_vdjbase_alleles_included(self) -> None:
@@ -260,8 +259,7 @@ class TestGenerateReferenceYaml:
 
             generated_vdjbase = set(result[found_ref]["vdjbase"][species])
             assert generated_vdjbase == all_vdjbase_alleles, (
-                f"VDJbase alleles for '{species}' incomplete. "
-                f"Missing: {all_vdjbase_alleles - generated_vdjbase}"
+                f"VDJbase alleles for '{species}' incomplete. " f"Missing: {all_vdjbase_alleles - generated_vdjbase}"
             )
 
     def test_output_loadable_by_references_from_yaml(self) -> None:
@@ -307,13 +305,7 @@ class TestGenerateReferenceYaml:
     def test_custom_g3_yaml_path(self) -> None:
         """Test passing custom g3 YAML path."""
         # Create a minimal g3 YAML
-        minimal_g3 = {
-            "test_ref": {
-                "imgt": {
-                    "human": ["IGHV1-2*02", "IGHJ6*01"]
-                }
-            }
-        }
+        minimal_g3 = {"test_ref": {"imgt": {"human": ["IGHV1-2*02", "IGHJ6*01"]}}}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             yaml.dump(minimal_g3, f, default_flow_style=False)
             g3_path = Path(f.name)
@@ -338,9 +330,7 @@ class TestGenerateReferenceYaml:
 
             for provider, species_dict in providers.items():
                 assert isinstance(provider, str), f"Provider should be str"
-                assert provider in ("imgt", "ogrdb", "vdjbase", "custom"), (
-                    f"Unknown provider '{provider}'"
-                )
+                assert provider in ("imgt", "ogrdb", "vdjbase", "custom"), f"Unknown provider '{provider}'"
                 assert isinstance(species_dict, dict), f"Species dict should be dict"
 
                 for species, alleles in species_dict.items():

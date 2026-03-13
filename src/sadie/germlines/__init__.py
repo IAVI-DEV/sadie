@@ -32,6 +32,7 @@ Pipeline:
 """
 
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
@@ -77,8 +78,6 @@ def get_pipeline() -> GermlinePipeline:
     """Get or create default GermlinePipeline."""
     global _default_pipeline
     if _default_pipeline is None:
-        from pathlib import Path
-
         base_dir = Path(__file__).parent
         _default_pipeline = GermlinePipeline(base_dir)
     return _default_pipeline
@@ -150,10 +149,8 @@ def get_gene_by_name(name: str, species: str, providers: Optional[List[str]] = N
     return manager.get_gene_by_name(name, species)
 
 
-def get_germlines_base_dir() -> "Path":
+def get_germlines_base_dir() -> Path:
     """Get the base directory for the germlines module."""
-    from pathlib import Path
-
     return Path(__file__).parent
 
 

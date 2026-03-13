@@ -299,7 +299,7 @@ class Airr:
                 self.germline_data = GermlineData(
                     reference_name, receptor, db_path, scheme, prebuilt=True, providers=providers
                 )
-            except (ValueError, RuntimeError, FileNotFoundError) as e:
+            except (ValueError, RuntimeError, FileNotFoundError, BadDataSet) as e:
                 logger.warning(
                     f"Reference module build failed for '{reference_name}': {e}. "
                     f"Falling back to direct germlines module path."
