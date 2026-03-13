@@ -1,0 +1,73 @@
+{
+  "featureId": "cli-rebuild-update",
+  "reviewedAt": "2026-03-13T19:15:00Z",
+  "commitId": "094f70ed",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The rebuild command was properly updated to route through the Reference module (References.from_yaml + make_airr_database) instead of GermlinePipeline. The CLI interface (--species/-s flag) is preserved. The populate command is completely unchanged — no lines in populate_germlines() were touched. The implementation adds well-structured helper functions (get_all_downloaded_species, rebuild_germlines, _find_reference_name_for_species) and 16 comprehensive tests. The app.py docstring was updated to reflect the new Reference module approach. Two known issues are pre-existing (pyright errors on lines 267-268 in the populate path, not in the new rebuild code).",
+    "issues": [
+      {
+        "file": "src/sadie/germlines/cli.py",
+        "line": 267,
+        "severity": "non_blocking",
+        "description": "Pre-existing pyright error: 'build_aux_file_for_species' is not exported from '.scripts.build_aux_files'. This is in the populate path (run_post_download_build), NOT in the new rebuild code. The import is wrapped in a try/except ImportError block, so it gracefully degrades at runtime."
+      },
+      {
+        "file": "src/sadie/germlines/cli.py",
+        "line": 268,
+        "severity": "non_blocking",
+        "description": "Pre-existing pyright error: 'build_internal_data_for_species' is not exported from '.scripts.build_internal_data'. Same as above — pre-existing in populate path, not introduced by this feature. The build scripts exist as CLI modules but don't export these function names."
+      },
+      {
+        "file": "src/sadie/germlines/cli.py",
+        "line": 555,
+        "severity": "non_blocking",
+        "description": "Minor: _find_reference_name_for_species iterates config[ref_name][source] assuming all values are dicts with species sub-keys. If the YAML config has non-dict values at the source level (e.g. scalar metadata), this could raise a TypeError. Low risk since the reference YAML format is controlled, but a defensive isinstance check would be more robust."
+      },
+      {
+        "file": "src/sadie/germlines/cli.py",
+        "line": 537,
+        "severity": "non_blocking",
+        "description": "The tempfile pattern uses NamedTemporaryFile(delete=False) then manually unlinks. While functionally correct with the try/finally block, using tempfile.TemporaryDirectory as a context manager with a file inside would be slightly cleaner. This is a style preference, not a bug."
+      },
+      {
+        "file": "tests/unit/germlines/test_rebuild_cli.py",
+        "line": 71,
+        "severity": "non_blocking",
+        "description": "Test mocks patch 'builtins.open' globally and 'pathlib.Path.exists' globally, which is fragile — these patches affect all code paths during the test, not just the rebuild function. While the tests pass, a more targeted approach (e.g., patching at the module level 'sadie.germlines.cli.open') would be less brittle."
+      },
+      {
+        "file": "src/sadie/app.py",
+        "line": 879,
+        "severity": "non_blocking",
+        "description": "Working tree observation: the working tree has reverted the docstring changes from commit 094f70ed back to the old text. The committed version correctly shows the Reference module approach. This is likely due to subsequent working tree modifications by another session, not a problem with this feature's commit."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker correctly followed AGENTS.md boundaries: populate command was not modified, no changes to provider download logic, and output goes to germlines/igblast/ as expected.",
+      "evidence": "git show 094f70ed --stat shows only cli.py, app.py, and test_rebuild_cli.py were modified. No populate_germlines() changes in the diff."
+    },
+    {
+      "area": "conventions",
+      "observation": "Working tree has uncommitted reversions of this feature's changes in both cli.py and app.py. The committed code at 094f70ed is correct, but the working tree state differs. This could cause confusion for subsequent features that depend on rebuild functionality.",
+      "evidence": "git diff HEAD -- src/sadie/germlines/cli.py shows all 155 new lines being removed. git diff HEAD -- src/sadie/app.py shows docstring reverted to old text."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker followed the python-refactor skill procedure correctly: TDD approach with 16 tests first, then implementation, broader test suite verification, pyright check, and manual CLI verification. skillFeedback.followedProcedure is true with no deviations.",
+      "evidence": "Handoff shows ordered verification: test file → unit tests → reference tests → unified pipeline tests → pyright → CLI help checks → formatting."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The build scripts (build_aux_files.py, build_internal_data.py) in src/sadie/germlines/scripts/ exist as standalone CLI modules but don't export the function names that cli.py tries to import (build_aux_file_for_species, build_internal_data_for_species). This is a pre-existing issue that should be documented so future workers don't waste time debugging it.",
+      "evidence": "rg 'def build_aux_file_for_species|def build_internal_data_for_species' src/sadie/germlines/scripts/ returns no matches. The scripts use argparse main() patterns, not importable function APIs."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The cli-rebuild-update feature correctly routes 'sadie germlines rebuild' through the Reference module (References.from_yaml + make_airr_database) while preserving the CLI interface and leaving populate completely unchanged. The commit (094f70ed) adds 152 lines of well-structured implementation code and 262 lines of comprehensive test coverage (16 tests). Two pyright errors on lines 267-268 are pre-existing in the populate path, not introduced by this feature. Non-blocking observations include fragile global mocking in tests and a minor robustness concern in _find_reference_name_for_species. The working tree currently has uncommitted reversions of these changes, but the committed code is correct."
+}

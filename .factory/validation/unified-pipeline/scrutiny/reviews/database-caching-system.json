@@ -1,0 +1,39 @@
+{
+  "featureId": "database-caching-system",
+  "reviewedAt": "2026-03-13T19:45:00.000Z",
+  "commitId": "0a6b7ff02eeacd2ab3c7f733ec4e2d3b348a0195",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid, well-structured implementation of a database caching module. The DatabaseCache class and compute_cache_key function correctly implement all 8 VAL-CACHE requirements. Code follows project conventions (NumPy docstrings, type hints, 120-char lines, Pydantic-compatible patterns). The sentinel-file pattern for partial failure safety is sound. Tests are comprehensive (24 tests, well-organized into logical classes) and use tmp_path for isolation. The TDD approach was followed. Two non-blocking observations noted below.",
+    "issues": [
+      {
+        "file": "src/sadie/reference/cache.py",
+        "line": 214,
+        "severity": "non_blocking",
+        "description": "build_and_cache() comment says 'If a previous failed attempt left files, clean them out' but only removes the sentinel file — it does NOT clean partial database files from a prior failed build. On retry, make_airr_database() is called into the same directory with stale partial files still present. In practice this is likely harmless (makeblastdb overwrites), but the comment is misleading and the behavior could theoretically cause issues if make_airr_database() doesn't overwrite all artifacts. Consider using shutil.rmtree(entry_path) + entry_path.mkdir() on retry, or adjusting the comment."
+      },
+      {
+        "file": "src/sadie/reference/cache.py",
+        "line": 29,
+        "severity": "non_blocking",
+        "description": "shutil is imported but never used in the module body — only in the clear() method which uses shutil.rmtree(). The import is valid, but worth noting it's the only stdlib import that touches the filesystem destructively. The clear() method has no confirmation or selective-delete capability; it removes the entire cache tree. This is fine for the current scope but could be a future footgun if the user accidentally points SADIE_CACHE_DIR to a non-cache directory."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The AGENTS.md already documents the cache location and cache key conventions (sections 4 and 5 under Key Architectural Decisions), and the environment.md library file already has SADIE_CACHE_DIR documented. No convention gaps detected — the worker's output aligns with documented patterns.",
+      "evidence": "AGENTS.md lines: '4. **Cache location**: ~/.sadie/cache/ by default, configurable via SADIE_CACHE_DIR env var' and '5. **Cache key**: Hash of (reference_name, sorted providers tuple, reference config content hash)'. .factory/library/environment.md: 'SADIE_CACHE_DIR: (NEW) User-configurable cache directory'"
+    },
+    {
+      "area": "skills",
+      "observation": "Worker followed the python-refactor skill procedure correctly: read context, wrote tests first (TDD red phase), implemented, ran green phase, broader test suite, pyright, black, then committed. Skill feedback confirms followedProcedure=true with no deviations. No skill gaps detected.",
+      "evidence": "Transcript skeleton shows the exact TDD sequence: Create test_cache.py → run tests (fail) → Create cache.py → Edit __init__.py → run tests (pass) → broader tests → pyright → black → commit. Handoff skillFeedback.followedProcedure=true."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The database caching system implementation passes review. All 8 VAL-CACHE requirements are covered by 24 well-structured tests. The implementation is clean, follows project conventions, and the sentinel-file pattern correctly prevents corrupt cache entries. Two non-blocking issues noted: (1) the retry path doesn't clean stale partial files from a prior failed build despite a misleading comment, and (2) the clear() method is an all-or-nothing destructive operation. Neither issue blocks the feature. The worker followed TDD as prescribed by the python-refactor skill, ran all verification steps, and the commit is focused with no unrelated changes."
+}

@@ -1,0 +1,90 @@
+{
+  "milestone": "unified-pipeline",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": false,
+      "command": "poetry run pytest tests/unit/ -x --tb=short -q",
+      "exitCode": 1,
+      "notes": "Pre-existing failures deselected (test_hard_igl_seqs, test_adaptable_correction, test_source_lookup_method x2, test_make_from_empty, test_cli, test_reference_class). Two NEW regressions: (1) test_rhesus_airr_annotation: BadDataSet 'rhesus_macaque' not in YAML which uses 'macaque'; (2) Multiple tests in test_unified_pipeline.py fail with AttributeError because _resolve_database_via_reference and _get_reference_yaml_path methods were removed from working tree but exist in committed code."
+    },
+    "typecheck": {
+      "passed": false,
+      "command": "poetry run pyright src/",
+      "exitCode": 0,
+      "notes": "7 errors total. 4 are pre-existing (renumbering/aligners/hmmer.py). 3 are new: (1) germlines/__init__.py:153 'Path' not defined (from cli-rebuild-update), (2-3) germlines/cli.py:267-268 unknown import symbols build_aux_file_for_species and build_internal_data_for_species (pre-existing in populate path, not from this milestone)."
+    },
+    "lint": {
+      "passed": false,
+      "command": "poetry run black --check src/",
+      "exitCode": 1,
+      "notes": "8 files would be reformatted. ALL are pre-existing (same 8 files fail before this milestone's commits). No new lint regressions."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 2,
+    "failed": 1,
+    "failedFeatures": ["airr-unified-pipeline"]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "airr-unified-pipeline",
+      "severity": "blocking",
+      "description": "Working tree has uncommitted reversions of airr.py that remove the entire unified pipeline implementation (135 lines deleted including _resolve_database_via_reference and _get_reference_yaml_path). The committed code at bdd4c1a2 and HEAD (094f70ed) is correct, but the current working tree breaks 6+ tests. The working tree also reverts cli.py (152 lines removed) and app.py changes from the cli-rebuild-update feature. These reversions must be discarded (git checkout -- src/sadie/airr/airr.py src/sadie/germlines/cli.py src/sadie/app.py) to restore the committed implementation."
+    },
+    {
+      "featureId": "airr-unified-pipeline",
+      "severity": "blocking",
+      "description": "Species name mismatch: The auto-generated reference.yml uses 'macaque' (from IMGT source directory) but the germlines igblast module uses 'rhesus_macaque'. The fallback exception handler in _resolve_database_via_reference catches (ValueError, RuntimeError, FileNotFoundError) but NOT BadDataSet, so Airr('rhesus_macaque') raises an uncaught BadDataSet instead of falling back. Fix: either add BadDataSet to the exception tuple in the fallback handler, or add a species name alias mapping."
+    },
+    {
+      "featureId": "airr-unified-pipeline",
+      "severity": "blocking",
+      "description": "New pyright error in germlines/__init__.py:153 - 'Path' is not defined. This was introduced by the unified-pipeline milestone (likely the cli-rebuild-update feature). Needs a 'from pathlib import Path' import at the top of germlines/__init__.py."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Documented species naming inconsistency between IMGT sources ('macaque') and germlines module ('rhesus_macaque') in .factory/library/species-naming.md",
+      "sourceFeature": "airr-unified-pipeline"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add to Pre-Existing Test Failures: tests/unit/germlines/test_multi_species.py::TestAirrAnnotationRhesus::test_rhesus_airr_annotation - fails due to species name mismatch (rhesus_macaque vs macaque in reference.yml). Also add tests/unit/airr/test_unified_pipeline.py mock-based tests to the known failures list until the working tree reversion is resolved.",
+      "evidence": "The test_rhesus_airr_annotation was passing before the unified-pipeline milestone but fails now due to species naming inconsistency. The unified pipeline tests fail due to working tree reversions of committed code.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add boundary: Workers MUST NOT leave uncommitted working tree changes that revert committed feature code. Each feature's commit should be the final state. If a subsequent feature needs to modify previously committed code, it should do so in its own commit, not leave uncommitted changes.",
+      "evidence": "The airr-unified-pipeline and cli-rebuild-update features' committed code is correct, but the working tree has local modifications reverting both features' implementations (135 lines in airr.py, 152 lines in cli.py, docstrings in app.py). This caused all mock-based tests to fail and confused the validation process.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add to Pre-Existing Issues: The build scripts in src/sadie/germlines/scripts/ (build_aux_files.py, build_internal_data.py) don't export the function names that cli.py tries to import (build_aux_file_for_species, build_internal_data_for_species). These are CLI-only modules without importable APIs, causing pyright errors on germlines/cli.py:267-268.",
+      "evidence": "Multiple reviewers identified this as pre-existing. The functions don't exist in the scripts - they use argparse main() patterns. These are in the populate path, not the rebuild path.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Worker correctly followed AGENTS.md boundaries and populate was not modified",
+      "reason": "Informational - not an actionable shared state update"
+    },
+    {
+      "observation": "Worker followed python-refactor TDD procedure correctly (all 3 features)",
+      "reason": "Informational - skill procedure working as intended, no changes needed"
+    },
+    {
+      "observation": "Cache location and cache key conventions already documented in AGENTS.md and environment.md",
+      "reason": "Already documented - no action needed"
+    }
+  ],
+  "previousRound": null
+}

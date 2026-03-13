@@ -1,0 +1,79 @@
+{
+  "featureId": "airr-unified-pipeline",
+  "reviewedAt": "2026-03-13T18:45:00Z",
+  "commitId": "bdd4c1a2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The committed code (bdd4c1a2) implements the unified pipeline correctly in src/sadie/airr/airr.py with _resolve_database_via_reference() and _get_reference_yaml_path() static methods, and adds 17 tests in tests/unit/airr/test_unified_pipeline.py. However, the working tree has a STAGED reversion of all airr.py changes (git status shows 'M src/sadie/airr/airr.py' removing 135 lines), meaning the feature's implementation is effectively undone in the current codebase. All mock-based tests that reference _resolve_database_via_reference and _get_reference_yaml_path fail with AttributeError against the working tree. Additionally, there is a species name mismatch: the auto-generated reference.yml uses 'macaque' as the species key (from IMGT source directory names), but existing tests and the germlines module use 'rhesus_macaque'. The fallback exception handler catches (ValueError, RuntimeError, FileNotFoundError) but not BadDataSet, so the 'macaque' vs 'rhesus_macaque' mismatch would raise an uncaught BadDataSet from _resolve_database_via_reference. Three pyright errors exist in the germlines module but are NOT from this feature's commit.",
+    "issues": [
+      {
+        "file": "src/sadie/airr/airr.py",
+        "line": 290,
+        "severity": "blocking",
+        "description": "WORKING TREE REVERSION: The entire unified pipeline implementation (lines 290-453 in committed code) has been staged for removal in the working tree. The methods _resolve_database_via_reference() and _get_reference_yaml_path() exist in the commit (bdd4c1a2) and HEAD (094f70ed) but are absent from the working tree. This means the feature is effectively broken in the current codebase state. All 6 mock-based tests that patch these methods fail with AttributeError."
+      },
+      {
+        "file": "tests/unit/airr/test_unified_pipeline.py",
+        "line": 71,
+        "severity": "blocking",
+        "description": "test_default_path_uses_reference_module fails with AttributeError: '<class sadie.airr.airr.Airr'> does not have the attribute '_resolve_database_via_reference'. Same failure affects test_resolve_calls_from_yaml_and_cache (line 82), test_providers_param_affects_filtering (line 103), test_database_param_bypasses_reference_module (line 117), test_references_param_bypasses_resolve (line 234), and test_auto_generates_reference_if_missing (line 298). These tests are correct for the committed code but fail against the current working tree."
+      },
+      {
+        "file": "src/sadie/airr/airr.py",
+        "line": 300,
+        "severity": "blocking",
+        "description": "Species name mismatch in unified pipeline: The fallback exception handler catches (ValueError, RuntimeError, FileNotFoundError) but _resolve_database_via_reference raises BadDataSet when reference_name is not found in the YAML config. BadDataSet inherits from Error(Exception), not from these three types. When Airr('rhesus_macaque') is called, the species passes the available_datasets check (rhesus_macaque exists in igblast/database/), but _resolve_database_via_reference looks up 'rhesus_macaque' in reference.yml where the key is 'macaque', raises BadDataSet, and the exception propagates uncaught instead of falling back to the direct germlines path."
+      },
+      {
+        "file": "src/sadie/airr/airr.py",
+        "line": 296,
+        "severity": "non_blocking",
+        "description": "The fallback exception handler should include BadDataSet (or its parent Error) to ensure species name mismatches between the reference YAML and the germlines module are gracefully handled via fallback. Currently only catches (ValueError, RuntimeError, FileNotFoundError)."
+      },
+      {
+        "file": "tests/unit/airr/test_unified_pipeline.py",
+        "line": 254,
+        "severity": "non_blocking",
+        "description": "TestPartialProviderCoverage::test_species_without_ogrdb_resolves creates temporary files in /tmp/fake_chicken_db (hardcoded path) and cleans up with shutil.rmtree. Should use pytest tmp_path fixture consistently. This test also mocks _resolve_database_via_reference which means it doesn't actually test the partial coverage logic in the real method."
+      },
+      {
+        "file": "tests/unit/airr/test_unified_pipeline.py",
+        "line": 280,
+        "severity": "non_blocking",
+        "description": "TestErrorHandling::test_unpopulated_germlines_raises_error patches _resolve_database_via_reference to raise BadDataSet, but in the real code path the outer check (reference_name not in _available_datasets) raises BadDataSet first for truly unknown species, while unpopulated germlines would manifest differently (e.g., FileNotFoundError in References.from_yaml or missing internal_data). The test doesn't verify the actual error path for unpopulated germlines."
+      },
+      {
+        "file": "tests/unit/airr/test_unified_pipeline.py",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "Tests use @pytest.mark.slow which is not registered in pytest configuration, generating PytestUnknownMarkWarning. Should be registered in pytest.ini or conftest.py."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Species name inconsistency between reference.yml auto-generation and the germlines module: IMGT source directories use 'macaque' while the germlines igblast module and OGRDB/VDJbase provider scripts normalize to 'rhesus_macaque'. This naming mismatch is not documented in AGENTS.md and affects any unified pipeline routing through reference.yml.",
+      "evidence": "src/sadie/germlines/sources/imgt/ uses 'macaque' directory; src/sadie/germlines/igblast/database/ and internal_data/ have 'rhesus_macaque'; src/sadie/germlines/scripts/download_ogrdb.py:88 normalizes 'macaque' -> 'rhesus_macaque'; reference.yml uses 'macaque' as the top-level key"
+    },
+    {
+      "area": "conventions",
+      "observation": "The BadDataSet exception is not included in the fallback exception handler for the unified pipeline, meaning certain species name mismatches propagate as uncaught exceptions instead of falling back to the direct germlines path. AGENTS.md doesn't document which exceptions should be caught in the unified pipeline fallback.",
+      "evidence": "src/sadie/airr/airr.py:296-304 (committed code) catches (ValueError, RuntimeError, FileNotFoundError) but BadDataSet extends Error(Exception)"
+    },
+    {
+      "area": "skills",
+      "observation": "The python-refactor skill's TDD procedure was nominally followed (tests written, implementation done, pyright checked). However, the worker's handoff reports all 17 tests passing, but the current working tree has staged changes reverting the implementation. This suggests either: (a) a subsequent session/feature reverted the changes, or (b) the working tree was manually modified after the commit. The skill doesn't address post-commit working tree integrity.",
+      "evidence": "git status shows 'M src/sadie/airr/airr.py' (staged change removing 135 lines). Handoff reports 17/17 tests passing. git show 094f70ed:src/sadie/airr/airr.py still contains the methods, confirming HEAD has the implementation but working tree does not."
+    },
+    {
+      "area": "conventions",
+      "observation": "The pyright errors in germlines/__init__.py:153 ('Path' not defined) and germlines/cli.py:267-268 (unknown import symbols 'build_aux_file_for_species', 'build_internal_data_for_species') are NOT from this feature's commit (bdd4c1a2). The __init__.py error is pre-existing, and the cli.py errors are from commit 094f70ed (germlines-rebuild-cli feature). These should not be attributed to this feature.",
+      "evidence": "git show bdd4c1a2 --stat shows only airr.py and test_unified_pipeline.py modified. germlines/__init__.py:153 uses forward ref 'Path' but imports it inside function body. germlines/cli.py:267 imports 'build_aux_file_for_species' but scripts only export 'build_aux_file' (no _for_species suffix)."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "FAIL. The feature's committed code (bdd4c1a2) correctly implements the unified pipeline in src/sadie/airr/airr.py with proper Reference module routing, caching integration, and fallback to direct germlines path. However, three blocking issues exist: (1) The working tree has a staged reversion of all airr.py implementation code, making the feature effectively non-functional — all mock-based tests (6/17) fail with AttributeError because _resolve_database_via_reference and _get_reference_yaml_path no longer exist in the working tree. (2) Species name mismatch: reference.yml uses 'macaque' but germlines module uses 'rhesus_macaque', and the fallback exception handler doesn't catch BadDataSet, causing uncaught exceptions for rhesus_macaque annotations through the unified pipeline. (3) The pyright errors noted in the task (germlines/__init__.py, germlines/cli.py) are NOT from this commit but from other features/pre-existing code. The integration tests (5 @pytest.mark.slow tests) would likely pass if the working tree matched the committed code, as they exercise the real pipeline end-to-end. Code quality of the committed implementation is solid: clean separation of concerns, proper caching integration, good fallback mechanism (except for the BadDataSet gap), and thorough test coverage design."
+}
