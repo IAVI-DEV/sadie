@@ -1,0 +1,95 @@
+{
+  "groupId": "cross-area",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "isolation": {
+    "repo": "/Users/tmsincomb/sadie",
+    "tmpDirs": "used tempfile.mkdtemp() and pytest tmp_path fixtures",
+    "sharedMutableState": "none"
+  },
+  "toolsUsed": ["poetry run python", "poetry run pytest"],
+  "assertions": [
+    {
+      "id": "VAL-CROSS-001",
+      "title": "Full pipeline end-to-end",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Generate reference YAML via generate_reference_yaml()",
+          "expected": "Valid YAML file with species configs",
+          "observed": "YAML generated successfully with species: ['clk', 'dog', 'human', 'mouse', 'rabbit']"
+        },
+        {
+          "action": "Extract human-only config and build database via References.from_yaml() + make_airr_database()",
+          "expected": "Valid IgBLAST database directory",
+          "observed": "BLAST Database creation error: local id is too long (185 chars, max 50). Fails at _make_internal_annotaion_file -> make_blast_db_for_internal -> write_blast_db"
+        },
+        {
+          "action": "Annotate VRC01 heavy chain sequence",
+          "expected": "Valid AIRR annotation with correct v_call",
+          "observed": "Could not reach this step — database build failed"
+        }
+      ],
+      "evidence": {
+        "outputLog": "unified-pipeline/cross-area/VAL-CROSS-001-output.txt",
+        "consoleErrors": "RuntimeError: BLAST Database creation error: Near line 1571, the local id is too long. Its length is 185 but the maximum allowed local id length is 50."
+      },
+      "issues": "The generated reference YAML produces allele IDs that exceed BLAST's 50-character limit for local IDs. This occurs even when filtering to human-only config. The pipeline generate_reference_yaml() → References.from_yaml() → make_airr_database() fails at the internal BLAST DB creation step. Also: References.from_yaml() does not support a name_filter parameter as assumed by the test script — it loads all species in the YAML."
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "Custom providers through full pipeline",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest tests/unit/airr/test_unified_pipeline.py::TestAnnotationCorrectness::test_human_annotation_with_imgt_default",
+          "expected": "Test passes — Airr with IMGT default providers annotates correctly",
+          "observed": "1 passed in 1.48s"
+        }
+      ],
+      "evidence": {
+        "outputLog": "unified-pipeline/cross-area/VAL-CROSS-002-output.txt",
+        "consoleErrors": "none (only deprecation warnings from Biopython and pandas)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "title": "Reference change triggers recompilation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest tests/unit/reference/test_cache.py::TestCacheInvalidation::test_config_change_invalidates_cache",
+          "expected": "Test passes — cache is invalidated when reference config changes",
+          "observed": "1 passed in 0.01s"
+        }
+      ],
+      "evidence": {
+        "outputLog": "unified-pipeline/cross-area/VAL-CROSS-003-output.txt",
+        "consoleErrors": "none"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "References.from_yaml() does not accept a name_filter parameter — the test script provided by the parent agent assumed this existed. Had to adjust to generate a human-only YAML manually.",
+      "resolved": true,
+      "resolution": "Created a human-only YAML by extracting just the 'human' key from the full config and writing it to a separate file.",
+      "affectedAssertions": ["VAL-CROSS-001"]
+    },
+    {
+      "description": "Even with human-only config, the generated reference YAML produces gene IDs that exceed BLAST's 50-character local ID limit (185 chars found). This prevents make_airr_database() from completing.",
+      "resolved": false,
+      "resolution": null,
+      "affectedAssertions": ["VAL-CROSS-001"]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "BLAST Database creation fails with 'local id is too long' error (185 chars vs 50 max) when building from auto-generated reference YAML. The gene IDs produced by generate_reference_yaml() through the germlines module path (use_germlines=True) are too long for BLAST's internal database format. This blocks the full end-to-end pipeline flow (generate → build → annotate).",
+      "affectedAssertions": ["VAL-CROSS-001"],
+      "quickFixAttempted": "Tried filtering to human-only species config to reduce complexity — same error persists because the issue is gene ID string length, not number of species."
+    }
+  ],
+  "summary": "Tested 3 assertions: 2 passed (VAL-CROSS-002, VAL-CROSS-003), 1 failed (VAL-CROSS-001: BLAST ID length overflow when building database from auto-generated reference YAML)"
+}

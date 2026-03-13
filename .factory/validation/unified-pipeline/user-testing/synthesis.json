@@ -1,0 +1,55 @@
+{
+  "milestone": "unified-pipeline",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 25,
+    "passed": 23,
+    "failed": 2,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CACHE-001",
+    "VAL-CACHE-002",
+    "VAL-CACHE-003",
+    "VAL-CACHE-004",
+    "VAL-CACHE-005",
+    "VAL-CACHE-006",
+    "VAL-CACHE-007",
+    "VAL-CACHE-008",
+    "VAL-AIRR-001",
+    "VAL-AIRR-002",
+    "VAL-AIRR-003",
+    "VAL-AIRR-004",
+    "VAL-AIRR-005",
+    "VAL-AIRR-006",
+    "VAL-AIRR-007",
+    "VAL-AIRR-008",
+    "VAL-ERR-001",
+    "VAL-GEN-006",
+    "VAL-GEN-007",
+    "VAL-CLI-001",
+    "VAL-CLI-002",
+    "VAL-CROSS-002",
+    "VAL-CROSS-003"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-ERR-002",
+      "reason": "Airr constructor catches BadDataSet from _resolve_database_via_reference and falls back to legacy germlines module path instead of propagating the error. The test expects BadDataSet to be raised when the Reference module fails, but the fallback mechanism silently recovers."
+    },
+    {
+      "id": "VAL-CROSS-001",
+      "reason": "Full pipeline end-to-end fails: generate_reference_yaml() produces allele IDs that exceed BLAST's 50-character local ID limit (185 chars found). make_airr_database() raises RuntimeError at internal BLAST DB creation step. This blocks the generate → build → annotate flow. Note: this is the same issue tracked in the 'reference-build-robustness' feature (pending in misc-followup-1 milestone)."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added unified-pipeline milestone test mapping covering all 25 assertions to their corresponding test files/classes",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null
+}

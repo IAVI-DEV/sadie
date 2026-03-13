@@ -83,3 +83,42 @@ These failures exist before this mission and should be noted but not fixed:
 - `test_adaptable_correction`, `test_hard_igl_seqs`, `test_source_lookup_method` in airr tests
 
 **IMPORTANT**: Reference tests (auto_generation, generate_cli) can take 30-120 seconds since they exercise the full germline manager loading IMGT/OGRDB/VDJbase data.
+
+### Unified-Pipeline Milestone Test Mapping
+
+**Cache assertions (VAL-CACHE-001 through VAL-CACHE-008)**:
+- VAL-CACHE-001 → `tests/unit/reference/test_cache.py::TestCacheHitMiss::test_cache_hit_with_sentinel` + `TestPartialCompilationSafety::test_build_and_cache_writes_sentinel_on_success`
+- VAL-CACHE-002 → `tests/unit/reference/test_cache.py::TestCacheSecondCallSkipsCompilation`
+- VAL-CACHE-003 → `tests/unit/reference/test_cache.py::TestComputeCacheKey::test_different_providers_produce_different_keys` + `TestCacheHitMiss::test_different_providers_produce_different_cache_entries`
+- VAL-CACHE-004 → `tests/unit/reference/test_cache.py::TestComputeCacheKey::test_different_config_content_produces_different_keys` + `TestCacheInvalidation`
+- VAL-CACHE-005 → `tests/unit/reference/test_cache.py::TestDatabaseCacheDefaults::test_custom_cache_dir_via_constructor` + `test_custom_cache_dir_via_env_var`
+- VAL-CACHE-006 → `tests/unit/reference/test_cache.py::TestDatabaseCacheDefaults::test_default_cache_location`
+- VAL-CACHE-007 → `tests/unit/reference/test_cache.py::TestCacheAutoCreation`
+- VAL-CACHE-008 → `tests/unit/reference/test_cache.py::TestPartialCompilationSafety`
+
+**Unified Airr pipeline assertions (VAL-AIRR-001 through VAL-AIRR-008)**:
+- VAL-AIRR-001 → `tests/unit/airr/test_unified_pipeline.py::TestUnifiedPipelineRouting`
+- VAL-AIRR-002 → `tests/unit/airr/test_unified_pipeline.py::TestDatabaseParamBackwardCompat`
+- VAL-AIRR-003 → `tests/unit/airr/test_unified_pipeline.py::TestAnnotationCorrectness`
+- VAL-AIRR-004 → `tests/unit/airr/test_unified_pipeline.py::TestProviderPriority`
+- VAL-AIRR-005 → `tests/unit/airr/test_unified_pipeline.py::TestSourceColumns`
+- VAL-AIRR-006 → `tests/unit/airr/test_unified_pipeline.py::TestReferencesParamBackwardCompat`
+- VAL-AIRR-007 → `tests/unit/airr/test_unified_pipeline.py::TestNonHumanSpecies`
+- VAL-AIRR-008 → `tests/unit/airr/test_unified_pipeline.py::TestPartialProviderCoverage`
+
+**Error handling assertions (VAL-ERR-001, VAL-ERR-002)**:
+- VAL-ERR-001 → `tests/unit/airr/test_unified_pipeline.py::TestErrorHandling::test_unknown_species_raises_error`
+- VAL-ERR-002 → `tests/unit/airr/test_unified_pipeline.py::TestErrorHandling::test_unpopulated_germlines_raises_error`
+
+**Auto-generation assertions (VAL-GEN-006, VAL-GEN-007)**:
+- VAL-GEN-006 → `tests/unit/airr/test_unified_pipeline.py::TestCacheIntegration::test_auto_generates_reference_if_missing`
+- VAL-GEN-007 → `tests/unit/reference/test_auto_generation.py::TestReferenceYamlAutoGeneration::test_output_loadable_by_references_from_yaml`
+
+**CLI assertions (VAL-CLI-001, VAL-CLI-002)**:
+- VAL-CLI-001 → `tests/unit/germlines/test_rebuild_cli.py::TestRebuildUsesReferenceModule` (all tests)
+- VAL-CLI-002 → `tests/unit/germlines/test_rebuild_cli.py::TestPopulateUnchanged`
+
+**Cross-area flow assertions (VAL-CROSS-001 through VAL-CROSS-003)**:
+- VAL-CROSS-001 → Run sequential: `sadie reference generate --output <tmp>` → verify YAML → run Airr("human").run_single(seq) → verify results
+- VAL-CROSS-002 → `tests/unit/airr/test_unified_pipeline.py::TestAnnotationCorrectness::test_human_annotation_with_imgt_default` (tests full pipeline)
+- VAL-CROSS-003 → `tests/unit/reference/test_cache.py::TestCacheInvalidation::test_config_change_invalidates_cache`

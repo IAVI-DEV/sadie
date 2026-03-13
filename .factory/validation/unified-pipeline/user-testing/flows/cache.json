@@ -1,0 +1,229 @@
+{
+  "groupId": "cache",
+  "testedAt": "2026-03-13T12:47:30Z",
+  "isolation": {
+    "repo": "/Users/tmsincomb/sadie",
+    "testFile": "tests/unit/reference/test_cache.py",
+    "notes": "All tests use tmp_path for writes — safe to run concurrently. No shared mutable state."
+  },
+  "toolsUsed": ["poetry run pytest"],
+  "assertions": [
+    {
+      "id": "VAL-CACHE-001",
+      "title": "First instantiation compiles and caches",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestCacheHitMiss::test_cache_hit_with_sentinel",
+          "expected": "Cache entry with sentinel file is detected as cached",
+          "observed": "PASSED — sentinel written, is_cached returns True"
+        },
+        {
+          "action": "Run TestPartialCompilationSafety::test_build_and_cache_writes_sentinel_on_success",
+          "expected": "build_and_cache writes sentinel after successful compilation",
+          "observed": "PASSED — sentinel exists after build_and_cache, make_airr_database called once"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestCacheHitMiss::test_cache_hit_with_sentinel PASSED",
+          "TestPartialCompilationSafety::test_build_and_cache_writes_sentinel_on_success PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-002",
+      "title": "Cache hit avoids recompilation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestCacheSecondCallSkipsCompilation::test_second_call_uses_cache",
+          "expected": "Second call with same params does not invoke make_airr_database",
+          "observed": "PASSED — make_airr_database called once on first call, mock_references_2.make_airr_database.assert_not_called() passes"
+        },
+        {
+          "action": "Run TestCacheSecondCallSkipsCompilation::test_get_or_build_returns_cached_on_hit",
+          "expected": "get_or_build returns cached path on second call without rebuilding",
+          "observed": "PASSED — second call returns same path, make_airr_database not called again"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestCacheSecondCallSkipsCompilation::test_second_call_uses_cache PASSED",
+          "TestCacheSecondCallSkipsCompilation::test_get_or_build_returns_cached_on_hit PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-003",
+      "title": "Different providers produce different cache entries",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestComputeCacheKey::test_different_providers_produce_different_keys",
+          "expected": "('imgt',) and ('ogrdb','imgt') produce different cache keys",
+          "observed": "PASSED — keys differ"
+        },
+        {
+          "action": "Run TestCacheHitMiss::test_different_providers_produce_different_cache_entries",
+          "expected": "Both entries coexist in cache, different paths, both cached",
+          "observed": "PASSED — two distinct paths, both is_cached True"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestComputeCacheKey::test_different_providers_produce_different_keys PASSED",
+          "TestCacheHitMiss::test_different_providers_produce_different_cache_entries PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-004",
+      "title": "Cache invalidated on reference config change",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestComputeCacheKey::test_different_config_content_produces_different_keys",
+          "expected": "Different config content produces different cache keys",
+          "observed": "PASSED — config_v1 and config_v2 produce different keys"
+        },
+        {
+          "action": "Run TestCacheInvalidation::test_config_change_invalidates_cache",
+          "expected": "After config change, old key is cached but new key is a miss",
+          "observed": "PASSED — key_v1 cached, key_v2 not cached, keys differ"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestComputeCacheKey::test_different_config_content_produces_different_keys PASSED",
+          "TestCacheInvalidation::test_config_change_invalidates_cache PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-005",
+      "title": "Cache directory is configurable",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestDatabaseCacheDefaults::test_custom_cache_dir_via_constructor",
+          "expected": "Constructor parameter sets custom cache directory",
+          "observed": "PASSED — cache.cache_dir matches custom_dir"
+        },
+        {
+          "action": "Run TestDatabaseCacheDefaults::test_custom_cache_dir_via_env_var",
+          "expected": "SADIE_CACHE_DIR env var sets custom cache directory",
+          "observed": "PASSED — cache.cache_dir matches env_cache path"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestDatabaseCacheDefaults::test_custom_cache_dir_via_constructor PASSED",
+          "TestDatabaseCacheDefaults::test_custom_cache_dir_via_env_var PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-006",
+      "title": "Default cache location",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestDatabaseCacheDefaults::test_default_cache_location",
+          "expected": "Default cache location is ~/.sadie/cache/",
+          "observed": "PASSED — cache.cache_dir equals Path.home() / '.sadie' / 'cache'"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestDatabaseCacheDefaults::test_default_cache_location PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-007",
+      "title": "Cache directory auto-created",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestCacheAutoCreation::test_cache_dir_auto_created",
+          "expected": "Non-existent deep path auto-created on ensure_cache_dir()",
+          "observed": "PASSED — directory created at tmp_path/nonexistent/deep/path"
+        },
+        {
+          "action": "Run TestCacheAutoCreation::test_cache_dir_auto_created_on_get",
+          "expected": "Cache dir auto-created when getting a cache entry path",
+          "observed": "PASSED — directory created at tmp_path/autocreated"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestCacheAutoCreation::test_cache_dir_auto_created PASSED",
+          "TestCacheAutoCreation::test_cache_dir_auto_created_on_get PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CACHE-008",
+      "title": "Partial compilation doesn't leave corrupt cache",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestPartialCompilationSafety::test_no_sentinel_on_failure",
+          "expected": "Directory without sentinel is a cache miss",
+          "observed": "PASSED — partial files exist but is_cached returns False"
+        },
+        {
+          "action": "Run TestPartialCompilationSafety::test_build_and_cache_no_sentinel_on_exception",
+          "expected": "RuntimeError propagated, no sentinel written",
+          "observed": "PASSED — exception raised, is_cached returns False"
+        },
+        {
+          "action": "Run TestPartialCompilationSafety::test_retry_after_failed_build",
+          "expected": "After failure, second attempt retries and succeeds",
+          "observed": "PASSED — first attempt fails (no sentinel), second attempt builds and caches"
+        },
+        {
+          "action": "Run TestPartialCompilationSafety::test_build_and_cache_writes_sentinel_on_success",
+          "expected": "Sentinel only written after successful build",
+          "observed": "PASSED — sentinel exists, make_airr_database called once"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/cache/pytest-output.txt",
+        "exitCode": 0,
+        "relevantTests": [
+          "TestPartialCompilationSafety::test_no_sentinel_on_failure PASSED",
+          "TestPartialCompilationSafety::test_build_and_cache_writes_sentinel_on_success PASSED",
+          "TestPartialCompilationSafety::test_build_and_cache_no_sentinel_on_exception PASSED",
+          "TestPartialCompilationSafety::test_retry_after_failed_build PASSED"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 8 assertions (VAL-CACHE-001 through VAL-CACHE-008): all 8 passed. 24/24 pytest tests passed in 0.04s with exit code 0. No frictions or blockers encountered."
+}

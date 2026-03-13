@@ -1,0 +1,89 @@
+{
+  "groupId": "cli-generation",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "isolation": {
+    "repo": "/Users/tmsincomb/sadie",
+    "note": "All tests use tmp_path or mocks — safe to run concurrently. No shared mutable state."
+  },
+  "toolsUsed": ["poetry run pytest"],
+  "assertions": [
+    {
+      "id": "VAL-CLI-001",
+      "title": "germlines rebuild uses Reference path",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestRebuildUsesReferenceModule (4 tests)",
+          "expected": "All 4 tests pass: rebuild calls References.from_yaml(), calls make_airr_database(), outputs to igblast dir, does not use GermlinePipeline",
+          "observed": "4 passed in 0.26s"
+        },
+        {
+          "action": "Run TestRebuildCLIHelp (2 tests)",
+          "expected": "rebuild --help shows --species/-s options and mentions Reference module",
+          "observed": "2 passed in 0.22s"
+        },
+        {
+          "action": "Run TestRebuildAutoGeneratesConfig (1 test)",
+          "expected": "rebuild auto-generates reference.yml when config file is missing",
+          "observed": "1 passed in 0.25s"
+        },
+        {
+          "action": "Run TestRebuildSpeciesFiltering (4 tests)",
+          "expected": "rebuild handles --species flag correctly: all species when no flag, specific species filtering, warns on missing species, warns on no data",
+          "observed": "4 passed in 0.25s"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "unified-pipeline/cli-generation/VAL-CLI-001-rebuild-reference-module.txt",
+        "consoleErrors": "none",
+        "testResults": "11/11 tests passed across 4 test classes"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-002",
+      "title": "germlines populate unchanged",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestPopulateUnchanged::test_populate_help_unchanged",
+          "expected": "populate --help shows --provider, --species, --force, --dry-run options",
+          "observed": "PASSED - all expected CLI options present in help output"
+        },
+        {
+          "action": "Run TestPopulateUnchanged::test_populate_does_not_import_reference",
+          "expected": "populate --dry-run works without Reference module involvement, exits 0 and shows DRY RUN",
+          "observed": "PASSED - exit code 0, 'DRY RUN' in output"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "unified-pipeline/cli-generation/VAL-CLI-002-populate-unchanged.txt",
+        "consoleErrors": "none",
+        "testResults": "2/2 tests passed"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GEN-007",
+      "title": "Generated YAML builds valid IgBLAST database",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestGenerateReferenceYaml::test_output_loadable_by_references_from_yaml",
+          "expected": "Auto-generated reference YAML is loadable by YamlRef (References.from_yaml path) and produces at least one reference name",
+          "observed": "PASSED - generated YAML written to temp file, loaded by YamlRef, names > 0 asserted"
+        }
+      ],
+      "evidence": {
+        "terminalOutput": "unified-pipeline/cli-generation/VAL-GEN-007-yaml-loadable.txt",
+        "consoleErrors": "none",
+        "warnings": "2 BiopythonDeprecationWarnings (cosmetic, unrelated to test logic)",
+        "testResults": "1/1 tests passed"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed. VAL-CLI-001 (11 tests across 4 classes all pass — rebuild routes through Reference module), VAL-CLI-002 (2 tests pass — populate unchanged), VAL-GEN-007 (1 test passes — generated YAML loadable by References). Note: the task specified test path TestReferenceYamlAutoGeneration but the actual class name is TestGenerateReferenceYaml — used -k flag to locate and run correctly."
+}

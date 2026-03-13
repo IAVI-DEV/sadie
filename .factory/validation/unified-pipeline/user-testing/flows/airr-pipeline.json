@@ -1,0 +1,189 @@
+{
+  "groupId": "airr-pipeline",
+  "testedAt": "2026-03-13T12:48:00Z",
+  "isolation": {
+    "repo": "/Users/tmsincomb/sadie",
+    "testFile": "tests/unit/airr/test_unified_pipeline.py",
+    "writesIsolated": true,
+    "noSharedMutableState": true
+  },
+  "toolsUsed": ["poetry run pytest"],
+  "assertions": [
+    {
+      "id": "VAL-AIRR-001",
+      "title": "Airr routes through Reference module",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestUnifiedPipelineRouting::test_default_path_uses_reference_module", "expected": "PASSED", "observed": "PASSED" },
+        { "action": "Run TestUnifiedPipelineRouting::test_resolve_calls_from_yaml_and_cache", "expected": "PASSED", "observed": "PASSED" },
+        { "action": "Run TestUnifiedPipelineRouting::test_providers_param_affects_filtering", "expected": "PASSED", "observed": "PASSED" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-002",
+      "title": "Backward compat with database parameter",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestDatabaseParamBackwardCompat::test_database_param_bypasses_reference_module", "expected": "PASSED", "observed": "PASSED" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-003",
+      "title": "Annotation results correctness",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestAnnotationCorrectness::test_human_vrc01_annotation", "expected": "PASSED", "observed": "PASSED — VRC01 heavy chain annotated as IGH locus with valid v_call" },
+        { "action": "Run TestAnnotationCorrectness::test_human_annotation_with_imgt_default", "expected": "PASSED", "observed": "PASSED — Default providers produce valid IGH annotation" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-004",
+      "title": "Provider order determines priority",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestProviderPriority::test_different_provider_orders_produce_different_cache_keys", "expected": "PASSED", "observed": "PASSED — Different provider sets produce different cache keys" },
+        { "action": "Run TestProviderPriority::test_imgt_only_produces_valid_results", "expected": "PASSED", "observed": "PASSED — IMGT-only provider produces valid annotation" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-005",
+      "title": "Source columns reflect provider origins",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestSourceColumns::test_source_columns_present", "expected": "PASSED", "observed": "PASSED — v_call_source, d_call_source, j_call_source columns present" },
+        { "action": "Run TestSourceColumns::test_source_columns_reflect_providers", "expected": "PASSED", "observed": "PASSED — v_call_source == 'imgt' for imgt-only run" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-006",
+      "title": "Backward compat with references parameter",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestReferencesParamBackwardCompat::test_references_param_bypasses_resolve", "expected": "PASSED", "observed": "PASSED — references= param bypasses _resolve_database_via_reference" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-007",
+      "title": "Non-human species annotation works",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestNonHumanSpecies::test_mouse_available_in_datasets", "expected": "PASSED", "observed": "PASSED — 'mouse' is in available datasets" },
+        { "action": "Run TestNonHumanSpecies::test_non_human_reference_config_exists", "expected": "PASSED", "observed": "PASSED — mouse present in reference YAML with imgt provider" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AIRR-008",
+      "title": "Species with partial provider coverage",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestPartialProviderCoverage::test_species_without_ogrdb_resolves", "expected": "PASSED", "observed": "PASSED — chicken without ogrdb resolves gracefully" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ERR-001",
+      "title": "Unknown species raises clear error",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestErrorHandling::test_unknown_species_raises_error", "expected": "PASSED", "observed": "PASSED — Airr('unicorn') raises BadDataSet" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/full-pytest-output.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ERR-002",
+      "title": "Unpopulated germlines raises clear error",
+      "status": "fail",
+      "steps": [
+        { "action": "Run TestErrorHandling::test_unpopulated_germlines_raises_error", "expected": "BadDataSet raised when _resolve_database_via_reference fails", "observed": "DID NOT RAISE BadDataSet. Airr constructor catches the exception from _resolve_database_via_reference and falls back to the direct germlines module path (logged WARNING: 'Reference module build failed for human... Falling back to direct germlines module path.')" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/VAL-ERR-002-failure-detail.txt",
+        "consoleErrors": "WARNING: Reference module build failed for 'human': human dataset, avail datasets[]. Falling back to direct germlines module path.",
+        "exitCode": 1
+      },
+      "issues": "Airr.__init__ catches BadDataSet from _resolve_database_via_reference and falls back to the legacy germlines module path instead of propagating the error. The test expects BadDataSet to be raised when the Reference module fails, but the fallback mechanism silently recovers. Either the test expectation or the fallback behavior needs to be aligned."
+    },
+    {
+      "id": "VAL-GEN-006",
+      "title": "Auto-generates reference config if missing",
+      "status": "pass",
+      "steps": [
+        { "action": "Run TestCacheIntegration::test_auto_generates_reference_if_missing", "expected": "PASSED", "observed": "PASSED — generate_reference_yaml called when YAML path doesn't exist, from_yaml called after generation, database built and cached" }
+      ],
+      "evidence": {
+        "pytestOutput": "unified-pipeline/airr-pipeline/VAL-GEN-006-pass.txt",
+        "consoleErrors": "none",
+        "exitCode": 0
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "pytest.ini has addopts = -x configured, causing the full test suite run to stop at first failure. The last test (test_auto_generates_reference_if_missing) was not executed in the full suite run and had to be run separately.",
+      "resolved": true,
+      "resolution": "Ran TestCacheIntegration::test_auto_generates_reference_if_missing as a separate pytest invocation to confirm it passes.",
+      "affectedAssertions": ["VAL-GEN-006"]
+    },
+    {
+      "description": "pytest.mark.slow is not registered in pytest config, producing PytestUnknownMarkWarning for 5 tests. Does not affect test execution.",
+      "resolved": false,
+      "resolution": "Non-blocking warning; tests still run correctly.",
+      "affectedAssertions": ["VAL-AIRR-003", "VAL-AIRR-004", "VAL-AIRR-005"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 11 assertions: 10 passed, 1 failed. VAL-ERR-002 (test_unpopulated_germlines_raises_error) fails because the Airr constructor catches BadDataSet from _resolve_database_via_reference and falls back to the legacy germlines module path instead of propagating the error. All other assertions pass, including routing through Reference module (VAL-AIRR-001), backward compatibility (VAL-AIRR-002, VAL-AIRR-006), annotation correctness (VAL-AIRR-003), provider priority (VAL-AIRR-004), source columns (VAL-AIRR-005), non-human species (VAL-AIRR-007), partial provider coverage (VAL-AIRR-008), unknown species error (VAL-ERR-001), and auto-generation (VAL-GEN-006)."
+}
