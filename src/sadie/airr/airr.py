@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # Std library
 import itertools
+import json
 import logging
 import os
 import platform
@@ -29,6 +30,7 @@ from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.germlines import get_germlines_base_dir
 from sadie.reference.cache import DatabaseCache, compute_cache_key
+from sadie.reference.reference import _NAME_MAPPING_FILENAME
 from sadie.reference.generate import generate_reference_yaml
 from sadie.reference.reference import References
 
@@ -738,6 +740,9 @@ class Airr:
             result = self.igblast.run_file(Path(file))
             logger.info(f"Ran blast on  {file}")
 
+            # Restore original allele names if they were truncated for BLAST
+            result = self._apply_allele_name_reverse_mapping(result)
+
             # this is worthless since query
             result.insert(2, "reference_name", pd.Series([self.name] * len(result)))
             result = self._add_source_columns(result)  # Add source tracking columns
@@ -871,6 +876,54 @@ class Airr:
 
         return lookup.get(first_allele, "unknown")
 
+    def _apply_allele_name_reverse_mapping(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Restore original allele names in v_call, d_call, j_call, c_call columns.
+
+        When long allele names were truncated for BLAST DB compatibility, a
+        mapping file is written alongside the database. This method reads that
+        mapping and replaces truncated names with the originals in the AIRR
+        output.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            AIRR result DataFrame with v_call, d_call, j_call, c_call columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with original allele names restored.
+        """
+        db_path = getattr(self, "_database_path", None)
+        if db_path is None:
+            return df
+
+        mapping_file = Path(db_path) / _NAME_MAPPING_FILENAME
+        if not mapping_file.exists():
+            return df
+
+        try:
+            name_mapping: Dict[str, str] = json.loads(mapping_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            return df
+
+        if not name_mapping:
+            return df
+
+        def _restore_name(call_value: object) -> object:
+            if pd.isna(call_value) or not call_value:  # type: ignore[arg-type]
+                return call_value
+            # v_call can be comma-separated list of alleles
+            alleles = str(call_value).split(",")
+            restored = [name_mapping.get(a.strip(), a.strip()) for a in alleles]
+            return ",".join(restored)
+
+        for col in ["v_call", "d_call", "j_call", "c_call"]:
+            if col in df.columns:
+                df[col] = df[col].apply(_restore_name)
+
+        return df
+
     def _add_source_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Add v_call_source, d_call_source, j_call_source, c_call_source columns.
@@ -907,6 +960,7 @@ class Airr:
         """
         # Do one round of blast on a file
         result_a = self.igblast.run_file(Path(file))
+        result_a = self._apply_allele_name_reverse_mapping(result_a)
 
         # Now take out the results from the input sequence
         remaining_seq = (
@@ -925,6 +979,7 @@ class Airr:
             SeqIO.write(seq_records, tmpfile.name, "fasta")
             # Now run airr again, but this time on the remaining sequencess
             result_b: pd.DataFrame = self.igblast.run_file(tmpfile.name)
+            result_b = self._apply_allele_name_reverse_mapping(result_b)
 
         airr_table_a = AirrTable(result_a)
         airr_table_b = AirrTable(result_b)

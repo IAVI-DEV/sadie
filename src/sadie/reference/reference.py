@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from pathlib import Path
 from time import sleep
@@ -28,6 +30,87 @@ logger = logging.getLogger("Reference")
 
 # column typing from pandas stubs
 Column = Union[Union[int, str], str]
+
+# BLAST local ID limit (from makeblastdb -parse_seqids)
+_BLAST_MAX_ID_LEN = 50
+
+# Name mapping file stored alongside database
+_NAME_MAPPING_FILENAME = ".allele_name_mapping.json"
+
+
+def _truncate_allele_name(name: str, max_len: int = _BLAST_MAX_ID_LEN) -> str:
+    """Truncate an allele name to fit within BLAST's local ID length limit.
+
+    If the name is already within the limit, it is returned unchanged.
+    Otherwise, the name is truncated and a hash suffix is appended to ensure
+    uniqueness.  The format is ``<prefix>_<hash>`` where *prefix* is the first
+    ``max_len - 12`` characters and *hash* is an 11-character hex digest.
+
+    Parameters
+    ----------
+    name : str
+        The original allele name.
+    max_len : int, optional
+        Maximum allowed length, by default 50.
+
+    Returns
+    -------
+    str
+        The (possibly truncated) name.
+    """
+    if len(name) <= max_len:
+        return name
+    hash_suffix = hashlib.sha256(name.encode("utf-8")).hexdigest()[:11]
+    prefix_len = max_len - 12  # 11 hash chars + 1 underscore
+    return f"{name[:prefix_len]}_{hash_suffix}"
+
+
+def _build_name_mapping(names: List[str], max_len: int = _BLAST_MAX_ID_LEN) -> Dict[str, str]:
+    """Build a short→original name mapping for all names that need truncation.
+
+    Parameters
+    ----------
+    names : list of str
+        All allele names.
+    max_len : int, optional
+        Maximum allowed name length, by default 50.
+
+    Returns
+    -------
+    dict
+        Mapping from truncated name → original name. Only entries that were
+        actually truncated are included.
+    """
+    mapping: Dict[str, str] = {}
+    for name in names:
+        short = _truncate_allele_name(name, max_len)
+        if short != name:
+            mapping[short] = name
+    return mapping
+
+
+def _apply_name_mapping_to_dataframe(database: pd.DataFrame, name_mapping: Dict[str, str]) -> pd.DataFrame:
+    """Replace original long gene names with truncated names in the dataframe.
+
+    Parameters
+    ----------
+    database : pd.DataFrame
+        The reference dataframe with a ``gene`` column.
+    name_mapping : dict
+        Mapping from truncated name → original name.
+
+    Returns
+    -------
+    pd.DataFrame
+        A copy of the dataframe with gene names replaced.
+    """
+    if not name_mapping:
+        return database
+    # Build reverse: original → truncated
+    reverse_map = {v: k for k, v in name_mapping.items()}
+    df = database.copy()
+    df["gene"] = df["gene"].map(lambda g: reverse_map.get(g, g))
+    return df
 
 
 class G3Error(Exception):
@@ -511,15 +594,32 @@ class References:
             missing_genes = sorted(v_gene_df["gene"].dropna().unique().tolist())
             raise ValueError("Missing IMGT V-region position columns " f"{missing_columns} for genes: {missing_genes}")
 
+        # Skip V genes with missing IMGT position annotations instead of raising
         missing_positions = v_gene_df[v_gene_df[required_columns].isna().any(axis=1)]
         if not missing_positions.empty:
             missing_genes = sorted(missing_positions["gene"].dropna().unique().tolist())
-            raise ValueError(
-                f"Missing IMGT V-region positions for genes: {missing_genes}. "
-                "Ensure IMGT-gapped sequences are available."
+            logger.warning(
+                f"Skipping {len(missing_genes)} V gene(s) with missing IMGT V-region positions: "
+                f"{missing_genes}. These alleles will be excluded from the BLAST database."
             )
+            # Remove the genes with missing positions from the database
+            database = database.drop(missing_positions.index)
+            v_gene_df = database.loc[database["gene_segment"] == "V"].copy()
+
+        # If ALL V genes were removed, raise an error
+        if v_gene_df.empty:
+            raise ValueError(
+                "No valid V genes remain after skipping alleles with missing IMGT positions. "
+                "Ensure at least some V gene alleles have complete IMGT-gapped annotations."
+            )
+
         if database[database.label == "D-REGION"].empty:
             raise ValueError("No D-REGION found in reference object...make sure to add D gene")
+
+        # Apply pre-computed name mapping for long allele names (BLAST compatibility)
+        name_mapping = getattr(self, "_name_mapping", {})
+        if name_mapping:
+            database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
         # first name, i.e. "human" or "se09"
         groupby_dataframe = database.groupby("name")
@@ -559,6 +659,11 @@ class References:
         database = self.get_dataframe()
         if database[database.label == "J-REGION"].empty:
             raise ValueError("No J-REGION found in reference object...make sure to add J def")
+
+        # Apply pre-computed name mapping for long allele names (BLAST compatibility)
+        name_mapping = getattr(self, "_name_mapping", {})
+        if name_mapping:
+            database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
         # group by source
         # for now we only have one scheme
@@ -615,6 +720,12 @@ class References:
         # The internal data file structure goes Ig/internal_path/{name}/
 
         database = self.get_dataframe()
+
+        # Apply pre-computed name mapping for long allele names (BLAST compatibility)
+        name_mapping = getattr(self, "_name_mapping", {})
+        if name_mapping:
+            database = _apply_name_mapping_to_dataframe(database, name_mapping)
+
         for name, group_df in database.groupby("name"):
             # V genes for NDM file (framework/CDR regions)
             v_genes = group_df.loc[group_df["gene_segment"] == "V"].copy()
@@ -758,9 +869,7 @@ class References:
                 except Exception as e:
                     logger.warning(f"Failed to build HMM for {name} chain {chain}: {e}")
 
-    def _write_stockholm_file(
-        self, pairs: List[Tuple[str, str]], name: str, chain: str, sto_path: Path
-    ) -> None:
+    def _write_stockholm_file(self, pairs: List[Tuple[str, str]], name: str, chain: str, sto_path: Path) -> None:
         """Write Stockholm alignment file.
 
         Parameters
@@ -909,6 +1018,28 @@ class References:
             self.references = self.from_yaml().references.copy()
         if isinstance(output_path, str):
             output_path = Path(output_path)
+
+        # Pre-compute the allele name mapping for long names (used by all sub-methods)
+        database = self.get_dataframe()
+        all_gene_names = database["gene"].dropna().unique().tolist()
+        name_mapping = _build_name_mapping(all_gene_names)
+        if name_mapping:
+            logger.info(
+                f"Truncating {len(name_mapping)} allele name(s) exceeding {_BLAST_MAX_ID_LEN} chars "
+                f"for BLAST DB compatibility."
+            )
+        # Save name mapping alongside database for reverse lookup
+        mapping_file = Path(output_path) / _NAME_MAPPING_FILENAME
+        mapping_file.parent.mkdir(parents=True, exist_ok=True)
+        if name_mapping:
+            mapping_file.write_text(json.dumps(name_mapping, indent=2, sort_keys=True))
+            logger.debug(f"Wrote allele name mapping to {mapping_file}")
+        elif mapping_file.exists():
+            mapping_file.unlink()
+
+        # Store mapping for sub-methods to use
+        self._name_mapping = name_mapping
+
         # dataframe to internal annotation structure
         self._make_internal_annotaion_file(output_path)
         logger.info(f"Generated Internal Data {output_path}/Ig/internal_data")

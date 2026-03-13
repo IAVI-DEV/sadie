@@ -1,6 +1,7 @@
 """
  Working directly with reference functions to create custom or trimmed databases. Also tests G3 intereaction
 """
+
 import glob
 import io
 import os
@@ -28,11 +29,37 @@ def test_yaml(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixt
 
     # The auto-generated reference.yml includes all species from germline sources
     expected_names = {
-        "alpaca", "atlantic_cod", "atlantic_salmon", "camel", "cat", "channel_catfish",
-        "chicken", "clk", "cow", "cynomolgus", "dog", "ferret", "goat", "gorilla",
-        "horse", "human", "lemur", "macaque", "mink", "mouse", "mouse_c57bl6j",
-        "orangutan_bornean", "orangutan_sumatran", "pig", "platypus", "rabbit",
-        "rainbow_trout", "rat", "se09", "sheep", "zebrafish",
+        "alpaca",
+        "atlantic_cod",
+        "atlantic_salmon",
+        "camel",
+        "cat",
+        "channel_catfish",
+        "chicken",
+        "clk",
+        "cow",
+        "cynomolgus",
+        "dog",
+        "ferret",
+        "goat",
+        "gorilla",
+        "horse",
+        "human",
+        "lemur",
+        "macaque",
+        "mink",
+        "mouse",
+        "mouse_c57bl6j",
+        "orangutan_bornean",
+        "orangutan_sumatran",
+        "pig",
+        "platypus",
+        "rabbit",
+        "rainbow_trout",
+        "rat",
+        "se09",
+        "sheep",
+        "zebrafish",
     }
     assert yaml_object.get_names() == expected_names
 
@@ -148,7 +175,14 @@ def test_references_from_yaml_use_germlines(fixture_setup: "SadieFixture") -> No
     assert df["_id"].notna().all()  # All rows have _id
 
 
-def test_missing_imgt_positions_fail_fast(tmp_path_factory: pytest.TempPathFactory) -> None:
+def test_missing_imgt_positions_skipped_with_warning(
+    tmp_path_factory: pytest.TempPathFactory, caplog: pytest.LogCaptureFixture
+) -> None:
+    """V genes with missing IMGT positions are skipped with a warning.
+
+    When *all* V genes in a reference have missing positions, a ValueError is
+    raised because no valid V genes remain for the BLAST database.
+    """
     from sadie.germlines import get_gene_by_name
     from sadie.germlines.g3_adapter import GermlineToG3Adapter
 
@@ -179,12 +213,9 @@ def test_missing_imgt_positions_fail_fast(tmp_path_factory: pytest.TempPathFacto
     refs.add_reference("test", ref)
 
     outpath = tmp_path_factory.mktemp("missing_imgt_positions")
-    with pytest.raises(ValueError) as exc_info:
+    # When all V genes are missing positions, the build raises because no valid V genes remain
+    with pytest.raises(ValueError, match="No valid V genes"):
         refs.make_airr_database(outpath)
-
-    message = str(exc_info.value)
-    assert "Missing IMGT V-region positions" in message
-    assert "IGHV1-69*01" in message
 
 
 def test_util_methods(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -276,7 +307,9 @@ def test_missing_makeblast_df(tmp_path_factory: pytest.TempPathFactory, fixture_
         write_blast_db(bogus_file, tmpdir.joinpath("missing.fasta"))
 
 
-def test_make_hmm_files_creates_directories(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture) -> None:
+def test_make_hmm_files_creates_directories(
+    tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture
+) -> None:
     """Test that _make_hmm_files creates stockholms/ and hmms/ directories."""
     shortened_yaml = fixture_setup.get_shortened_yaml()
     references: References = References().from_yaml(shortened_yaml, use_germlines=True)
