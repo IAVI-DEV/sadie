@@ -1,0 +1,50 @@
+{
+  "featureId": "reference-build-robustness",
+  "reviewedAt": "2026-03-14T00:15:00.000Z",
+  "commitId": "632fa74f2607eb6472b6984ab207c310948b6d98",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Implementation correctly addresses both issues: (1) V genes with missing IMGT positions are skipped with a warning log instead of raising ValueError, with a hard error only when ALL V genes are invalid. (2) Long allele names are truncated using a SHA-256 hash suffix to fit BLAST's 50-char limit, with a JSON mapping file for reverse lookup. The reverse mapping is applied in the Airr class after IgBLAST runs, covering both single-chain and ScFV code paths. Test coverage is comprehensive with 8 new tests plus 1 updated test. The implementation is clean, well-documented, and follows existing code patterns.",
+    "issues": [
+      {
+        "file": "src/sadie/reference/reference.py",
+        "line": 97,
+        "severity": "non_blocking",
+        "description": "The _apply_name_mapping_to_dataframe() function is called in three separate sub-methods (_make_igblast_ref_database, _make_auxillary_file, _make_internal_annotaion_file), each doing `getattr(self, '_name_mapping', {})`. This pattern of setting a transient instance attribute (self._name_mapping) in make_airr_database() and reading it via getattr in sub-methods is a bit fragile. If a sub-method is called independently (without make_airr_database), the mapping is silently absent. However, since sub-methods are private and only called from make_airr_database(), this is acceptable."
+      },
+      {
+        "file": "src/sadie/airr/airr.py",
+        "line": 897,
+        "severity": "non_blocking",
+        "description": "The reverse mapping reads the JSON file from disk on every call to _apply_allele_name_reverse_mapping(). For ScFV paths, this means the file is read twice (once per chain). Caching the mapping in memory after first read would be a minor optimization, but given the file is small and this is not a hot path, this is non-blocking."
+      },
+      {
+        "file": "src/sadie/reference/reference.py",
+        "line": 604,
+        "severity": "non_blocking",
+        "description": "When V genes with missing positions are dropped from the database DataFrame, the drop occurs on the local `database` variable inside _make_igblast_ref_database(). This means only the BLAST DB excludes these genes — the aux file and internal data file still include them (via fresh get_dataframe() calls). This is actually correct behavior: the aux file handles J genes and internal data needs all segments, but a V gene with missing IMGT positions in the internal_data NDM file would be dropped anyway by the `index_df.drop(index_df[index_df.isna().any(axis=1)].index)` logic at line ~778. So the behavior is consistent, just worth noting the implicit handling."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The BLAST 50-character local ID limit (_BLAST_MAX_ID_LEN = 50) is an important constraint that affects any code writing allele names to FASTA files for makeblastdb. This constraint is not documented in AGENTS.md but could be relevant for future features that add new providers or modify allele naming.",
+      "evidence": "src/sadie/reference/reference.py:35 — _BLAST_MAX_ID_LEN = 50, used by _truncate_allele_name() and _build_name_mapping()"
+    },
+    {
+      "area": "conventions",
+      "observation": "The pattern of using a transient instance attribute (self._name_mapping) set in a parent method and consumed by private sub-methods via getattr() is now established in the Reference module. Future workers should be aware of this coupling pattern.",
+      "evidence": "src/sadie/reference/reference.py make_airr_database() sets self._name_mapping, then _make_igblast_ref_database(), _make_auxillary_file(), _make_internal_annotaion_file() each read it via getattr(self, '_name_mapping', {})"
+    },
+    {
+      "area": "conventions",
+      "observation": "The .allele_name_mapping.json file is a new artifact written alongside the compiled database. The Airr class reads this file to reverse-map truncated names. This creates a coupling between the Reference module (writer) and the Airr module (reader) via a file convention (_NAME_MAPPING_FILENAME). This is documented via the shared constant import but not in AGENTS.md.",
+      "evidence": "src/sadie/reference/reference.py:39 _NAME_MAPPING_FILENAME, imported in src/sadie/airr/airr.py:33"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The reference-build-robustness feature passes review. Both issues are correctly addressed: (1) V genes with missing IMGT positions are gracefully skipped with warning logs, with a hard error only when zero valid V genes remain. (2) Long allele names are truncated with SHA-256 hash suffixes and a reverse mapping file enables restoration after IgBLAST. The implementation covers all code paths (single-chain, ScFV), has 8 comprehensive new tests, passes pyright type checking, and follows project conventions. The feature fulfills VAL-CROSS-001 by removing two blockers that prevented the unified pipeline from working with all provider combinations. Three non-blocking observations noted for shared state documentation."
+}

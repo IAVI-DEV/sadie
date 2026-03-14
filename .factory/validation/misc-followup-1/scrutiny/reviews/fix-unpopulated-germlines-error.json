@@ -1,0 +1,34 @@
+{
+  "featureId": "fix-unpopulated-germlines-error",
+  "reviewedAt": "2026-03-13T23:45:00.000Z",
+  "commitId": "c02f66e1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of VAL-ERR-002. Adds a well-structured _check_germlines_populated() helper function that checks the germlines igblast/Ig/internal_data directory for population status. When BadDataSet is caught in the Airr constructor fallback handler, the helper is called before falling back to the direct germlines path. If germlines are unpopulated, a clear BadDataSet error is raised with a message directing the user to run 'sadie germlines populate'. The test properly simulates unpopulated germlines by creating an empty internal_data directory and patching get_germlines_base_dir. Code follows project conventions (NumPy docstrings, type hints, 120-char line length, black formatted).",
+    "issues": [
+      {
+        "file": "tests/unit/airr/test_unified_pipeline.py",
+        "line": 348,
+        "severity": "non_blocking",
+        "description": "Test assertion `assert 'populate' in error_msg.lower() or 'human' in error_msg.lower()` is overly permissive. The `or 'human'` clause would match even the original unfixed BadDataSet('human', []).__str__() output ('human dataset, avail datasets[]'). The assertion should only check for 'populate' to ensure the new error message is actually raised. In practice this doesn't cause a false pass because the mock setup ensures _check_germlines_populated is actually invoked (the fallback path would also fail differently), but the assertion is weaker than it needs to be."
+      },
+      {
+        "file": "src/sadie/airr/airr.py",
+        "line": 56,
+        "severity": "non_blocking",
+        "description": "The `not any(internal_data.iterdir())` check doesn't filter dotfiles (e.g., .DS_Store on macOS). If internal_data contains only a .DS_Store file but no actual species directories, the first check passes but the second species-specific check catches it correctly. Not a bug, but the two checks have inconsistent filtering logic."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker did not run pyright (type checking) as required by step 6 of the python-refactor skill procedure. The handoff verification.commandsRun only includes pytest and black, missing the pyright step. The change is low-risk for type errors (simple function with Path operations and string formatting), but the skill procedure was not fully followed.",
+      "evidence": "Handoff verification.commandsRun has 4 entries: pytest (x3) and black (x1). No pyright entry. Skill SKILL.md step 6 says 'poetry run pyright src/sadie/<module>/' is required."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The implementation correctly adds a _check_germlines_populated() helper in airr.py that verifies germlines are populated before falling back to the direct germlines path. When BadDataSet is caught and germlines are unpopulated, a clear error with 'sadie germlines populate' guidance is raised. The test properly simulates the unpopulated state using tmp_path and mocking. Two non-blocking issues noted: (1) the test assertion is slightly too permissive due to an `or 'human'` fallback, and (2) the empty-directory check doesn't filter dotfiles (though the species-specific check handles this). Both are cosmetic and don't affect correctness."
+}
