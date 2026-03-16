@@ -1,0 +1,9 @@
+{
+  "milestone": "production-hardening",
+  "round": 1,
+  "overridden": true,
+  "overrideJustification": "All 3 production-hardening features have empty fulfills arrays - no validation assertions depend on this milestone. All 37/37 validation assertions were already passed in prior milestones (reference-hardening, unified-pipeline, misc-followup-1). Spawning a user-testing validator with zero assertions to test provides no value.",
+  "assertionsTested": [],
+  "assertionResults": {},
+  "appliedUpdates": []
+}

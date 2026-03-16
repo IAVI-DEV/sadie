@@ -1,0 +1,23 @@
+{
+  "milestone": "production-hardening",
+  "round": 1,
+  "overridden": true,
+  "overrideJustification": "All scrutiny failures are pre-existing issues documented in AGENTS.md. Verified independently: (1) test_hard_igl_seqs is a pre-existing macaque vj_in_frame mismatch, (2) 6 pyright errors are in germlines/cli.py and renumbering/aligners/hmmer.py (unrelated to mission), (3) 6 black files are in modules not modified by this mission. All 100 reference tests, 96 airr tests (excluding 4 pre-existing failures), and 213 germlines tests pass. No production-hardening features have validation assertions (empty fulfills arrays) - they are quality fixes only.",
+  "validatorGate": {
+    "pytest": {
+      "status": "pre-existing-failure",
+      "detail": "test_hard_igl_seqs fails on pre-existing macaque vj_in_frame mismatch at row 356"
+    },
+    "pyright": {
+      "status": "pre-existing-failure",
+      "detail": "6 errors: 2 unknown imports in germlines/cli.py, 4 type assignments in renumbering/aligners/hmmer.py"
+    },
+    "black": {
+      "status": "pre-existing-failure",
+      "detail": "6 files needing formatting in yaml.py, aux.py, j_gene_data.py, igblast.py, download_imgt.py, download_ogrdb.py"
+    }
+  },
+  "featureReviews": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": []
+}
