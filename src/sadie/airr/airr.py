@@ -26,7 +26,7 @@ from Bio.SeqRecord import SeqRecord
 
 # package/module level
 from sadie.airr.airrtable import AirrTable, LinkedAirrTable
-from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
+from sadie.airr.exceptions import BadDataSet, BadIgBLASTArgument, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.germlines import get_germlines_base_dir
 from sadie.reference.cache import DatabaseCache, compute_cache_key
@@ -323,6 +323,20 @@ class Airr:
             if reference_name not in _available_datasets:
                 raise BadDataSet(reference_name, list(_available_datasets))
 
+            # When germlines module is enabled, verify the species actually exists in it
+            # (not just in legacy G3 datasets). Species only available via G3 should not
+            # be routed through the unified pipeline.
+            from sadie.airr.igblast.germline import _use_germlines_module, _get_germlines_igblast_dir
+
+            if _use_germlines_module():
+                _germlines_internal = _get_germlines_igblast_dir() / "Ig" / "internal_data" / reference_name
+                if not _germlines_internal.exists():
+                    raise ValueError(
+                        f"Species '{reference_name}' not found in germlines module. "
+                        f"Build germlines databases with: sadie germlines populate. "
+                        f"To use legacy G3 paths, set SADIE_USE_GERMLINES_MODULE=false."
+                    )
+
             # Unified pipeline: route through Reference module with caching.
             # Falls back to direct germlines module path if Reference build fails
             # (e.g., when IMGT position annotations are incomplete for some alleles).
@@ -347,7 +361,11 @@ class Airr:
         # This will set all the igblast params given the Germline Data class whcih validates them
         self.igblast.igdata = self.germline_data.igdata
         self.igblast.germline_db_v = self.germline_data.v_gene_dir
-        self.igblast.germline_db_d = self.germline_data.d_gene_dir
+        try:
+            self.igblast.germline_db_d = self.germline_data.d_gene_dir
+        except BadIgBLASTArgument:
+            # Some species/chains may not have D genes (e.g., light chains)
+            pass
         self.igblast.germline_db_j = self.germline_data.j_gene_dir
         self.igblast.germline_db_c = self.germline_data.c_gene_dir
         self.igblast.aux_path = self.germline_data.aux_path

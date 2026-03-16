@@ -601,9 +601,7 @@ class IgBLASTN:
         """Path to D gene database prefix"""
         abs_path = ensure_prefix_to(path)
         if not abs_path:
-            warnings.warn(f"{path} is not found, No D gene segment", UserWarning)
-            # raise BadIgBLASTArgument(path, "Valid path to D Database")
-            self._germline_db_d = IgBLASTArgument("germline_db_d", "germline_db_D", "", False)
+            raise BadIgBLASTArgument(path, "Valid path to D Database")
         else:
             self._germline_db_d = IgBLASTArgument("germline_db_d", "germline_db_D", path, True)
 
