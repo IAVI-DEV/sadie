@@ -167,7 +167,7 @@ class Airr:
         temp_directory : str|Path|None
             the temporary working directory, by default uses your enviroments tempdir
         references: Optional[References] = None
-            A refernces class with custom references in it. If None, will default to SADIE shipped references
+            A references class with custom references in it. If None, will default to SADIE shipped references
         debug : bool
             if True, print the IgBLAST command before execution, by default False
         num_alignments_v : int
@@ -197,8 +197,8 @@ class Airr:
             By default None (uses germlines module or G3).
         providers : List[str], optional
             Ordered list of germline providers to use for source tracking.
-            Default: ["vdjbase", "ogrdb", "imgt", "custom"]
-            Example: ["imgt"] for IMGT-only source tracking.
+            Default: ["imgt"]
+            Example: ["ogrdb", "vdjbase", "imgt"] for multi-source tracking.
         """
         # Resolve providers once so both the primary Reference path and
         # the fallback GermlineData path use the same resolved list.
@@ -907,6 +907,9 @@ class Airr:
         mapping and replaces truncated names with the originals in the AIRR
         output.
 
+        The parsed JSON mapping is cached as ``self._allele_name_mapping`` after
+        the first read so subsequent calls avoid re-reading from disk.
+
         Parameters
         ----------
         df : pd.DataFrame
@@ -917,18 +920,28 @@ class Airr:
         pd.DataFrame
             DataFrame with original allele names restored.
         """
-        db_path = getattr(self, "_database_path", None)
-        if db_path is None:
-            return df
+        # Use cached mapping if available
+        cached = getattr(self, "_allele_name_mapping", None)
+        if cached is not None:
+            name_mapping = cached
+        else:
+            db_path = getattr(self, "_database_path", None)
+            if db_path is None:
+                self._allele_name_mapping: Dict[str, str] = {}
+                return df
 
-        mapping_file = Path(db_path) / _NAME_MAPPING_FILENAME
-        if not mapping_file.exists():
-            return df
+            mapping_file = Path(db_path) / _NAME_MAPPING_FILENAME
+            if not mapping_file.exists():
+                self._allele_name_mapping = {}
+                return df
 
-        try:
-            name_mapping: Dict[str, str] = json.loads(mapping_file.read_text())
-        except (json.JSONDecodeError, OSError):
-            return df
+            try:
+                name_mapping = json.loads(mapping_file.read_text())
+            except (json.JSONDecodeError, OSError):
+                self._allele_name_mapping = {}
+                return df
+
+            self._allele_name_mapping = name_mapping
 
         if not name_mapping:
             return df
@@ -974,7 +987,7 @@ class Airr:
 
     # private run methods
     def _run_scfv(self, file: Union[Path, str]) -> LinkedAirrTable:
-        """An internal method kito run a special scfv execution on paired scfv or other linked chains
+        """An internal method to run a special scfv execution on paired scfv or other linked chains
 
 
         Returns

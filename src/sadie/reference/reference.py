@@ -1,4 +1,4 @@
-"""This module houses the main Refernce object to manipulate the backend references"""
+"""This module houses the main Reference object to manipulate the backend references"""
 
 from __future__ import annotations
 
@@ -80,11 +80,23 @@ def _build_name_mapping(names: List[str], max_len: int = _BLAST_MAX_ID_LEN) -> D
     dict
         Mapping from truncated name → original name. Only entries that were
         actually truncated are included.
+
+    Raises
+    ------
+    ValueError
+        If two different original names produce the same truncated name,
+        indicating a collision that would cause silent data loss.
     """
     mapping: Dict[str, str] = {}
     for name in names:
         short = _truncate_allele_name(name, max_len)
         if short != name:
+            if short in mapping and mapping[short] != name:
+                raise ValueError(
+                    f"Name mapping collision: truncated name '{short}' maps to both "
+                    f"'{mapping[short]}' and '{name}'. Consider increasing max_len or "
+                    f"using a different truncation strategy."
+                )
             mapping[short] = name
     return mapping
 
@@ -439,7 +451,7 @@ class Reference:
         # get dict as lis tof records
         input_list: List[Dict[Column, Any]] = input_df.to_dict(orient="records")  # type: ignore
 
-        # can't assign dirrectly so have to append to beat mypy
+        # can't assign directly so have to append to beat mypy
         for key in input_list:
             reference.data.append(key)
         return reference
@@ -448,6 +460,7 @@ class Reference:
 class References:
     def __init__(self, default_output_path: Path | str | None = None) -> None:
         self.references: Dict[str, Reference] = {}
+        self._name_mapping: Dict[str, str] = {}
         if not default_output_path:
             self.default_output_path = Path(__file__).parent / "../airr/data/germlines"
         else:
@@ -512,7 +525,7 @@ class References:
         # get the indexes which contain names that are to be chimerized
         indexes_to_chimera = concat_df[concat_df["name"].isin(list_of_chimera)].index
 
-        # set all cherics to false
+        # set all chimerics to false
         concat_df["chimera"] = False
         concat_df.loc[indexes_to_chimera, "chimera"] = True
 
@@ -617,7 +630,7 @@ class References:
             raise ValueError("No D-REGION found in reference object...make sure to add D gene")
 
         # Apply pre-computed name mapping for long allele names (BLAST compatibility)
-        name_mapping = getattr(self, "_name_mapping", {})
+        name_mapping = self._name_mapping
         if name_mapping:
             database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
@@ -661,7 +674,7 @@ class References:
             raise ValueError("No J-REGION found in reference object...make sure to add J def")
 
         # Apply pre-computed name mapping for long allele names (BLAST compatibility)
-        name_mapping = getattr(self, "_name_mapping", {})
+        name_mapping = self._name_mapping
         if name_mapping:
             database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
@@ -698,7 +711,7 @@ class References:
             )
             logger.info(f"Wrote aux to {aux_file_name}")
 
-    def _make_internal_annotaion_file(self, outpath: Path) -> None:
+    def _make_internal_annotation_file(self, outpath: Path) -> None:
         """Generate the internal database file for IgBlast.
 
         Creates combined VDJC FASTA and BLAST database for each reference name.
@@ -722,7 +735,7 @@ class References:
         database = self.get_dataframe()
 
         # Apply pre-computed name mapping for long allele names (BLAST compatibility)
-        name_mapping = getattr(self, "_name_mapping", {})
+        name_mapping = self._name_mapping
         if name_mapping:
             database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
@@ -1041,7 +1054,7 @@ class References:
         self._name_mapping = name_mapping
 
         # dataframe to internal annotation structure
-        self._make_internal_annotaion_file(output_path)
+        self._make_internal_annotation_file(output_path)
         logger.info(f"Generated Internal Data {output_path}/Ig/internal_data")
         # dataframe to igblast annotation structure
         self._make_igblast_ref_database(output_path)

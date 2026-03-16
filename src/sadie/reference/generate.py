@@ -33,7 +33,7 @@ from sadie.germlines.manager import GermlineManager
 logger = logging.getLogger(__name__)
 
 # Default path for the curated g3 YAML baseline
-_DEFAULT_G3_PATH = Path(__file__).parents[3] / "reference.g3.yml"
+_DEFAULT_G3_PATH = Path(__file__).parent / "data" / "reference.g3.yml"
 
 # YAML dict type alias
 YamlConfig = Dict[str, Dict[str, Dict[str, List[str]]]]
