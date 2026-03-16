@@ -466,7 +466,7 @@ class References:
         if self._reference_dataframe_path.exists():
             self.reference_dataframe = pd.read_csv(self._reference_dataframe_path, index_col=0)
         else:
-            raise FileExistsError(
+            raise FileNotFoundError(
                 f"Reference dataframe does not exist in default path {self._reference_dataframe_path}"
             )
 

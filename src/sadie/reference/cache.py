@@ -27,6 +27,7 @@ import hashlib
 import logging
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Tuple
 
@@ -180,12 +181,14 @@ class DatabaseCache:
         logger.debug(f"Wrote cache sentinel for key {cache_key}")
 
     def build_and_cache(self, cache_key: str, references: References) -> Path:
-        """Build the IgBLAST database and store it in the cache.
+        """Build the IgBLAST database and store it in the cache atomically.
 
-        Delegates to ``references.make_airr_database()`` with the cache entry
-        directory as the output path. A sentinel file is written **only** after
-        a successful build. If the build raises, the sentinel is not written
-        and the entry remains invalid so that subsequent calls retry.
+        Uses an atomic build pattern to prevent corruption from concurrent access:
+        1. Build into a temporary directory (in the same parent as the cache).
+        2. Write sentinel file only after successful build.
+        3. Atomically rename the temp dir to the final cache path via ``os.rename()``.
+        4. If the final path already exists (another process finished first),
+           delete the temp dir and use the existing cache.
 
         Parameters
         ----------
@@ -204,26 +207,54 @@ class DatabaseCache:
         Exception
             Re-raises any exception from ``make_airr_database``.
         """
-        entry_path = self.get_cache_entry_path(cache_key)
-        entry_path.mkdir(parents=True, exist_ok=True)
+        self.ensure_cache_dir()
+        final_path = self._cache_dir / cache_key
 
-        logger.info(f"Building IgBLAST database into cache: {entry_path}")
+        # Build into a temporary directory in the same parent as cache
+        # (same filesystem ensures os.rename is atomic)
+        tmp_dir = tempfile.mkdtemp(dir=self._cache_dir, prefix=f".tmp_{cache_key}_")
+        tmp_path = Path(tmp_dir)
 
-        # If a previous failed attempt left files, clean them out
-        sentinel = entry_path / _SENTINEL_FILENAME
-        if sentinel.exists():
-            sentinel.unlink()
+        logger.info(f"Building IgBLAST database into temp dir: {tmp_path}")
 
         try:
-            references.make_airr_database(entry_path)
+            references.make_airr_database(tmp_path)
         except Exception:
-            logger.error(f"Database build failed for cache key {cache_key}; entry remains invalid")
+            logger.error(f"Database build failed for cache key {cache_key}; cleaning up temp dir")
+            shutil.rmtree(tmp_path, ignore_errors=True)
             raise
 
-        # Only mark complete after successful build
-        self.write_sentinel(cache_key)
-        logger.info(f"Cached database for key {cache_key} at {entry_path}")
-        return entry_path
+        # Write sentinel inside the temp dir before renaming
+        sentinel = tmp_path / _SENTINEL_FILENAME
+        sentinel.touch()
+
+        # Atomically rename temp dir to final path
+        try:
+            os.rename(tmp_path, final_path)
+            logger.info(f"Cached database for key {cache_key} at {final_path}")
+        except OSError:
+            # Another process finished first — final_path already exists.
+            # Check if it's a valid cache entry; if so, use it.
+            if self.is_cached(cache_key):
+                logger.info(
+                    f"Another process completed cache entry for key {cache_key}; "
+                    f"discarding our build and using existing cache."
+                )
+                shutil.rmtree(tmp_path, ignore_errors=True)
+            else:
+                # The final path exists but is invalid (no sentinel).
+                # Remove it and try again.
+                shutil.rmtree(final_path, ignore_errors=True)
+                try:
+                    os.rename(tmp_path, final_path)
+                    logger.info(f"Replaced invalid cache entry for key {cache_key} at {final_path}")
+                except OSError:
+                    # Last resort: clean up temp and let next call retry
+                    shutil.rmtree(tmp_path, ignore_errors=True)
+                    logger.error(f"Failed to install cache entry for key {cache_key}")
+                    raise
+
+        return final_path
 
     def get_or_build(self, cache_key: str, references: References) -> Path:
         """Return a cached database path, building if necessary.

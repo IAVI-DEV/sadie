@@ -200,6 +200,9 @@ class Airr:
             Default: ["vdjbase", "ogrdb", "imgt", "custom"]
             Example: ["imgt"] for IMGT-only source tracking.
         """
+        # Resolve providers once so both the primary Reference path and
+        # the fallback GermlineData path use the same resolved list.
+        providers = providers or ["imgt"]
         self._providers = providers
 
         # If the temp directory is passed, it is important to keep track of it so we can delete it at the destructory
@@ -341,12 +344,12 @@ class Airr:
             # Falls back to direct germlines module path if Reference build fails
             # (e.g., when IMGT position annotations are incomplete for some alleles).
             try:
-                db_path = self._resolve_database_via_reference(reference_name, providers or ["imgt"], scheme)
+                db_path = self._resolve_database_via_reference(reference_name, providers, scheme)
                 self._database_path = db_path
                 self.germline_data = GermlineData(
                     reference_name, receptor, db_path, scheme, prebuilt=True, providers=providers
                 )
-            except (ValueError, RuntimeError, FileNotFoundError, BadDataSet) as e:
+            except (ValueError, RuntimeError, FileNotFoundError, OSError, BadDataSet) as e:
                 # Before falling back, check if germlines are actually populated.
                 # If not, raise a clear error directing the user to populate them.
                 if isinstance(e, BadDataSet):
@@ -450,8 +453,11 @@ class Airr:
             logger.info(f"Auto-generated reference config at {yaml_path}")
 
         # Read the full YAML config
-        with open(yaml_path) as f:
-            full_config = yaml.safe_load(f)
+        try:
+            with open(yaml_path) as f:
+                full_config = yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Failed to parse reference YAML config at {yaml_path}: {exc}") from exc
 
         # Check that the requested reference_name exists in the config
         if reference_name not in full_config:
@@ -466,11 +472,10 @@ class Airr:
                 filtered_ref[provider] = ref_config[provider]
 
         if not filtered_ref:
-            logger.warning(
+            raise ValueError(
                 f"No alleles found for reference '{reference_name}' with providers {providers}. "
-                f"Available sources: {list(ref_config.keys())}. Falling back to all providers."
+                f"Available sources in reference config: {list(ref_config.keys())}."
             )
-            filtered_ref = ref_config
 
         # Build a single-reference YAML config with only the requested data
         filtered_config = {reference_name: filtered_ref}
