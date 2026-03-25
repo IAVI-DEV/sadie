@@ -26,6 +26,13 @@ class NumberingResults(pd.DataFrame):
     def _constructor(self):
         return NumberingResults
 
+    @classmethod
+    def _constructor_from_mgr(cls, mgr, axes):
+        """Override to prevent type-slicing during internal pandas operations."""
+        obj = pd.DataFrame._from_mgr(mgr, axes)  # type: ignore[attr-defined]
+        obj.__class__ = cls
+        return obj
+
     def get_alignment_table(self) -> pd.DataFrame:
         """Get a numbered alignment table from the numbering and insertions
 

@@ -85,7 +85,7 @@ class AirrSeries(pd.Series):  # type: ignore
     @classmethod
     def _constructor_from_mgr(cls, mgr, axes):
         """Override to prevent type-slicing during internal pandas operations."""
-        obj = pd.Series._from_mgr(mgr, axes)
+        obj = pd.Series._from_mgr(mgr, axes)  # type: ignore[attr-defined]
         obj.__class__ = cls
         object.__setattr__(obj, "_name", None)
         return obj
@@ -301,7 +301,7 @@ class AirrTable(pd.DataFrame):
     @classmethod
     def _constructor_from_mgr(cls, mgr, axes):
         """Override to prevent recursion during internal pandas operations."""
-        obj = pd.DataFrame._from_mgr(mgr, axes)
+        obj = pd.DataFrame._from_mgr(mgr, axes)  # type: ignore[attr-defined]
         obj.__class__ = cls
         return obj
 
@@ -1012,7 +1012,7 @@ class LinkedAirrTable(AirrTable):
     @classmethod
     def _constructor_from_mgr(cls, mgr, axes):
         """Override to prevent type-slicing during internal pandas operations."""
-        obj = pd.DataFrame._from_mgr(mgr, axes)
+        obj = pd.DataFrame._from_mgr(mgr, axes)  # type: ignore[attr-defined]
         obj.__class__ = cls
         return obj
 

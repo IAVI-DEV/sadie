@@ -142,6 +142,16 @@ Commit all changes with a descriptive message. One commit per feature.
 }
 ```
 
+## Pandas 3 Compatibility Notes
+
+When working on pandas 3 compatibility features:
+
+- **Read reference files first**: The user provided `~/Downloads/methods.py` and `~/Downloads/airrtable.py` as reference implementations. These show the target pandas 3 patterns but also contain unrelated feature additions. Only apply pandas-compatibility patterns.
+- **Key compat patterns**: See AGENTS.md "Key Pandas 3 Patterns" section for the specific replacement patterns.
+- **Import _compat**: When features require `_is_internal_manager` or `NAType`, import from `sadie._compat` (created by the compat-module feature).
+- **Test with existing tests**: The existing test suite is the primary validation mechanism. If all tests pass, the refactoring is correct.
+- **Do not change behavior**: These are pure API pattern replacements. The computational results must be identical.
+
 ## When to Return to Orchestrator
 
 - Feature depends on code changes from another unfinished feature

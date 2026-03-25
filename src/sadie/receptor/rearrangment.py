@@ -10,7 +10,7 @@ from typing import Any, List, Optional, Set, Union
 from uuid import UUID, uuid4
 
 from Bio.Seq import Seq
-from pandas._libs.missing import NAType
+from sadie._compat import NAType
 from pydantic import BaseModel, ConfigDict, field_validator
 
 

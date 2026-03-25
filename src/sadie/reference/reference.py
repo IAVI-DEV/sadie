@@ -693,7 +693,7 @@ class References:
             bad_remainders = common_df[(common_df["imgt.remainder"].isna())]
             if not bad_remainders.empty:
                 logger.warning(f"Had to drop {bad_remainders.shape[0]} rows due to bad remainder for {group}")
-                common_df.drop(bad_remainders.index, inplace=True)
+                common_df = common_df.drop(bad_remainders.index)
 
             # make columns of an aux databaee common_df = common_df[(common_df["imgt.cdr3_end"] != "")]
             common_df.loc[:, "reading_frame"] = common_df["imgt.reading_frame"].astype(int)

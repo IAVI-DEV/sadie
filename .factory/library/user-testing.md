@@ -1,5 +1,25 @@
 # User Testing
 
+## Pandas 3 Compatibility Mission
+
+### Validation Surface
+
+This is a pure library refactoring with no user-facing surface (no web UI, no CLI changes). Validation is entirely through:
+- **Unit test suite**: `poetry run pytest tests/unit/ -x --tb=short -q` (613 tests)
+- **Type checking**: `poetry run pyright src/`
+- **Linting**: `poetry run pre-commit run --all-files`
+- **Code pattern verification**: `rg` searches for deprecated patterns that should no longer exist
+
+### Validation Concurrency
+
+- Max concurrent validators: **5** (tests are CPU-bound, machine has 16 cores and 128 GB RAM)
+- Each validator runs the test suite independently — no shared state or isolation concerns
+- Test suite completes in seconds, no resource pressure
+
+---
+
+## Previous Mission Content
+
 Testing surface, resource cost classification, and validation approach.
 
 **What belongs here:** How to validate user-facing functionality, testing tools, resource constraints.

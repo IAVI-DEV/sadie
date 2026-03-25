@@ -1,4 +1,3 @@
-from distutils.version import StrictVersion
 from math import nan
 
 import pandas as pd
@@ -6,6 +5,8 @@ import pandas as pd
 from sadie.airr import Airr, AirrTable
 from sadie.airr.airrtable import constants
 from tests.conftest import SadieFixture
+
+_PANDAS_VERSION = tuple(int(x) for x in pd.__version__.split(".")[:2])
 
 
 def fillna(df, fill_value=""):
@@ -15,9 +16,9 @@ def fillna(df, fill_value=""):
     """
     for col in df.dtypes[df.dtypes == "category"].index:
         if fill_value not in df[col].cat.categories:
-            df[col].cat.add_categories([fill_value], inplace=True)
+            df[col] = df[col].cat.add_categories([fill_value])
     # Known bug https://github.com/pandas-dev/pandas/issues/25472
-    if StrictVersion(pd.__version__) >= StrictVersion("1.0"):
+    if _PANDAS_VERSION >= (1, 0):
         for col in df.dtypes[df.dtypes.apply(lambda x: x in ["float64", "Int16", "Int64"])].index:
             df[col] = df[col].astype("float")
     return df.fillna(fill_value)
