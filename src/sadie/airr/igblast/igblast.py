@@ -1000,6 +1000,9 @@ class IgBLASTN:
                 if pd.notna(v_call) and v_call:
                     # Take first v_call if multiple, extract first 3 chars (IGH, IGK, IGL)
                     first_v = str(v_call).split(",")[0]
+                    # Strip species prefix if present (e.g., "human|IGHV1-2*02" -> "IGHV1-2*02")
+                    if "|" in first_v:
+                        first_v = first_v.split("|", 1)[1]
                     if first_v.startswith(("IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG")):
                         return first_v[:3]
             return row["locus"]

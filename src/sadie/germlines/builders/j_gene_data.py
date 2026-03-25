@@ -77,6 +77,39 @@ HUMAN_J_GENE_DATA = {
     "IGLJ7*02": (1, 6, 1),
 }
 
+# Mouse J gene reference data (validated against NCBI IgBLAST official aux data)
+# Format: {allele: (reading_frame, cdr3_end, extra_bps)}
+MOUSE_J_GENE_DATA = {
+    # Heavy chain (JH)
+    "IGHJ1*01": (1, 18, 1),
+    "IGHJ1*02": (1, 18, 1),
+    "IGHJ1*03": (1, 18, 1),
+    "IGHJ2*01": (2, 13, 1),
+    "IGHJ2*02": (2, 13, 1),
+    "IGHJ2*03": (0, 11, 1),
+    "IGHJ3*01": (2, 13, 1),
+    "IGHJ3*02": (2, 13, 1),
+    "IGHJ4*01": (2, 19, 1),
+    # Kappa chain (JK)
+    "IGKJ1*01": (1, 6, 1),
+    "IGKJ1*02": (0, 5, 1),
+    "IGKJ2*01": (2, 7, 1),
+    "IGKJ2*02": (2, 7, 1),
+    "IGKJ2*03": (2, 7, 1),
+    "IGKJ3*01": (1, 6, 1),
+    "IGKJ3*02": (1, 6, 1),
+    "IGKJ4*01": (1, 6, 1),
+    "IGKJ4*02": (1, 6, 1),
+    "IGKJ5*01": (1, 6, 1),
+    # Lambda chain (JL)
+    "IGLJ1*01": (1, 6, 1),
+    "IGLJ2*01": (1, 6, 1),
+    "IGLJ3*01": (1, 6, 1),
+    "IGLJ3P*01": (1, 6, 1),
+    "IGLJ4*01": (1, 6, 1),
+    "IGLJ5*01": (1, 6, 1),
+}
+
 # Chain type mapping
 CHAIN_TYPE_MAP = {
     "H": "JH",
@@ -375,9 +408,9 @@ def parse_j_gene(
 
                     cdr3_aa = j_gene_aa[:end_cdr3_index]
                     fwr4_aa = j_gene_aa[end_cdr3_index:]
-                    cdr3_end_nt_index = end_index_codon
+                    cdr3_end_nt_index = end_index_codon - 1
                     expression_match = True
-                    fwr4_start = cdr3_end_nt_index
+                    fwr4_start = end_index_codon
                     fwr4_end = len(sequence) - (remainder or 0)
         else:
             not_implemented = True
@@ -441,6 +474,11 @@ def get_j_gene_data(
     # Check known human reference data first (for validated human genes)
     if allele_name in HUMAN_J_GENE_DATA and (species is None or species.lower() == "human"):
         rf, cdr3_end, extra_bps = HUMAN_J_GENE_DATA[allele_name]
+        return (rf, chain_type, cdr3_end, extra_bps)
+
+    # Check known mouse reference data (for validated mouse genes)
+    if allele_name in MOUSE_J_GENE_DATA and species is not None and _normalize_species(species) == "mouse":
+        rf, cdr3_end, extra_bps = MOUSE_J_GENE_DATA[allele_name]
         return (rf, chain_type, cdr3_end, extra_bps)
 
     # Calculate from sequence if provided

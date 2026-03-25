@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 import math
 import warnings
-from typing import Any, List, Union
+from pathlib import Path
+from typing import Any, List, Optional, Union
 
 import numpy as np
 
@@ -329,9 +330,36 @@ def run_mutational_analysis(
 
         return LinkedAirrTable(left_table.merge(right_table, on=key, suffixes=(l_suffix, r_suffix)), key_column=key)
 
+    # Detect species for renumbering - chimeric references have species-prefixed v_call values (e.g., "human|IGHV1-2*02")
+    v_calls = airrtable["v_call"].dropna().astype(str)
+    chimeric_species: list[str] = []
+    if not v_calls.empty:
+        has_prefix = v_calls.str.contains("|", regex=False)
+        if has_prefix.any():
+            species_set: set[str] = set()
+            for vc in v_calls[has_prefix]:
+                for call in str(vc).split(","):
+                    if "|" in call:
+                        species_set.add(call.split("|", 1)[0].strip().lower())
+            valid_species = Renumbering.get_allowed_species()
+            chimeric_species = sorted(s for s in species_set if s in valid_species)
+
+    if chimeric_species:
+        allowed_species = chimeric_species
+    elif "species" in pd.DataFrame(airrtable).columns:
+        species_vals = pd.DataFrame(airrtable)["species"].dropna().unique()
+        valid_species = Renumbering.get_allowed_species()
+        allowed_species = sorted(s.lower() for s in species_vals if s.lower() in valid_species)
+        if not allowed_species:
+            allowed_species = ["human"]
+    else:
+        allowed_species = ["human"]
+
     # create Renumbering api
     logger.info("Running Renumbering on germline alignment")
-    renumbering_api = Renumbering(scheme=scheme, allowed_chain=["H", "K", "L"], run_multiproc=run_multiproc)
+    renumbering_api = Renumbering(
+        scheme=scheme, allowed_chain=["H", "K", "L"], allowed_species=allowed_species, run_multiproc=run_multiproc
+    )
     airrtable = pd.DataFrame(airrtable)  # type: ignore[assignment]
     germline_results_renumbering = renumbering_api.run_dataframe(
         airrtable["germline_alignment_aa"].str.replace("-", "").to_frame().join(airrtable[key]),
@@ -444,7 +472,10 @@ def run_igl_assignment(airrtable: Union[AirrTable, LinkedAirrTable]) -> Union[Ai
 
 
 def run_five_prime_buffer(
-    airrtable: AirrTable | LinkedAirrTable, cutoff: int = 21, references: None | References = None
+    airrtable: AirrTable | LinkedAirrTable,
+    cutoff: int = 21,
+    references: None | References = None,
+    database: Optional[Path | str] = None,
 ) -> AirrTable | LinkedAirrTable:
     """Extend incomplete V gene sequences to the 5' end of the sequence with their germline sequence
 
@@ -473,8 +504,8 @@ def run_five_prime_buffer(
     if isinstance(airrtable, LinkedAirrTable):
         # split table into left and right (heavy and light) tables
         left_table, right_table = airrtable.get_split_table()
-        left_table = run_five_prime_buffer(left_table, cutoff, references)
-        right_table = run_five_prime_buffer(right_table, cutoff, references)
+        left_table = run_five_prime_buffer(left_table, cutoff, references, database)
+        right_table = run_five_prime_buffer(right_table, cutoff, references, database)
         key = airrtable.key_column
         l_suffix = airrtable.suffixes[0]
         r_suffix = airrtable.suffixes[1]
@@ -518,7 +549,7 @@ def run_five_prime_buffer(
         new_sequence = Seq(ref_seq[: v_index - 1] + sequence[v_sequnce_start - 1 + change :])
         new_records.append(SeqRecord(new_sequence, id=str(index), name=str(index)))
 
-    airr_api = Airr(refs_name[0], adaptable=True)
+    airr_api = Airr(refs_name[0], adaptable=True, references=references, database=database)
     new_airr_table = airr_api.run_records(new_records)
     airrtable.update(pd.DataFrame(new_airr_table).astype({"sequence_id": int}).set_index("sequence_id"))
     # Don't add the padded_five_prime column - it will be removed anyway
@@ -526,7 +557,9 @@ def run_five_prime_buffer(
 
 
 def run_three_prime_buffer(
-    airrtable: AirrTable | LinkedAirrTable, references: None | References = None
+    airrtable: AirrTable | LinkedAirrTable,
+    references: None | References = None,
+    database: Optional[Path | str] = None,
 ) -> AirrTable | LinkedAirrTable:
     """Extend incomplete J gene sequences to the 3' end of the sequence with their germline sequence
 
@@ -556,8 +589,8 @@ def run_three_prime_buffer(
     if isinstance(airrtable, LinkedAirrTable):
         # split table into left and right (heavy and light) tables
         left_table, right_table = airrtable.get_split_table()
-        left_table = run_three_prime_buffer(left_table, references)
-        right_table = run_three_prime_buffer(right_table, references)
+        left_table = run_three_prime_buffer(left_table, references, database)
+        right_table = run_three_prime_buffer(right_table, references, database)
         key = airrtable.key_column
         l_suffix = airrtable.suffixes[0]
         r_suffix = airrtable.suffixes[1]
@@ -627,7 +660,7 @@ def run_three_prime_buffer(
 
     # Only run IgBLAST if we have sequences to process
     if new_records:
-        airr_api = Airr(refs_name[0], adaptable=True)
+        airr_api = Airr(refs_name[0], adaptable=True, references=references, database=database)
         new_airr_table = airr_api.run_records(new_records)
         airrtable.update(pd.DataFrame(new_airr_table).astype({"sequence_id": int}).set_index("sequence_id"))
     else:
@@ -638,7 +671,10 @@ def run_three_prime_buffer(
 
 
 def run_termini_buffers(
-    airrtable: AirrTable | LinkedAirrTable, cutoff: int = 21, references: None | References = None
+    airrtable: AirrTable | LinkedAirrTable,
+    cutoff: int = 21,
+    references: None | References = None,
+    database: Optional[Path | str] = None,
 ) -> AirrTable | LinkedAirrTable:
     """Extend incomplete V and J gene sequences to the 5'  and 3' end of the sequence with their assigned germline sequence
 
@@ -671,14 +707,14 @@ def run_termini_buffers(
     original_j_calls = airrtable["j_call"].copy() if "j_call" in airrtable.columns else None
 
     logger.debug("Running five prime buffer")
-    airrtable = run_five_prime_buffer(airrtable, cutoff, references)
+    airrtable = run_five_prime_buffer(airrtable, cutoff, references, database)
 
     # Store the original J calls for fallback use in 3' extension
     if original_j_calls is not None:
         airrtable["original_j_call"] = original_j_calls
 
     logger.debug("Running three prime buffer")
-    airrtable = run_three_prime_buffer(airrtable, references)
+    airrtable = run_three_prime_buffer(airrtable, references, database)
 
     # Clean up temporary columns - remove all extension-related tracking columns
     columns_to_drop = []
