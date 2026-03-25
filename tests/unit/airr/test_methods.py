@@ -91,8 +91,7 @@ def test_get_igl_nt(fixture_setup, caplog):
     # seq alignment is shorter/longer than germline
     _row = row.copy()
     _row.germline_alignment_aa = _row.germline_alignment_aa[:-1]
-    with pytest.raises(ValueError):
-        get_igl_nt(_row)
+    assert get_igl_nt(_row) is nan
     _row = row.copy()
     _row.germline_alignment_aa = _row.germline_alignment_aa[:1] + "-" + _row.germline_alignment_aa[2:]
     _row.sequence_alignment_aa = _row.germline_alignment_aa

@@ -67,7 +67,7 @@ def test_antibody_igblast_setup() -> None:
         aux_ref = os.path.join(germline_ref, "imgt/aux_db/")
         with pytest.raises(airr_exceptions.BadIgBLASTArgument):
             ig_blast.germline_db_v = os.path.join(db_ref, "{}_V".format(species))
-        with pytest.warns(UserWarning):
+        with pytest.raises(airr_exceptions.BadIgBLASTArgument):
             ig_blast.germline_db_d = os.path.join(db_ref, "{}_D".format(species))
         with pytest.raises(airr_exceptions.BadIgBLASTArgument):
             ig_blast.germline_db_j = os.path.join(db_ref, "{}_J".format(species))

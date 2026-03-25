@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -9,7 +10,14 @@ from tests.conftest import SadieFixture
 
 def test_airr_cli(fixture_setup: SadieFixture):
     tmp_path = fixture_setup.tmp_path
-    runner = CliRunner()
+
+    # Temporarily disable root logger StreamHandlers to prevent conflict between
+    # pytest log_cli=True and Click CliRunner's stdout/stderr isolation
+    root_logger = logging.getLogger()
+    saved_handlers = root_logger.handlers[:]
+    root_logger.handlers = [h for h in root_logger.handlers if not isinstance(h, logging.StreamHandler)]
+
+    runner = CliRunner(mix_stderr=False)
 
     # check that sadie can be invoked alone (with --help)
     results = runner.invoke(sadie, ["--help"])
@@ -45,3 +53,5 @@ def test_airr_cli(fixture_setup: SadieFixture):
     results = runner.invoke(airr, ["--skip-igl", "--skip-mutation", str(input_file), str(tmp_out)])
     assert Path(tmp_out).exists()
     assert results.exit_code == 0
+
+    root_logger.handlers = saved_handlers

@@ -1,0 +1,236 @@
+<mxfile host="65bd71144e">
+    <diagram id="diagram1" name="Unified Germline Pipeline">
+        <mxGraphModel dx="837" dy="1357" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1800" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="SADIE Unified Germline Pipeline" style="text;strokeColor=none;fillColor=none;html=1;fontSize=24;fontStyle=1;verticalAlign=middle;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="20" width="450" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="subtitle" value="Airr(providers=[...]) &amp;rarr; Reference Module &amp;rarr; Cached IgBLAST Database" style="text;strokeColor=none;fillColor=none;html=1;fontSize=12;fontStyle=2;verticalAlign=middle;align=center;fontColor=#999999;" parent="1" vertex="1">
+                    <mxGeometry x="175" y="55" width="500" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg1" value="Pipeline Step" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="20" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg2" value="External Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="45" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg3" value="User Input" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="70" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg4" value="Output / Artifact" style="shape=parallelogram;html=1;strokeWidth=1;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="95" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg5" value="Decision" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="120" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="entry" value="&lt;b&gt;Airr(reference_name, providers=[...])&lt;/b&gt;&lt;div&gt;User instantiates the Airr class&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+                    <mxGeometry x="265" y="100" width="320" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="decision" value="&lt;b&gt;Which path?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="350" y="190" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_entry_dec" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="entry" target="decision" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="branch1" value="&lt;b&gt;Branch 1: Prebuilt&lt;/b&gt;&lt;div&gt;database=&amp;lt;path&amp;gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="210" width="170" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_dec_b1" value="database= provided" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="decision" target="branch1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="branch1note" value="Uses path directly.&lt;div&gt;Skips all resolution.&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="258" width="170" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="branch2" value="&lt;b&gt;Branch 2: Custom&lt;/b&gt;&lt;div&gt;references=&amp;lt;References&amp;gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="630" y="210" width="170" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_dec_b2" value="references= provided" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="decision" target="branch2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="branch2note" value="Builds fresh from object.&lt;div&gt;No caching.&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="630" y="258" width="170" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="step1" value="1. Check reference.yml&lt;div&gt;(_get_reference_yaml_path)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="320" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_dec_b3" value="default path" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10;fontStyle=1;" parent="1" source="decision" target="step1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step1note" value="If reference.yml missing:&lt;div&gt;auto-generate it&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="325" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="gen_sub1" value="reference.g3.yml (curated baseline)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="310" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="gen_sub2" value="GermlineManager (discover alleles)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="337" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="gen_sub3" value="generate_reference_yaml()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="364" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_gen_sub" value="" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" parent="1" source="gen_sub2" target="step1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step2" value="2. Filter YAML Config&lt;div&gt;(by reference_name + providers)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="415" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e12" value="reference.yml" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="step1" target="step2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step2note" value="Keep only requested species&lt;div&gt;and provider sections&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="420" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="step3" value="3. Cross-Provider Deduplication&lt;div&gt;&lt;b&gt;(YamlRef._deduplicate_yaml_data)&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="510" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e23" value="filtered YAML" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="step2" target="step3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step3note" value="First-come-first-serve:&lt;div&gt;earlier provider wins on&lt;/div&gt;&lt;div&gt;duplicate allele names&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="510" width="180" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="step4" value="4. Cache Lookup&lt;div&gt;&lt;b&gt;(DatabaseCache.get_or_build)&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="610" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e34" value="deduplicated config" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="step3" target="step4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_sub1" value="compute_cache_key()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="600" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_sub2" value="SHA-256(name, sorted providers, yaml)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="627" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_sub3" value="~/.sadie/cache/&amp;lt;hash&amp;gt;/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="654" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cache_sub" value="" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" parent="1" source="cache_sub2" target="step4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_dec" value="&lt;b&gt;Cache&lt;br&gt;hit?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="375" y="705" width="100" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4_cache" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="step4" target="cache_dec" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_hit" value="&lt;b&gt;Cache Hit&lt;/b&gt;&lt;div&gt;Return cached path&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="715" width="140" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cache_hit" value="yes" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontStyle=1;fontSize=10;fontColor=#82b366;" parent="1" source="cache_dec" target="cache_hit" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step5" value="5. Build IgBLAST Database&lt;div&gt;(References.make_airr_database)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="820" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cache_miss" value="no (cache miss)" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=10;fontColor=#b85450;" parent="1" source="cache_dec" target="step5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="build_sub1" value="References.from_yaml()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="810" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="build_sub2" value="GermlineToG3Adapter (format)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="837" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="build_sub3" value="_build_name_mapping (truncation)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="864" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="build_sub4" value="makeblastdb (NCBI BLAST+)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="891" width="185" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_build_sub" value="" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;" parent="1" source="build_sub2" target="step5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step5note" value="Names &amp;gt;50 chars truncated&lt;div&gt;with SHA-256 suffix.&lt;/div&gt;&lt;div&gt;Mapping saved as JSON.&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="825" width="180" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="step6" value="6. Atomic Cache Store&lt;div&gt;(build_and_cache &amp;rarr; os.rename)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="920" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e56" value="compiled database" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="step5" target="step6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step6note" value="Temp dir &amp;rarr; rename for&lt;div&gt;concurrency safety&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="925" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="cache_out" value="~/.sadie/cache/&amp;lt;hash&amp;gt;/" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="1010" width="170" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="e6_out" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="step6" target="cache_out" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_hit_merge" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=1;" parent="1" source="cache_hit" target="cache_out" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="625" y="1030"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="db_struct" value="&lt;table style=&quot;font-size:10px;border-collapse:collapse;width:100%;&quot;&gt;&lt;tr style=&quot;background:#f0f0f0;&quot;&gt;&lt;th style=&quot;border:1px solid #999;padding:4px;&quot; colspan=&quot;2&quot;&gt;Cached Database Contents&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;font-family:monospace;&quot;&gt;blastdb/&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;BLAST databases (V, D, J)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;font-family:monospace;&quot;&gt;aux_db/&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Auxiliary J-gene data&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;font-family:monospace;&quot;&gt;internal_data/&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;IgBLAST annotation files&lt;/td&gt;&lt;/tr&gt;&lt;tr style=&quot;font-weight:bold;background:#f8cecc;&quot;&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;font-family:monospace;&quot;&gt;.allele_name_mapping.json&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Truncated &amp;rarr; original names&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;font-family:monospace;&quot;&gt;.sadie_cache_complete&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Sentinel (build succeeded)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="text;strokeColor=none;fillColor=none;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="980" width="260" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="step7" value="7. IgBLAST Annotation&lt;div&gt;(GermlineData &amp;rarr; IgBLAST)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="1090" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_out_7" value="db_path" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="cache_out" target="step7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step7note" value="GermlineData(prebuilt=True)&lt;div&gt;wraps the cached path&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="1095" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="step8" value="8. Reverse Name Mapping&lt;div&gt;(_apply_allele_name_reverse_mapping)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="315" y="1190" width="220" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e78" value="raw IgBLAST output" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=9;" parent="1" source="step7" target="step8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="step8note" value="Restores truncated gene&lt;div&gt;names to originals using&lt;/div&gt;&lt;div&gt;.allele_name_mapping.json&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=10;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="1190" width="180" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="output" value="&lt;b&gt;AirrTable&lt;/b&gt;&lt;div&gt;AIRR-standard annotation results&lt;/div&gt;&lt;div&gt;(v_call, d_call, j_call, cdr3, ...)&lt;/div&gt;" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="275" y="1295" width="300" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e8_out" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="step8" target="output" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fallback_label" value="&lt;b&gt;Fallback Path&lt;/b&gt; (if unified pipeline fails)" style="text;strokeColor=none;fillColor=none;html=1;fontSize=11;fontStyle=0;align=left;fontColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="1140" width="260" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fallback" value="Direct GermlineData&lt;div&gt;(legacy germlines/ module)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="1165" width="195" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="fallback_note" value="Catches BadDataSet,&lt;div&gt;ValueError, RuntimeError,&lt;/div&gt;&lt;div&gt;FileNotFoundError, OSError,&lt;/div&gt;&lt;div&gt;yaml.YAMLError&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=9;align=left;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="1208" width="195" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_fallback" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4;strokeColor=#b85450;fontSize=9;" parent="1" source="step5" target="fallback" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="152" y="848"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="callout" value="&lt;b&gt;Cache invalidation:&lt;/b&gt;&lt;div&gt;Any change to allele lists,&lt;/div&gt;&lt;div&gt;providers, or YAML content&lt;/div&gt;&lt;div&gt;produces a new cache key.&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Override:&lt;/b&gt; SADIE_CACHE_DIR&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=8;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="960" width="200" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="prov_table" value="&lt;table style=&quot;font-size:10px;border-collapse:collapse;width:100%;&quot;&gt;&lt;tr style=&quot;background:#f0f0f0;&quot;&gt;&lt;th style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Provider&lt;/th&gt;&lt;th style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Curated spp.&lt;/th&gt;&lt;th style=&quot;border:1px solid #999;padding:4px;&quot;&gt;Uncurated spp.&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;IMGT&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;g3 allowlist only&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;ALL alleles&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;OGRDB&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;ALL alleles&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;ALL alleles&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;VDJbase&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;ALL alleles&lt;/td&gt;&lt;td style=&quot;border:1px solid #999;padding:4px;&quot;&gt;ALL alleles&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;" style="text;strokeColor=none;fillColor=none;html=1;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="1290" width="250" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_b1_igblast" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=1;dashed=1;dashPattern=4 4;fontColor=#666666;" parent="1" source="branch1" target="step7" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="135" y="1118"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_b2_igblast" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=1;dashed=1;dashPattern=4 4;fontColor=#666666;" parent="1" source="branch2" target="step7" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="715" y="1118"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

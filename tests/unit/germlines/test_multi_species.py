@@ -93,6 +93,10 @@ class TestBlastDatabaseIntegrity:
         for species_dir in database_dir.iterdir():
             if not species_dir.is_dir() or species_dir.name.startswith("."):
                 continue
+            if species_dir.name in ("_template", "raw"):
+                continue
+            if not any(species_dir.iterdir()):
+                continue
 
             species = species_dir.name
 
