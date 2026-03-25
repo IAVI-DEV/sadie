@@ -15,6 +15,7 @@ from Bio.Seq import Seq
 from Levenshtein import distance  # type: ignore
 from numpy import nan
 
+from sadie._compat import PANDAS_VERSION, _is_internal_manager
 from sadie.airr.airrtable.constants import CONSTANTS_AIRR, IGBLAST_AIRR, OTHER_COLS
 from sadie.airr.airrtable.genbank import GenBank, GenBankFeature
 from sadie.airr.exceptions import MissingAirrColumns
@@ -63,10 +64,13 @@ class AirrSeries(pd.Series):  # type: ignore
     _metadata = ["meta"]  # add custom namespaces here
 
     def __init__(self, data: Any, copy: bool = False, *args, **kwargs):
-        super(AirrSeries, self).__init__(data=data, copy=copy, *args, **kwargs)  # type: ignore
-        # Only run verification if data is not from internal operations (SingleBlockManager)
+        if PANDAS_VERSION >= (3,):
+            super(AirrSeries, self).__init__(data=data, *args, **kwargs)  # type: ignore
+        else:
+            super(AirrSeries, self).__init__(data=data, copy=copy, *args, **kwargs)  # type: ignore
+        # Only run verification if data is not from internal pandas operations
         # Also skip verification if we're creating a boolean series (from astype operations)
-        if not (data.__class__.__name__ == "SingleBlockManager"):
+        if not _is_internal_manager(data):
             if isinstance(data, pd.Series) and data.dtype != bool:
                 self._verify()
 
@@ -77,6 +81,14 @@ class AirrSeries(pd.Series):  # type: ignore
     @property
     def _constructor_expanddim(self) -> Type["AirrTable"]:
         return AirrTable
+
+    @classmethod
+    def _constructor_from_mgr(cls, mgr, axes):
+        """Override to prevent type-slicing during internal pandas operations."""
+        obj = pd.Series._from_mgr(mgr, axes)
+        obj.__class__ = cls
+        object.__setattr__(obj, "_name", None)
+        return obj
 
     def _verify(self) -> None:
         """Verifies that the AirrSeries is valid"""
@@ -229,10 +241,13 @@ class AirrTable(pd.DataFrame):
         # Check if we're in a constructor chain to prevent recursion
         self._in_constructor = getattr(self, "_in_constructor", False)
 
-        super(AirrTable, self).__init__(data=data, copy=copy)  # type: ignore
+        if PANDAS_VERSION >= (3,):
+            super(AirrTable, self).__init__(data=data)  # type: ignore
+        else:
+            super(AirrTable, self).__init__(data=data, copy=copy)  # type: ignore
 
-        # Only run initialization if not in a constructor chain and not a BlockManager
-        if not self._in_constructor and not (data.__class__.__name__ == "BlockManager"):
+        # Only run initialization if not in a constructor chain and not an internal manager
+        if not self._in_constructor and not _is_internal_manager(data):
             if self.__class__ is AirrTable:
                 self._islinked: bool = False
                 self._key_column: str = key_column
@@ -286,13 +301,8 @@ class AirrTable(pd.DataFrame):
     @classmethod
     def _constructor_from_mgr(cls, mgr, axes):
         """Override to prevent recursion during internal pandas operations."""
-        # Create instance with the flag set to prevent verification
-        obj = cls.__new__(cls)
-        obj._in_constructor = True
-        # Call parent constructor
-        pd.DataFrame.__init__(obj, mgr)
-        obj._in_constructor = False
-        # Copy metadata from the original if available
+        obj = pd.DataFrame._from_mgr(mgr, axes)
+        obj.__class__ = cls
         return obj
 
     @property
@@ -488,8 +498,8 @@ class AirrTable(pd.DataFrame):
         # drop any unnamed columns without triggering recursion
         unnamed_cols = [i for i in self.columns if "Unnamed" in i]
         if unnamed_cols:
-            # Use super().drop to avoid recursion through _constructor
-            super().drop(unnamed_cols, axis=1, inplace=True)
+            for col in unnamed_cols:
+                del self[col]
 
         # set boolean strings to boolelan types
         _to_boolean = ["productive", "vj_in_frame", "stop_codon", "rev_comp", "v_frameshift", "complete_vdj"]
@@ -544,9 +554,9 @@ class AirrTable(pd.DataFrame):
                         continue
 
                     new_call = call + f"_top{suffix}"
-                    # drop the volumn if it's already there, that helps with backwards compatibility
+                    # drop the column if it's already there, that helps with backwards compatibility
                     if new_call in self.columns:
-                        super().drop(new_call, inplace=True, axis=1)
+                        del self[new_call]
 
                     # Insert right next to the X_call airr_columns
                     self.insert(
@@ -554,34 +564,37 @@ class AirrTable(pd.DataFrame):
                     )
 
                 # get mutation frequency rather than identity
-                self.loc[:, f"v_mutation{suffix}"] = self[f"v_identity{suffix}"].apply(lambda x: (1 - x))
-                # self.loc[:, f"v_identity{suffix}"] = self[f"v_identity{suffix}"].apply(lambda x: x / 100)
+                self[f"v_mutation{suffix}"] = (1 - self[f"v_identity{suffix}"]).astype("float32")
 
                 # then get a percentage for AA by computing levenshtein
-                self.loc[:, f"v_mutation_aa{suffix}"] = self[
-                    [f"v_sequence_alignment_aa{suffix}", f"v_germline_alignment_aa{suffix}"]
-                ].apply(lambda x: self._get_aa_distance(x), axis=1)
+                self[f"v_mutation_aa{suffix}"] = (
+                    self[[f"v_sequence_alignment_aa{suffix}", f"v_germline_alignment_aa{suffix}"]]
+                    .apply(self._get_aa_distance, axis=1)
+                    .astype("float32")
+                )
 
                 # do the same for D and J gene segment portions
-                self.loc[:, f"d_mutation{suffix}"] = self[f"d_identity{suffix}"].apply(
-                    lambda x: (1 - x) if x else np.nan
+                self[f"d_mutation{suffix}"] = (
+                    self[f"d_identity{suffix}"].apply(lambda x: (1 - x) if x else np.nan).astype("float32")
                 )
-                # self.loc[:, f"d_identity{suffix}"] = self[f"d_identity{suffix}"].apply(lambda x: x / 100)
 
-                self.loc[:, f"d_mutation_aa{suffix}"] = self[
-                    [f"d_sequence_alignment_aa{suffix}", f"d_germline_alignment_aa{suffix}"]
-                ].apply(lambda x: self._get_aa_distance(x), axis=1)
-                self.loc[:, f"j_mutation{suffix}"] = self[f"j_identity{suffix}"].apply(lambda x: (1 - x))
-                # self.loc[:, f"j_identity{suffix}"] = self[f"j_identity{suffix}"].apply(lambda x: x / 100)
-                self.loc[:, f"j_mutation_aa{suffix}"] = self[
-                    [f"j_sequence_alignment_aa{suffix}", f"j_germline_alignment_aa{suffix}"]
-                ].apply(lambda x: self._get_aa_distance(x), axis=1)
+                self[f"d_mutation_aa{suffix}"] = (
+                    self[[f"d_sequence_alignment_aa{suffix}", f"d_germline_alignment_aa{suffix}"]]
+                    .apply(self._get_aa_distance, axis=1)
+                    .astype("float32")
+                )
+                self[f"j_mutation{suffix}"] = (1 - self[f"j_identity{suffix}"]).astype("float32")
+                self[f"j_mutation_aa{suffix}"] = (
+                    self[[f"j_sequence_alignment_aa{suffix}", f"j_germline_alignment_aa{suffix}"]]
+                    .apply(self._get_aa_distance, axis=1)
+                    .astype("float32")
+                )
 
         else:
             for call in ["v_call", "d_call", "j_call"]:
-                # drop the volumn if it's already there, that helps with backwards compatibility
+                # drop the column if it's already there, that helps with backwards compatibility
                 if f"{call}_top" in self.columns:
-                    super().drop(f"{call}_top", inplace=True, axis=1)
+                    del self[f"{call}_top"]
                 # pure light chain columns won't have a dcall
                 if call in self.columns:
                     # Insert right next to the X_call airr_columns
@@ -590,22 +603,27 @@ class AirrTable(pd.DataFrame):
                     )
 
             # get mutation frequency rather than identity
-            self.loc[:, "v_mutation"] = self["v_identity"].apply(lambda x: (1 - x))
+            self["v_mutation"] = (1 - self["v_identity"]).astype("float32")
 
             # then get a percentage for AA by computing levenshtein
-            self.loc[:, "v_mutation_aa"] = self[["v_sequence_alignment_aa", "v_germline_alignment_aa"]].apply(
-                lambda x: self._get_aa_distance(x), axis=1
+            self["v_mutation_aa"] = (
+                self[["v_sequence_alignment_aa", "v_germline_alignment_aa"]]
+                .apply(self._get_aa_distance, axis=1)
+                .astype("float32")
             )
 
             # do the same for D and J gene segment portions
-            self.loc[:, "d_mutation"] = self["d_identity"].apply(lambda x: (1 - x) if x else np.nan)
-            self.loc[:, "d_mutation_aa"] = self[["d_sequence_alignment_aa", "d_germline_alignment_aa"]].apply(
-                lambda x: self._get_aa_distance(x), axis=1
+            self["d_mutation"] = self["d_identity"].apply(lambda x: (1 - x) if x else np.nan).astype("float32")
+            self["d_mutation_aa"] = (
+                self[["d_sequence_alignment_aa", "d_germline_alignment_aa"]]
+                .apply(self._get_aa_distance, axis=1)
+                .astype("float32")
             )
-            self.loc[:, "j_mutation"] = self["j_identity"].apply(lambda x: (1 - x))
-            # self.loc[:, "j_identity"] = self["j_identity"].apply(lambda x: x / 100)
-            self.loc[:, "j_mutation_aa"] = self[["j_sequence_alignment_aa", "j_germline_alignment_aa"]].apply(
-                lambda x: self._get_aa_distance(x), axis=1
+            self["j_mutation"] = (1 - self["j_identity"]).astype("float32")
+            self["j_mutation_aa"] = (
+                self[["j_sequence_alignment_aa", "j_germline_alignment_aa"]]
+                .apply(self._get_aa_distance, axis=1)
+                .astype("float32")
             )
         self._verified = True
 
@@ -982,14 +1000,21 @@ class LinkedAirrTable(AirrTable):
         copy: bool = False,
     ):
         super(LinkedAirrTable, self).__init__(data=data, copy=copy)
-        # Only run initialization if data is not a BlockManager (internal pandas object)
-        if not (data.__class__.__name__ == "BlockManager"):
+        # Only run initialization if data is not an internal pandas manager object
+        if not _is_internal_manager(data):
             if isinstance(self, LinkedAirrTable):
                 self._islinked = True
                 self._key_column = key_column
                 self._suffixes = suffixes
                 if not self.verified:
                     self._verify()
+
+    @classmethod
+    def _constructor_from_mgr(cls, mgr, axes):
+        """Override to prevent type-slicing during internal pandas operations."""
+        obj = pd.DataFrame._from_mgr(mgr, axes)
+        obj.__class__ = cls
+        return obj
 
     @property
     def key_column(self) -> str:
