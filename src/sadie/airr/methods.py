@@ -170,9 +170,11 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
         return np.nan
 
     if len(germline_alignment_aa) != len(sequence_alignment_aa):
-        raise ValueError(
-            f"{row.index} - germline aa alignment is not the same length as the sequence aa alignment {len(germline_alignment_aa)} != {len(sequence_alignment_aa)}"
+        logger.debug(
+            f"{row.name} - germline aa alignment is not the same length as the sequence aa alignment "
+            f"{len(germline_alignment_aa)} != {len(sequence_alignment_aa)}"
         )
+        return np.nan
 
     # indexer
     germline_index, sequence_index = 0, 0

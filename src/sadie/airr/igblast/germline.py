@@ -416,12 +416,18 @@ class GermlineData:
         """
         Build gene name → source lookup table.
 
+        Results are cached on the instance so repeated calls
+        return the same object (identity check with ``is``).
+
         Returns
         -------
         Dict[str, str]
             Mapping from gene name to source provider
             (imgt, vdjbase, ogrdb, custom)
         """
+        if hasattr(self, "_source_lookup_cache"):
+            return self._source_lookup_cache
+
         from sadie.germlines import GermlineManager
 
         lookup: Dict[str, str] = {}
@@ -436,4 +442,5 @@ class GermlineData:
                 except Exception:
                     pass  # Some segment/chain combos may not exist
 
+        self._source_lookup_cache = lookup
         return lookup
