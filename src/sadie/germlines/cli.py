@@ -178,10 +178,6 @@ def populate_provider(
     dict
         Results with species counts and status
     """
-    if not force and is_up_to_date(provider_name):
-        console.print(f"[yellow]{provider_name}[/yellow]: Already up-to-date, skipping")
-        return {"status": "skipped", "reason": "up-to-date"}
-
     all_species = get_all_provider_species(provider_name)
     target_species = species if species else all_species
 
@@ -190,6 +186,10 @@ def populate_provider(
         for sp in target_species:
             console.print(f"  - {sp}")
         return {"status": "dry_run", "species_count": len(target_species)}
+
+    if not force and is_up_to_date(provider_name):
+        console.print(f"[yellow]{provider_name}[/yellow]: Already up-to-date, skipping")
+        return {"status": "skipped", "reason": "up-to-date"}
 
     completed = load_checkpoint(provider_name) if not force else set()
     remaining = [sp for sp in target_species if sp not in completed]
