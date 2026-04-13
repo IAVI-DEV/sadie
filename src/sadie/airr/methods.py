@@ -354,6 +354,12 @@ def run_mutational_analysis(
         allowed_species = sorted(s.lower() for s in species_vals if s.lower() in valid_species)
         if not allowed_species:
             allowed_species = ["human"]
+    elif "reference_name" in pd.DataFrame(airrtable).columns:
+        ref_vals = pd.DataFrame(airrtable)["reference_name"].dropna().unique()
+        valid_species = Renumbering.get_allowed_species()
+        allowed_species = sorted(s.lower() for s in ref_vals if s.lower() in valid_species)
+        if not allowed_species:
+            allowed_species = ["human"]
     else:
         allowed_species = ["human"]
 

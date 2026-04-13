@@ -281,6 +281,7 @@ class Renumbering:
             "rat",
             "rabbit",
             "rhesus",
+            "macaque",
             "pig",
             "alpaca",
             "dog",

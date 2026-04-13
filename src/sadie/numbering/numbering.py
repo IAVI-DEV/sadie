@@ -393,6 +393,15 @@ class Numbering:
 
         return vector_state
 
+    # Species aliases for germline lookup - maps alternative names to keys in all_germlines
+    _SPECIES_ALIASES = {
+        "macaque": "rhesus",
+    }
+
+    def _resolve_germline_species(self, species_name):
+        """Resolve species name to the key used in all_germlines, applying aliases."""
+        return self._SPECIES_ALIASES.get(species_name, species_name)
+
     def run_germline_assignment(self, state_vector, sequence, chain_type, allowed_species=None):
         """
         Find the closest sequence identity match.
@@ -412,19 +421,21 @@ class Numbering:
             if allowed_species is not None:
                 _allowed = []
                 for sp in allowed_species:
-                    if sp not in all_germlines["V"][chain_type]:
-                        logger.debug(f"removeing {sp} from all types since it does not exists for {chain_type}")
+                    resolved = self._resolve_germline_species(sp)
+                    if resolved not in all_germlines["V"][chain_type]:
+                        logger.debug(f"removing {sp} (resolved: {resolved}) from all types since it does not exist for {chain_type}")
                         continue
                     else:
-                        _allowed.append(sp)
+                        _allowed.append(resolved)
             else:
                 allowed_species = _allowed
             seq_ids = {}
             for species in allowed_species:
-                if species not in all_germlines["V"][chain_type]:
-                    continue  # Previously bug.
-                for gene, germline_sequence in all_germlines["V"][chain_type][species].items():
-                    seq_ids[(species, gene)] = self.get_identity(state_sequence, germline_sequence)
+                resolved = self._resolve_germline_species(species)
+                if resolved not in all_germlines["V"][chain_type]:
+                    continue
+                for gene, germline_sequence in all_germlines["V"][chain_type][resolved].items():
+                    seq_ids[(resolved, gene)] = self.get_identity(state_sequence, germline_sequence)
             genes["v_gene"][0] = max(seq_ids, key=lambda x: seq_ids[x])
             genes["v_gene"][1] = seq_ids[genes["v_gene"][0]]
 
