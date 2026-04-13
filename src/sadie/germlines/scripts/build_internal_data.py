@@ -203,7 +203,10 @@ def generate_ndm_entry(gene_name: str, gapped_seq: str, chain: str) -> Optional[
 
 def build_ndm_file(species: str, germlines_root: Path) -> List[str]:
     """
-    Build NDM file content for a species from IMGT gapped sequences.
+    Build NDM file content for a species from normalized gapped sequences.
+
+    Reads from normalized/{species}/gapped/ which contains V genes from ALL
+    providers (custom, ogrdb, vdjbase, imgt), priority-merged and IMGT-gapped.
 
     Parameters
     ----------
@@ -217,21 +220,19 @@ def build_ndm_file(species: str, germlines_root: Path) -> List[str]:
     List[str]
         NDM file lines
     """
-    imgt_dir = germlines_root / "sources" / "imgt" / species
+    normalized_gapped_dir = germlines_root / "normalized" / species / "gapped"
     entries = []
 
     # Process V genes for each chain
     for chain in ["H", "K", "L"]:
-        gapped_fasta = imgt_dir / f"IG{chain}V_gapped.fasta"
+        gapped_fasta = normalized_gapped_dir / f"IG{chain}V.fasta"
 
         if not gapped_fasta.exists():
             logger.debug(f"No gapped V file: {gapped_fasta}")
             continue
 
         for record in SeqIO.parse(gapped_fasta, "fasta"):
-            # Parse IMGT header: >ACCESSION|GENE_NAME|SPECIES|...
-            parts = record.id.split("|")
-            gene_name = parts[1] if len(parts) > 1 else parts[0]
+            gene_name = record.id
 
             gapped_seq = str(record.seq).upper()
             entry = generate_ndm_entry(gene_name, gapped_seq, chain)

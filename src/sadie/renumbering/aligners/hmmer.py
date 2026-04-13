@@ -6,6 +6,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import pyhmmer
+
+
+def _ensure_str(value: str | bytes) -> str:
+    """Convert bytes to str, handling both pyhmmer <0.12 (bytes) and >=0.12 (str)."""
+    return value if isinstance(value, str) else value.decode()
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -183,7 +188,13 @@ class HMMER:
             name = name.encode()
         if isinstance(seq, Seq):
             seq = str(seq)
-        return pyhmmer.easel.TextSequence(name=name, sequence=seq).digitize(self.alphabet)
+        try:
+            return pyhmmer.easel.TextSequence(name=name, sequence=seq).digitize(self.alphabet)
+        except TypeError:
+            # pyhmmer >=0.12 expects str name, not bytes
+            if isinstance(name, bytes):
+                name = name.decode()
+            return pyhmmer.easel.TextSequence(name=name, sequence=seq).digitize(self.alphabet)
 
     def transform_seqs(
         self, seq_objs: Union[List[Union[Path, SeqRecord, str]], Path, SeqRecord, str]
@@ -323,10 +334,10 @@ class HMMER:
         sequences = self.transform_seqs(sequences)  # type: ignore[assignment]
 
         # Multiprocessing might scramble actual seq from order
-        seq_name_2_seq = {seq.name.decode(): seq.textize().sequence for seq in sequences}
+        seq_name_2_seq = {_ensure_str(seq.name): seq.textize().sequence for seq in sequences}
 
         # Maintain order of sequences since pyhmmer is async
-        results = {seq.name.decode(): [] for seq in sequences}
+        results = {_ensure_str(seq.name): [] for seq in sequences}
 
         # HMMs not big enough to be worth multiprocessing
         for top_hits in pyhmmer.hmmsearch(self.hmms, sequences, cpus=1):
@@ -337,17 +348,19 @@ class HMMER:
                 if domain.score < bit_score_threshold:
                     continue
 
-                results[hit.name.decode()].append(
+                hit_name = _ensure_str(hit.name)
+                hmm_name = _ensure_str(ali.hmm_name)
+                results[hit_name].append(
                     {
                         "order": 0,  # best domain always has order 0
                         # "order": _i,  # no need for it unless we allow multiple domain hits
                         "n": len(hit.domains),
-                        "query": hit.name.decode(),
-                        "query_length": len(seq_name_2_seq[hit.name.decode()]),
+                        "query": hit_name,
+                        "query_length": len(seq_name_2_seq[hit_name]),
                         "hmm_seq": ali.hmm_sequence,
                         "hmm_start": ali.hmm_from - 1,  # hmm seq starts with 1 and not 0
                         "hmm_end": ali.hmm_to,
-                        "id": ali.hmm_name.decode(),
+                        "id": hmm_name,
                         "description": hit.description or "",
                         "evalue": float("{:.2e}".format(domain.c_evalue)),
                         # "bitscore": round(hit.score, 1),  # TODO: numbering doesnt use hit score, but domain score; maybe use this as an option later?
@@ -356,8 +369,8 @@ class HMMER:
                         "query_seq": ali.target_sequence.upper(),
                         "query_start": ali.target_from - 1,  # target seq starts on pythonic index
                         "query_end": ali.target_to,
-                        "species": ali.hmm_name.decode().split("_")[0],
-                        "chain_type": ali.hmm_name.decode().split("_")[1],
+                        "species": hmm_name.split("_")[0],
+                        "chain_type": hmm_name.split("_")[1],
                     }
                 )
 
