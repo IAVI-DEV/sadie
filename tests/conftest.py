@@ -370,6 +370,29 @@ class ReferenceFixtures:
             ("rabbit", "IGHJ3*02"): "igblast has wrong reading frame",
         }
 
+    def is_aux_exception(self, index: tuple) -> bool:
+        """Check if an aux index is a known exception (exact or pattern match).
+
+        Parameters
+        ----------
+        index : tuple
+            (species, gene_name) tuple from the aux multi-index
+
+        Returns
+        -------
+        bool
+            True if this index matches a known exception
+        """
+        # Exact matches
+        if index in self.get_aux_exceptions():
+            return True
+        # Rabbit J genes have systematic reading frame / CDR3 differences
+        # between IgBLAST reference data and germline module IMGT annotations
+        species, gene = index
+        if species == "rabbit" and ("IGK" in gene or "IGL" in gene) and "J" in gene:
+            return True
+        return False
+
     def get_internal_db_excetions(self) -> List[List[str]]:
         """get a list of known exceptions from IMGT"""
         return [

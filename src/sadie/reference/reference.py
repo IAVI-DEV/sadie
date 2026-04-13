@@ -139,7 +139,7 @@ class Reference:
     # G3 API Endpoint
     _endpoint = "https://g3.jordanrwillis.com/api/v1/genes"
 
-    def __init__(self, endpoint: str = _endpoint, use_germlines: bool = False):
+    def __init__(self, endpoint: str = _endpoint, use_germlines: bool = True):
         """Initialize the reference object
 
         Parameters
@@ -148,7 +148,7 @@ class Reference:
            The endpoint API address to get the data. Defaults to the G3 API.
            Ignored if use_germlines is True.
         use_germlines : bool, optional
-           If True, use local germlines module instead of G3 API. Defaults to False.
+           If True, use local germlines module instead of G3 API. Defaults to True.
         """
         self.data: List[Dict[Column, str] | Dict[str, str]] = []
         self.use_germlines = use_germlines
@@ -537,7 +537,7 @@ class References:
         return concat_df
 
     @staticmethod
-    def from_yaml(yaml_path: Optional[Path] = None, use_germlines: bool = False) -> "References":
+    def from_yaml(yaml_path: Optional[Path] = None, use_germlines: bool = True) -> "References":
         """Parse a yaml file into a references file object
 
         Parameters
@@ -545,7 +545,7 @@ class References:
         yaml_path : Path
             Path to yaml file
         use_germlines : bool, optional
-            If True, use local germlines module instead of G3 API. Defaults to False.
+            If True, use local germlines module instead of G3 API. Defaults to True.
 
         Returns
         -------
@@ -1026,9 +1026,9 @@ class References:
         ref_class.to_airr_database("/path/to/output/")
         """
         if not self.references:
-            # If empty make a reference from the yaml from object and call G3
+            # If empty make a reference from the yaml from object using local germlines
             logger.warning("Reference data is empty - Generating from yaml")
-            self.references = self.from_yaml().references.copy()
+            self.references = self.from_yaml(use_germlines=True).references.copy()
         if isinstance(output_path, str):
             output_path = Path(output_path)
 

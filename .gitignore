@@ -79,8 +79,10 @@ my_database/
 # helpers tailored for user specific needs
 .claude/
 .cursor/
-# .factory/ is committed for mission infrastructure
-# .factory/
+.factory/
 
 # test env
 nb/
+
+# Data files
+PC68-L31 bnAb Lineage Details_Revised.xlsx
