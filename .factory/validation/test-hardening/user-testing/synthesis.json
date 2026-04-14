@@ -1,41 +1,38 @@
 {
   "milestone": "test-hardening",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "assertionsSummary": {
     "total": 8,
-    "passed": 5,
-    "failed": 3,
+    "passed": 6,
+    "failed": 2,
     "blocked": 0
   },
   "passedAssertions": [
     "VAL-TEST-001",
     "VAL-TEST-002",
+    "VAL-TEST-003",
     "VAL-TEST-004",
     "VAL-TEST-005",
     "VAL-CROSS-003"
   ],
   "failedAssertions": [
     {
-      "id": "VAL-TEST-003",
-      "reason": "Heavy-chain numbered-result and germline-assignment coverage passes for every allowed species, but HMM-loading coverage is implemented as a for-loop rather than pytest parameterization, so the file does not literally parametrize all three required dimensions."
-    },
-    {
       "id": "VAL-CROSS-001",
-      "reason": "Using productive macaque IGH sequence_id=772 from bum_igl_assignment_macaque.feather, Airr(\"macaque\").run_single() routed to macaque HMMs but returned j_call, sequence_alignment_aa, and germline_alignment_aa as nan; run_mutational_analysis(..., \"kabat\") then raised KeyError(\"Id\")."
+      "reason": "Airr('macaque').run_single() on the committed MACAQUE_IGH_NT sequence still returns nan j/alignment fields, and run_mutational_analysis(..., 'kabat') raises KeyError('Id'), so the exact same-sequence full pipeline does not produce Kabat output."
     },
     {
       "id": "VAL-CROSS-002",
-      "reason": "The renumbering-level rhesus compatibility tests pass, but the full user-facing Airr entry point does not: Airr(\"rhesus\") raises BadDataSet instead of behaving identically to Airr(\"macaque\")."
+      "reason": "Airr('rhesus') now aliases to macaque and matches run_single output, but substituting 'rhesus' at every entry point still does not yield identical full-pipeline results because both same-sequence pipelines fail before mutation/Kabat output is produced."
     }
   ],
   "blockedAssertions": [],
   "appliedUpdates": [
     {
       "target": "user-testing.md",
-      "description": "Documented the current `Airr(\"rhesus\")` entry-point failure and the reproducible raw-sequence macaque `VAL-CROSS-001` failure path discovered during test-hardening validation.",
+      "description": "Updated the current validation findings to reflect that Airr('rhesus') now aliases to 'macaque', while the strict same-sequence Airr(...).run_single() -> run_mutational_analysis() chain still fails for both macaque and rhesus and fixture-row reference_name aliasing remains equivalent.",
       "source": "flow-report"
     }
   ],
-  "previousRound": null
+  "previousRound": ".factory/validation/test-hardening/user-testing/synthesis.round1.json"
 }

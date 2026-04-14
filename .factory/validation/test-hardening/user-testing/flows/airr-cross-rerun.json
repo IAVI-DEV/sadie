@@ -1,0 +1,125 @@
+{
+  "groupId": "airr-cross-rerun",
+  "surface": "pytest",
+  "testedAt": "2026-04-14T13:46:12.398046+00:00",
+  "milestone": "test-hardening",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "mode": "shared project checkout read-only except assigned evidence/report outputs"
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commandsRun": [
+    {
+      "command": "poetry run pytest \"/Users/tmsincomb/sadie/tests/unit/airr/test_macaque_e2e.py\" -k \"TestMacaqueFullPipelineChain or TestRhesusAirrAlias\" -vv",
+      "exitCode": 0,
+      "purpose": "Validate the committed tests that now cover macaque full-pipeline chain coverage and the Airr('rhesus') alias behavior.",
+      "observation": "6 selected tests passed; the committed suite proves constructor/run_single alias coverage and fixture-based chain checks, but not the exact same-sequence Airr(...).run_single() -> run_mutational_analysis() contract.",
+      "evidenceFile": "test-hardening/airr-cross-rerun/01-committed-targeted-pytest.log"
+    },
+    {
+      "command": "poetry run pytest -o addopts= \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/airr-cross-rerun/test_airr_cross_rerun_evidence.py\" -vv -s",
+      "exitCode": 1,
+      "purpose": "Strictly validate the exact same-sequence macaque chain and the rhesus-at-every-entry-point parity contract with evidence-only pytest checks.",
+      "observation": "VAL-CROSS-001 and the strict same-sequence portion of VAL-CROSS-002 failed: Airr(...).run_single() returned productive output but j_call, sequence_alignment_aa, and germline_alignment_aa were NaN, and run_mutational_analysis(..., 'kabat') raised KeyError 'Id'. A fixture-row subcheck showed reference_name='rhesus' still matches macaque mutation calls when the AirrTable already contains valid alignments.",
+      "evidenceFile": "test-hardening/airr-cross-rerun/02-helper-evidence-pytest.log"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CROSS-001",
+      "title": "macaque full pipeline correct Kabat positions",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Run the committed macaque/rhesus target tests in tests/unit/airr/test_macaque_e2e.py.",
+          "expected": "Committed tests exercising the recent fixes pass.",
+          "observed": "All 6 selected committed tests passed (see 01-committed-targeted-pytest.log)."
+        },
+        {
+          "action": "Run an evidence-only same-sequence check for Airr('macaque').run_single() -> run_mutational_analysis(..., 'kabat') using the committed MACAQUE_IGH_NT sequence.",
+          "expected": "The exact same sequence reaches mutational analysis successfully and yields a Kabat position 30 residue (not a deletion).",
+          "observed": "run_single() returned productive=True with reference_name='macaque' and v_call='IGHV4-5WKJ*19', but j_call, sequence_alignment_aa, and germline_alignment_aa were NaN; run_mutational_analysis(..., 'kabat') then raised KeyError 'Id', so no Kabat position 30 output was available for the same-sequence flow."
+        }
+      ],
+      "evidence": {
+        "pytestLogs": [
+          "test-hardening/airr-cross-rerun/01-committed-targeted-pytest.log",
+          "test-hardening/airr-cross-rerun/02-helper-evidence-pytest.log"
+        ],
+        "helperFile": "test-hardening/airr-cross-rerun/test_airr_cross_rerun_evidence.py",
+        "keyObservation": "The exact Airr('macaque').run_single() output still lacks j_call and AA alignment fields required by run_mutational_analysis()."
+      },
+      "issues": "Contract not met: the same macaque sequence does not complete the Airr('macaque').run_single() -> run_mutational_analysis(..., 'kabat') chain, and the position-30/non-deletion requirement cannot be observed on that exact flow."
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "rhesus full pipeline identical to macaque",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Run the committed Airr('rhesus') alias tests in tests/unit/airr/test_macaque_e2e.py.",
+          "expected": "Airr('rhesus') is accepted and its run_single output matches Airr('macaque').",
+          "observed": "The committed alias tests passed: Airr('rhesus') no longer raises BadDataSet, and the committed run_single comparison passed."
+        },
+        {
+          "action": "Run an evidence-only same-sequence parity check for Airr('macaque') and Airr('rhesus') followed by run_mutational_analysis(..., 'kabat').",
+          "expected": "Both full pipelines succeed and produce identical Kabat positions, germline assignment, and mutation calls.",
+          "observed": "The macaque and rhesus run_single outputs matched each other, but both contained j_call/sequence_alignment_aa/germline_alignment_aa as NaN and both full pipelines raised KeyError 'Id' at run_mutational_analysis(..., 'kabat'), so no final user-facing full-pipeline output exists to compare."
+        },
+        {
+          "action": "Run the evidence-only fixture-row subcheck with reference_name switched between 'macaque' and 'rhesus'.",
+          "expected": "If the reference_name alias path works, both mutation analyses should match on valid AirrTable data.",
+          "observed": "The subcheck passed: valid fixture rows with reference_name='macaque' and reference_name='rhesus' both produced scheme='kabat' and identical mutation calls ['Y47F', 'S50R', 'S52I', 'K73N']."
+        }
+      ],
+      "evidence": {
+        "pytestLogs": [
+          "test-hardening/airr-cross-rerun/01-committed-targeted-pytest.log",
+          "test-hardening/airr-cross-rerun/02-helper-evidence-pytest.log"
+        ],
+        "helperFile": "test-hardening/airr-cross-rerun/test_airr_cross_rerun_evidence.py",
+        "keyObservation": "Constructor alias parity is improved and reference_name='rhesus' works on valid fixture rows, but the strict same-sequence Airr(...).run_single() -> run_mutational_analysis() flow still fails identically for both species labels."
+      },
+      "issues": "Contract not met: substituting 'rhesus' for 'macaque' does not yield identical full-pipeline output because neither same-sequence full pipeline reaches a final mutational-analysis result."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The committed targeted tests passed but did not prove the exact same-sequence contract from the validation spec, so an evidence-only helper pytest file was required.",
+      "resolved": true,
+      "resolution": "Created test_airr_cross_rerun_evidence.py under the assigned evidence directory and ran it with pytest.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002"
+      ]
+    },
+    {
+      "description": "pytest.ini enables -x, which would have stopped after the first helper failure and hidden the second assigned assertion result.",
+      "resolved": true,
+      "resolution": "Ran the helper command with -o addopts= so both assigned assertions executed in one pass.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002"
+      ]
+    },
+    {
+      "description": "AIRR initialization emitted repeated reference-module fallback warnings about missing IMGT V-region position columns before both passing and failing checks.",
+      "resolved": false,
+      "resolution": "Not resolved in this validation run; treated as observed noise because it did not block command execution.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Committed macaque/rhesus target tests now pass, but both assigned cross-flow assertions still fail under strict same-sequence validation: Airr(...).run_single() on the committed macaque IGH sequence returns NaN j/AA alignment fields, and run_mutational_analysis(..., 'kabat') raises KeyError 'Id' for both macaque and rhesus paths. The narrower reference_name='rhesus' alias path on already-valid fixture rows does match macaque mutation output, so the remaining gap is the exact Airr-run_single -> mutational-analysis chain.",
+  "evidenceFiles": [
+    "test-hardening/airr-cross-rerun/01-committed-targeted-pytest.log",
+    "test-hardening/airr-cross-rerun/02-helper-evidence-pytest.log",
+    "test-hardening/airr-cross-rerun/test_airr_cross_rerun_evidence.py"
+  ]
+}

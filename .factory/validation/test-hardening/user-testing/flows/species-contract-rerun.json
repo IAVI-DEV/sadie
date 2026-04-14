@@ -1,0 +1,62 @@
+{
+  "groupId": "species-contract-rerun",
+  "testedAt": "2026-04-14T13:41:23.983736+00:00",
+  "surface": "pytest",
+  "toolsUsed": [
+    "pytest"
+  ],
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "sharedCheckoutOnly": true,
+    "servicesRequired": false
+  },
+  "commandsRun": [
+    {
+      "command": "cd \"/Users/tmsincomb/sadie\" && poetry run pytest -c \"/Users/tmsincomb/sadie/pytest.ini\" -o addopts='' -p no:cacheprovider -vv \"tests/unit/renumbering/test_species_contract.py::TestSpeciesContract::test_all_allowed_species_have_hmms\" \"tests/unit/renumbering/test_species_contract.py::TestSpeciesContract::test_species_produces_numbered_result\" \"tests/unit/renumbering/test_species_contract.py::TestSpeciesContract::test_species_gets_germline_assignment\" > \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract-rerun/committed-val-test-003.log\" 2>&1; status=$?; cat \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract-rerun/committed-val-test-003.log\"; exit $status",
+      "exitCode": 0,
+      "logFile": "test-hardening/species-contract-rerun/committed-val-test-003.log",
+      "observation": "36 committed pytest cases passed. Verbose output showed separate parametrized cases for HMM loading, numbered result production, and germline assignment across all 12 allowed species, including cow and chicken."
+    },
+    {
+      "command": "cd \"/Users/tmsincomb/sadie\" && poetry run pytest -c \"/Users/tmsincomb/sadie/pytest.ini\" -o addopts='' -p no:cacheprovider -vv -s \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract-rerun/test_val_test_003_parametrize_evidence.py\" > \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract-rerun/helper-val-test-003.log\" 2>&1; status=$?; cat \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract-rerun/helper-val-test-003.log\"; exit $status",
+      "exitCode": 0,
+      "logFile": "test-hardening/species-contract-rerun/helper-val-test-003.log",
+      "observation": "3 evidence-only helper tests passed. Introspection confirmed test_all_allowed_species_have_hmms is decorated with @pytest.mark.parametrize using Renumbering.get_allowed_species(), and the numbered-result and germline-assignment parametrizations each cover the full allowed-species set."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TEST-003",
+      "title": "species contract covers all allowed species",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the three committed TestSpeciesContract pytest targets with -vv",
+          "expected": "Separate parametrized cases pass for every allowed species for HMM loading, numbered result production, and germline assignment.",
+          "observed": "36/36 cases passed; output listed individual cases for human, mouse, rat, rabbit, rhesus, macaque, pig, alpaca, dog, cat, cow, and chicken across the three targets."
+        },
+        {
+          "action": "Run an evidence-only pytest helper that inspects the committed test decorators",
+          "expected": "Decorator metadata proves explicit parametrization matches the allowed-species contract.",
+          "observed": "3/3 helper tests passed; HMM loading uses @pytest.mark.parametrize with ids/species equal to Renumbering.get_allowed_species(), and numbered-result plus germline-assignment parametrizations each cover the exact allowed-species set including cow and chicken."
+        }
+      ],
+      "reason": "VAL-TEST-003 now passes. The committed species-contract tests execute as explicit pytest parametrized cases for all allowed species, and helper introspection verifies that the decorator metadata matches the full allowed-species contract rather than relying on a loop.",
+      "issues": null,
+      "evidence": [
+        "test-hardening/species-contract-rerun/committed-val-test-003.log",
+        "test-hardening/species-contract-rerun/helper-val-test-003.log",
+        "test-hardening/species-contract-rerun/test_val_test_003_parametrize_evidence.py"
+      ]
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "evidenceFiles": [
+    "test-hardening/species-contract-rerun/committed-val-test-003.log",
+    "test-hardening/species-contract-rerun/helper-val-test-003.log",
+    "test-hardening/species-contract-rerun/test_val_test_003_parametrize_evidence.py"
+  ],
+  "summary": "Tested 1 assertion (VAL-TEST-003): passed. The rerun confirmed the previous loop-based HMM-loading gap is fixed and all required species-contract parametrized coverage now passes."
+}

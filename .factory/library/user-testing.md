@@ -34,8 +34,9 @@ No browser testing, no services to start.
 
 ## Current Validation Findings
 
-- `Airr("rhesus")` is not currently an accepted AIRR dataset name. Test-hardening evidence showed `Airr("rhesus")` raises `BadDataSet`, even though downstream `run_mutational_analysis()` with `reference_name="rhesus"` still aliases to macaque and matches macaque mutation calls.
-- The exact raw-sequence macaque flow for `VAL-CROSS-001` is currently reproducible with productive IGH `sequence_id=772` from `tests/data/fixtures/airr_tables/bum_igl_assignment_macaque.feather`: `Airr("macaque").run_single()` routes to macaque HMMs but returns `j_call`, `sequence_alignment_aa`, and `germline_alignment_aa` as `nan`, and `run_mutational_analysis(..., "kabat")` then raises `KeyError: 'Id'`.
+- `Airr("rhesus")` is now accepted and normalizes to the canonical `"macaque"` dataset name; the committed alias tests in `tests/unit/airr/test_macaque_e2e.py` pass for constructor behavior and `run_single()` output parity.
+- The strict same-sequence full pipeline is still broken for both `macaque` and `rhesus`: using the committed `MACAQUE_IGH_NT` sequence in `tests/unit/airr/test_macaque_e2e.py`, `Airr(...).run_single()` returns `productive=True` and matching `v_call`, but `j_call`, `sequence_alignment_aa`, and `germline_alignment_aa` remain `nan`, and `run_mutational_analysis(..., "kabat")` raises `KeyError: 'Id'`.
+- On valid fixture rows that already contain full AIRR alignments, changing `reference_name` from `"macaque"` to `"rhesus"` still produces identical mutation calls, so the remaining gap is specifically the raw `Airr(...).run_single()` → `run_mutational_analysis()` chain rather than the downstream `reference_name` alias path.
 
 ## Flow Validator Guidance: pytest
 

@@ -1,0 +1,41 @@
+{
+  "milestone": "test-hardening",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 8,
+    "passed": 5,
+    "failed": 3,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-TEST-001",
+    "VAL-TEST-002",
+    "VAL-TEST-004",
+    "VAL-TEST-005",
+    "VAL-CROSS-003"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-TEST-003",
+      "reason": "Heavy-chain numbered-result and germline-assignment coverage passes for every allowed species, but HMM-loading coverage is implemented as a for-loop rather than pytest parameterization, so the file does not literally parametrize all three required dimensions."
+    },
+    {
+      "id": "VAL-CROSS-001",
+      "reason": "Using productive macaque IGH sequence_id=772 from bum_igl_assignment_macaque.feather, Airr(\"macaque\").run_single() routed to macaque HMMs but returned j_call, sequence_alignment_aa, and germline_alignment_aa as nan; run_mutational_analysis(..., \"kabat\") then raised KeyError(\"Id\")."
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "reason": "The renumbering-level rhesus compatibility tests pass, but the full user-facing Airr entry point does not: Airr(\"rhesus\") raises BadDataSet instead of behaving identically to Airr(\"macaque\")."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Documented the current `Airr(\"rhesus\")` entry-point failure and the reproducible raw-sequence macaque `VAL-CROSS-001` failure path discovered during test-hardening validation.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}
