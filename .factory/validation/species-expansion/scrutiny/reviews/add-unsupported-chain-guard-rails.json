@@ -1,0 +1,39 @@
+{
+  "featureId": "add-unsupported-chain-guard-rails",
+  "reviewedAt": "2026-04-14T08:48:04Z",
+  "commitId": "2fdca9882cc1bfc87d06114e23d23be5882022d3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The new `ValueError` path does catch fully unsupported requests like `alpaca/K`, but the guard rail is implemented as an all-or-nothing `if not hmms` check after the full load loop. That means explicit requests that mix supported and unsupported species/chain pairs still silently drop the unsupported pair instead of raising the descriptive error promised by the feature.",
+    "issues": [
+      {
+        "file": "src/sadie/renumbering/aligners/hmmer.py",
+        "line": 190,
+        "severity": "blocking",
+        "description": "The guard rail only runs when `not hmms`, so it misses explicit requests that contain at least one supported pair alongside an unsupported one. Reproduced from the reviewed code with `Renumbering(allowed_species=['alpaca'], allowed_chain=['H', 'K'], run_multiproc=False)`, which returns only `alpaca_H` without raising, and with `Renumbering(allowed_species=['human', 'alpaca'], allowed_chain=['K'], run_multiproc=False)`, which returns only `human_K`. In both cases an explicitly requested unsupported combo is still silently skipped, which does not satisfy the feature requirement to raise when a requested species/chain combination has no HMM."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 527,
+        "severity": "non_blocking",
+        "description": "The new guard-rail tests only cover requests where every requested pair is unsupported (`alpaca/K`, `alpaca/L`, `chicken/K`). There is no regression test for mixed explicit requests such as `['alpaca'] x ['H', 'K']` or `['human', 'alpaca'] x ['K']`, so the narrowed `if not hmms` implementation gap is left untested."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `python-library-worker` skill still frames a full `poetry run pytest` as mandatory, but this repo's mission guidance and this worker run both show that the practical path is scoped validation because the full suite regularly times out.",
+      "evidence": ".factory/skills/python-library-worker/SKILL.md:52-62 requires broader and full-suite pytest runs; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73-79 explicitly allows scoped alternatives; the reviewed transcript/handoff for session `c58c2f29-ad14-4c3f-b1d5-a51610f5d0ae` shows multiple full-suite timeout attempts before falling back to targeted renumbering tests, and `handoff.skillFeedback.suggestedChanges` asks for better timeout guidance."
+    },
+    {
+      "area": "services",
+      "observation": "`.factory/services.yaml` exposes only the generic `poetry run pytest` command for repo-wide testing and does not surface the scoped renumbering commands that mission guidance recommends, which makes the shared service catalog less useful for this codebase.",
+      "evidence": ".factory/services.yaml:1-8 defines `test: poetry run pytest` plus broad directory-level commands, while /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73-79 recommends a special scoped pytest command or feature-relevant directories because the full suite is impractical here."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "FAIL. The feature covers pure unsupported-chain requests, but it still silently skips explicitly requested unsupported pairs whenever any other requested pair loads successfully, so the guard rail is incomplete."
+}

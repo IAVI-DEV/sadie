@@ -1,0 +1,34 @@
+{
+  "featureId": "add-cow-species-support",
+  "reviewedAt": "2026-04-14T08:47:14Z",
+  "commitId": "1f4bee302a2e14d5a08e9034359291f6b980aa2f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The product change is correctly scoped: adding `\"cow\"` to `Renumbering.get_allowed_species()` is sufficient because cow aliases, HMMs, and germline data were already present in the repository, and the worker added focused species-contract coverage around the new allowlist entry. I found no high-confidence blocking defect in the implementation, but two of the new tests are weaker than the feature contract they claim to enforce.",
+    "issues": [
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 387,
+        "severity": "non_blocking",
+        "description": "`test_cow_hmms_load_successfully()` only checks that at least one loaded HMM name contains `\"cow\"`. The feature description explicitly called for verifying `cow_H.hmm`, `cow_K.hmm`, and `cow_L.hmm`; this assertion would still pass if only one cow chain model loaded."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 401,
+        "severity": "non_blocking",
+        "description": "`test_cow_vh_produces_numbered_result()` uses `result.shape[1] > 5` as a proxy for Kabat numbering, but VAL-EXP-002 requires non-empty Kabat position assignments. Because that shape check can pass from metadata columns alone, the test does not actually prove Kabat positions were populated."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `python-library-worker` skill still treats a full `poetry run pytest` as mandatory, but this mission's guidance and the worker transcript show that workers often need to fall back to scoped suites because the repo-wide run is too slow here.",
+      "evidence": ".factory/skills/python-library-worker/SKILL.md:58-60 requires `poetry run pytest --no-header 2>&1 | tail -30`; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73 allows targeted alternatives; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/worker-transcripts.jsonl:9 shows the worker's broader-suite command timing out before they switched to scoped verification."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The implementation cleanly enables cow renumbering support via the existing HMM and germline assets, with only non-blocking gaps in the strength of two new contract tests."
+}

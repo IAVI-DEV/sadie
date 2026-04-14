@@ -1,0 +1,39 @@
+{
+  "featureId": "add-chicken-species-support",
+  "reviewedAt": "2026-04-14T08:48:30Z",
+  "commitId": "74e7f217944d668fe36c8c9636678589ec3eb363",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation is scoped correctly: it adds `\"chicken\"` to the renumbering allowlist, commits chicken heavy/lambda germline tables plus a new lambda Stockholm/HMM asset, and adds focused species-contract coverage around heavy-chain renumbering and germline assignment. I found no high-confidence blocking defect in the product code, but the new tests are weaker than the H/L support contract they are meant to prove.",
+    "issues": [
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 444,
+        "severity": "non_blocking",
+        "description": "`test_chicken_hmms_load_successfully()` only checks that at least one loaded HMM name contains `\"chicken\"`. The feature claims chicken H/L support and commits `chicken_L.hmm`/`chicken_L.sto`, but no assertion proves that both `chicken_H` and `chicken_L` load, and no chicken lambda sequence is exercised, so a broken lambda path could still slip through."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 455,
+        "severity": "non_blocking",
+        "description": "`test_chicken_vh_produces_numbered_result()` uses `result.shape[1] > 5` as a proxy for successful Kabat numbering. VAL-EXP-005 calls for valid numbered output, and that shape check can pass from metadata columns alone without proving any numbered residue positions were populated."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The shared mission state says where chicken germline FASTA inputs live, but it does not document how to derive the 128-character `all_germlines` amino-acid entries from IMGT gapped nucleotide FASTA or what filtering rules are acceptable for pseudogenes/fragments. This worker spent a large portion of the transcript reverse-engineering dot/codon handling, left/right padding, and filtering heuristics.",
+      "evidence": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:41-58 documents the dict shape and chicken FASTA locations only; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/worker-transcripts.jsonl:10 shows the worker repeatedly reasoning through triplet-dot translation and 128-char padding; handoff 2026-04-14T07-36-42-100Z__add-chicken-species-support__a0395eb0-ba70-4fe2-bc40-544360d1a705.json:10-11,75-80 records the codon-by-codon conversion plus stop-codon/short-fragment filtering."
+    },
+    {
+      "area": "services",
+      "observation": "`.factory/services.yaml` still lacks a repo-sanctioned fast regression command that matches the mission's recommended ignore flags, so workers keep constructing ad hoc broader-suite pytest commands and rediscovering the same timeout behavior.",
+      "evidence": "/Users/tmsincomb/sadie/.factory/services.yaml:2-8 only defines generic `test`, directory-level pytest commands, and `test_species_contract`; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73 recommends a scoped `pytest -o addopts='' --ignore=...` command instead; handoff 2026-04-14T07-36-42-100Z__add-chicken-species-support__a0395eb0-ba70-4fe2-bc40-544360d1a705.json:87-88 explicitly asks for a `test_fast` command."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The feature successfully wires chicken into the renumbering allowlist and adds heavy/lambda germline assets, with only non-blocking gaps in the strength of the new contract tests (especially around lambda-chain proof and numbered-position assertions)."
+}
