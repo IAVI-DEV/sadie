@@ -26,13 +26,17 @@ from Bio.SeqRecord import SeqRecord
 
 # package/module level
 from sadie.airr.airrtable import AirrTable, LinkedAirrTable
-from sadie.airr.exceptions import BadDataSet, BadIgBLASTArgument, BadIgBLASTExe, BadRequstedFileType
+from sadie.airr.exceptions import (
+    BadDataSet,
+    BadIgBLASTArgument,
+    BadIgBLASTExe,
+    BadRequstedFileType,
+)
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.germlines import get_germlines_base_dir
 from sadie.reference.cache import DatabaseCache, compute_cache_key
-from sadie.reference.reference import _NAME_MAPPING_FILENAME
 from sadie.reference.generate import generate_reference_yaml
-from sadie.reference.reference import References
+from sadie.reference.reference import _NAME_MAPPING_FILENAME, References
 
 logger = logging.getLogger("AIRR")
 warnings.filterwarnings("ignore", "Partial codon")
@@ -295,6 +299,9 @@ class Airr:
 
         # Properties that will be passed to germline Data Class.
         # Pass theese as private since germline class will handle setter logic
+        # Normalize "rhesus" alias to canonical "macaque" for backward compat
+        if reference_name == "rhesus":
+            reference_name = "macaque"
         self._name = reference_name
         self.scheme = scheme  # Store scheme as instance attribute
 
@@ -329,7 +336,10 @@ class Airr:
             # When germlines module is enabled, verify the species actually exists in it
             # (not just in legacy G3 datasets). Species only available via G3 should not
             # be routed through the unified pipeline.
-            from sadie.airr.igblast.germline import _use_germlines_module, _get_germlines_igblast_dir
+            from sadie.airr.igblast.germline import (
+                _get_germlines_igblast_dir,
+                _use_germlines_module,
+            )
 
             if _use_germlines_module():
                 _germlines_internal = _get_germlines_igblast_dir() / "Ig" / "internal_data" / reference_name

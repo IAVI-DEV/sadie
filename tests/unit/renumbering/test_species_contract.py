@@ -97,15 +97,19 @@ SPECIES_SUPPORTED_CHAINS: dict[str, list[str]] = {
 class TestSpeciesContract:
     """Verify every allowed species can complete the full renumbering pipeline."""
 
-    def test_all_allowed_species_have_hmms(self):
+    @pytest.mark.parametrize(
+        "species",
+        Renumbering.get_allowed_species(),
+        ids=Renumbering.get_allowed_species(),
+    )
+    def test_all_allowed_species_have_hmms(self, species):
         """Every species in get_allowed_species() must load at least one HMM (H chain)."""
-        for species in Renumbering.get_allowed_species():
-            r = Renumbering(
-                allowed_species=[species],
-                allowed_chain=["H"],
-                run_multiproc=False,
-            )
-            assert len(r.hmmer.hmms) > 0, f"Species '{species}' loaded 0 HMMs -- it will silently fail."
+        r = Renumbering(
+            allowed_species=[species],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        assert len(r.hmmer.hmms) > 0, f"Species '{species}' loaded 0 HMMs -- it will silently fail."
 
     @pytest.mark.parametrize(
         "species,seq",
