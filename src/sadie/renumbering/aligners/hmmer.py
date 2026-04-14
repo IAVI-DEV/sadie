@@ -149,7 +149,23 @@ class HMMER:
                         self._loaded_pairs.add((canonical_species, chain))
                         continue
 
-                # Priority 1: Local germlines HMM builder (new default)
+                # Priority 1: Numbering (legacy) HMMs — specifically designed
+                # for antibody numbering and produce correct IMGT gap patterns
+                # (e.g. conserved deletion at position 10 for VH).
+                numbering_species = single_species
+                if numbering_species.strip() == "macaque":
+                    numbering_species = "rhesus"
+                if (numbering_species, chain) in self.numbering.species_chain_to_paths:
+                    hmm_paths = self.numbering.species_chain_to_paths[(numbering_species, chain)]
+                    for hmm_path in hmm_paths:
+                        with pyhmmer.plan7.HMMFile(hmm_path) as hmm_file:
+                            hmm = next(hmm_file)
+                            hmms.append(hmm)
+                    self._loaded_pairs.add((canonical_species, chain))
+                    continue
+
+                # Priority 2: Local germlines HMM builder — fallback for
+                # species/chains not covered by legacy Numbering HMMs.
                 if use_local:
                     try:
                         if self._local_hmm_builder is None:
@@ -164,30 +180,16 @@ class HMMER:
                         self._loaded_pairs.add((canonical_species, chain))
                         continue
                     except Exception as e:
-                        # Fall through to G3/Numbering on error
+                        # Fall through to G3 on error
                         import logging
 
                         logging.warning(
-                            f"Local HMM builder failed for {canonical_species} {chain}: {e}. "
-                            f"Falling back to G3/Numbering."
+                            f"Local HMM builder failed for {canonical_species} {chain}: {e}. " f"Falling back to G3."
                         )
 
-                # Priority 2: If not in G3 or forced -- try Numbering
+                # Priority 3: Build G3 HMMs (final fallback)
                 if chain not in self.g3.chains or single_species not in self.g3.species or use_numbering_hmms is True:
-                    # Legacy HMMs have rhesus as the species for macaque
-                    if single_species.strip() == "macaque":
-                        single_species = "rhesus"
-                    # If not in Numbering -- ignore
-                    if (single_species, chain) not in self.numbering.species_chain_to_paths:
-                        continue
-                    # Build Numbering HMMs
-                    hmm_paths = self.numbering.species_chain_to_paths[(single_species, chain)]
-                    for hmm_path in hmm_paths:
-                        with pyhmmer.plan7.HMMFile(hmm_path) as hmm_file:
-                            hmm = next(hmm_file)
-                            hmms.append(hmm)
-                    self._loaded_pairs.add((canonical_species, chain))
-                # Priority 3: Build G3 HMMs (legacy fallback)
+                    continue  # No HMM available for this pair
                 else:
                     hmm = self.g3.get_hmm(
                         source=source,
