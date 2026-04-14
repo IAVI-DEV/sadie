@@ -116,8 +116,10 @@ def airr(name: str, skip_igl: bool, skip_mutation: bool, input_path: Path, outpu
     click.echo(f"File written to: {str(output_object.output_path)}")
 
 
-def _validate_numbering_objects(ctx: click.Context, param: Any, value: str) -> List[str]:
+def _validate_numbering_objects(ctx: click.Context, param: Any, value: Optional[str]) -> Optional[List[str]]:
     """Private method for click context to evaluate comma seperated lists and make sure each field is okay"""
+    if value is None:
+        return None
     columns = [c.strip() for c in value.split(",")]
     param_name = param.human_readable_name
     if param_name == "allowed_species":
@@ -185,10 +187,10 @@ def _validate_numbering_objects(ctx: click.Context, param: Any, value: str) -> L
     "--allowed-chains",
     "-c",
     is_flag=False,
-    default=",".join(Renumbering.get_allowed_chains()),
-    show_default=True,
+    default=None,
+    show_default=False,
     callback=_validate_numbering_objects,
-    help="A comma seperated list of species to align against",
+    help="A comma seperated list of chains to align against; omit to use the broad search default",
 )
 @click.option(
     "--out",
@@ -216,7 +218,7 @@ def renumbering(
     scheme: str,
     region: str,
     allowed_species: List[str],
-    allowed_chains: List[str],
+    allowed_chains: Optional[List[str]],
     out: Path,
     compress: str,
     file_format: str,
