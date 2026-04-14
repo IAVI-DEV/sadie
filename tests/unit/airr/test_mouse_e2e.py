@@ -27,13 +27,12 @@ skip_no_mouse = pytest.mark.skipif(not _mouse_available(), reason="mouse germlin
 
 # Mouse VH amino acid sequence from HMM-bug.md Section 7 and test_species_contract.py.
 # Used for renumbering-level HMM and Kabat position checks.
-MOUSE_VH_AA = (
-    "EVQLQQSGPELVKPGASVKISCKASGYTFTDYNMDWVKQSHGKSLEWIGDINPNNGGT"
-    "IYNQKFKGKATLTVDKSSSTAYMELRSLTSEDTAVYYCAR"
-)
+MOUSE_VH_AA = "EVQLQQSGPELVKPGASVKISCKASGYTFTDYNMDWVKQSHGKSLEWIGDINPNNGGT" "IYNQKFKGKATLTVDKSSSTAYMELRSLTSEDTAVYYCAR"
 
 # Path to real mouse VDJ FASTA fixture for full pipeline tests.
-MOUSE_VDJ_FASTA = Path(__file__).parent.parent.parent / "data" / "fixtures" / "fasta_inputs" / "mouse_vdj_validation.fasta"
+MOUSE_VDJ_FASTA = (
+    Path(__file__).parent.parent.parent / "data" / "fixtures" / "fasta_inputs" / "mouse_vdj_validation.fasta"
+)
 
 
 @skip_no_mouse
@@ -146,9 +145,7 @@ class TestMouseE2eMutationalAnalysis:
                 f"A '-' or wrong residue here indicates the human HMM was used."
             )
 
-    def test_full_pipeline_mutational_analysis_produces_valid_output(
-        self, mouse_mutational_result: AirrTable
-    ) -> None:
+    def test_full_pipeline_mutational_analysis_produces_valid_output(self, mouse_mutational_result: AirrTable) -> None:
         """Full pipeline from FASTA -> Airr annotation -> mutational analysis should succeed.
 
         Verifies the pipeline completes end-to-end with real mouse sequences and produces
@@ -167,9 +164,9 @@ class TestMouseE2eMutationalAnalysis:
         for _, row in mouse_airrtable.iterrows():
             v_call = str(row["v_call"])
             assert v_call != "nan", f"v_call should not be nan for sequence {row['sequence_id']}"
-            assert "IGHV" in v_call, (
-                f"Expected mouse IGHV gene in v_call but got '{v_call}' for sequence {row['sequence_id']}"
-            )
+            assert (
+                "IGHV" in v_call
+            ), f"Expected mouse IGHV gene in v_call but got '{v_call}' for sequence {row['sequence_id']}"
 
     def test_mouse_reference_name_detection(self, mouse_airrtable: AirrTable) -> None:
         """reference_name='mouse' must trigger mouse species detection in run_mutational_analysis.
@@ -186,6 +183,4 @@ class TestMouseE2eMutationalAnalysis:
             f"reference_name detection should find 'mouse' but got {detected}. "
             f"Available reference_names: {ref_vals.tolist()}"
         )
-        assert "human" not in detected, (
-            f"reference_name detection should NOT include 'human': {detected}"
-        )
+        assert "human" not in detected, f"reference_name detection should NOT include 'human': {detected}"

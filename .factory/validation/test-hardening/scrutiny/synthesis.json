@@ -1,0 +1,82 @@
+{
+  "milestone": "test-hardening",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "poetry run pytest -o addopts='' -o log_cli=false --ignore=tests/unit/renumbering/test_renumbering.py --ignore=tests/migration/ --no-header -q",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "poetry run pyright src/",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "poetry run pre-commit run --files tests/unit/airr/test_macaque_e2e.py tests/unit/airr/test_mouse_e2e.py tests/unit/renumbering/test_species_contract.py",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "failedFeatures": [
+      "add-macaque-e2e-mutational-analysis",
+      "add-mouse-e2e-mutational-analysis",
+      "expand-species-contract-tests"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "add-macaque-e2e-mutational-analysis",
+      "severity": "blocking",
+      "description": "`tests/unit/airr/test_macaque_e2e.py` never feeds `Airr(\"macaque\").run_single()` output into `run_mutational_analysis()`, so the required full Airr -> mutational-analysis handoff can regress without failing the suite."
+    },
+    {
+      "featureId": "add-macaque-e2e-mutational-analysis",
+      "severity": "blocking",
+      "description": "The macaque `reference_name` and no-fallback tests only assert successful completion or reimplement species filtering / standalone `Renumbering`; they do not observe what species `run_mutational_analysis()` actually uses, so a regression back to human fallback could still pass."
+    },
+    {
+      "featureId": "add-mouse-e2e-mutational-analysis",
+      "severity": "blocking",
+      "description": "`tests/unit/airr/test_mouse_e2e.py` checks mouse HMM/Kabat behavior on standalone `Renumbering.run_single()` calls, while the actual e2e `run_mutational_analysis()` coverage only asserts non-empty output and optional position-30 checks, so mouse fallback or shifted-numbering regressions could slip through."
+    },
+    {
+      "featureId": "add-mouse-e2e-mutational-analysis",
+      "severity": "blocking",
+      "description": "The mouse pipeline's germline assertion only checks that `v_call` contains `IGHV`, which would also pass for human heavy-chain fallback; the suite does not prove mouse-specific germline assignment through the Airr/mutational-analysis path."
+    },
+    {
+      "featureId": "expand-species-contract-tests",
+      "severity": "blocking",
+      "description": "The generalized heavy/kappa/lambda species-contract tests only require a non-null `v_gene`, not `identity_species` or another species-specific signal, so silent wrong-species fallback still satisfies the new contract."
+    }
+  ],
+  "nonBlockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "services.yaml",
+      "description": "Added `commands.test_milestone` for the AGENTS-approved filtered milestone pytest command and `commands.lint_files` for file-scoped pre-commit runs.",
+      "sourceFeature": "expand-species-contract-tests"
+    },
+    {
+      "target": "library",
+      "description": "Documented in `.factory/library/user-testing.md` that `tests/conftest.py:get_monkey_edge_seq()` is a macaque lambda/light-chain fixture, not a VH/heavy-chain fixture.",
+      "sourceFeature": "add-macaque-e2e-mutational-analysis"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "python-library-worker skill",
+      "suggestion": "Replace the hardcoded raw full-suite `poetry run pytest` / `| tail` guidance with repo-aware validation instructions that defer to `.factory/services.yaml` or `AGENTS.md` when known exclusions or long runtimes apply.",
+      "evidence": "Reviews for `add-mouse-e2e-mutational-analysis` and `expand-species-contract-tests` both found workers deviating to AGENTS-approved filtered pytest commands, and this scrutiny run likewise needed the filtered milestone command to complete in a practical timeframe.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}

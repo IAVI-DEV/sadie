@@ -28,6 +28,7 @@ No browser testing, no services to start.
 
 - Tests requiring germline databases may skip if `sadie germlines populate` hasn't been run
 - Some tests are gated behind `skip_no_macaque`/`skip_no_mouse` fixtures
+- `tests/conftest.py:get_monkey_edge_seq()` is a macaque lambda/light-chain sequence, not a VH/heavy-chain fixture
 - Legacy ANARCI HMMs exist at `src/sadie/renumbering/data/anarci/HMMs/` and should not be modified
 - Guard-rail tests for intentionally unsupported species/chain pairs may print `Local HMM builder failed ... Falling back to G3/Numbering` warnings before the expected `ValueError` is asserted; if the targeted pytest command exits `0` and the descriptive-error tests pass, treat those warnings as expected friction rather than assertion failure.
 

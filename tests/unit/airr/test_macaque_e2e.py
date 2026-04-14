@@ -302,6 +302,4 @@ class TestNoSilentSpeciesFallback:
             f"reference_name='{species}' should detect '{species}', got {detected}. "
             f"If empty, it would fall back to human -- this is the silent fallback bug."
         )
-        assert "human" not in detected, (
-            f"reference_name='{species}' should NOT include human: {detected}"
-        )
+        assert "human" not in detected, f"reference_name='{species}' should NOT include human: {detected}"
