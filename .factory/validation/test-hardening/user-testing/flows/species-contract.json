@@ -1,0 +1,59 @@
+{
+  "groupId": "species-contract",
+  "surface": "pytest",
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commandsRun": [
+    {
+      "command": "poetry run pytest -vv tests/unit/renumbering/test_species_contract.py::TestSpeciesContract tests/unit/renumbering/test_species_contract.py::TestSpeciesContractCompleteness tests/unit/renumbering/test_species_contract.py::TestLightChainContract tests/unit/renumbering/test_species_contract.py::TestRhesusBackwardCompatE2E",
+      "exitCode": 0,
+      "observation": "70 committed tests passed. Verbose output showed heavy-chain numbered-result and germline-assignment cases for all allowed species (human, mouse, macaque, rhesus, rabbit, rat, cow, chicken, alpaca, cat, dog, pig), all committed light-chain contract cases passed, and the renumbering-level rhesus/macaque backward-compat tests passed."
+    },
+    {
+      "command": "poetry run pytest -c /Users/tmsincomb/sadie/pytest.ini -vv -s -o addopts= /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/species-contract/test_species_contract_evidence.py",
+      "exitCode": 1,
+      "observation": "Evidence-only helper produced 3 passes and 2 failures. It confirmed numbered-result and germline-assignment decorators cover every allowed species, confirmed non-human light-chain coverage matches supported chains, showed the HMM-loading test is loop-based rather than @pytest.mark.parametrize, and showed Airr(\"rhesus\") raises BadDataSet even though downstream run_mutational_analysis with reference_name=\"rhesus\" matched macaque mutation calls."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TEST-003",
+      "status": "fail",
+      "reason": "Committed heavy-chain coverage passes for all allowed species, but the HMM-loading check is not pytest-parametrized. test_all_allowed_species_have_hmms iterates over Renumbering.get_allowed_species() in a for-loop, so individual HMM-loading cases do not appear as separate parametrized tests as required by the contract.",
+      "evidence": [
+        "test-hardening/species-contract/committed-species-contract-pytest.log",
+        "test-hardening/species-contract/helper-species-contract-pytest.log",
+        "test-hardening/species-contract/test_species_contract_evidence.py"
+      ]
+    },
+    {
+      "id": "VAL-TEST-004",
+      "status": "pass",
+      "reason": "Committed TestLightChainContract cases all passed for supported non-human light chains. Kappa coverage passed for macaque, mouse, rabbit, rat, cow, cat, dog, and pig; lambda coverage passed for those species plus chicken, matching the supported-chain contract.",
+      "evidence": [
+        "test-hardening/species-contract/committed-species-contract-pytest.log",
+        "test-hardening/species-contract/helper-species-contract-pytest.log"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "status": "fail",
+      "reason": "The committed renumbering-level rhesus/macaque tests pass, but the full user-facing flow does not. Evidence-only pytest showed Airr(\"rhesus\") fails immediately with BadDataSet because \"rhesus\" is not an available AIRR dataset name (available datasets include \"macaque\" and \"rhesus_macaque\", not \"rhesus\"). A downstream control using reference_name=\"rhesus\" still produced the same mutation calls as macaque, so the break is specifically at the Airr entry point.",
+      "evidence": [
+        "test-hardening/species-contract/committed-species-contract-pytest.log",
+        "test-hardening/species-contract/helper-species-contract-pytest.log",
+        "test-hardening/species-contract/test_species_contract_evidence.py"
+      ]
+    }
+  ],
+  "frictions": [
+    "During the full-flow helper run, Airr(\"macaque\") emitted a reference-builder warning about missing IMGT V-region position columns and fell back to the direct germlines-module path; the macaque control still completed successfully."
+  ],
+  "blockers": [],
+  "evidenceFiles": [
+    "test-hardening/species-contract/committed-species-contract-pytest.log",
+    "test-hardening/species-contract/helper-species-contract-pytest.log",
+    "test-hardening/species-contract/test_species_contract_evidence.py"
+  ]
+}

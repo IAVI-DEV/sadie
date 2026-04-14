@@ -1,0 +1,79 @@
+{
+  "groupId": "airr-e2e",
+  "surface": "pytest",
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commandsRun": [
+    {
+      "command": "cd \"/Users/tmsincomb/sadie\" && poetry run pytest -v -rA \"/Users/tmsincomb/sadie/tests/unit/airr/test_macaque_e2e.py\" \"/Users/tmsincomb/sadie/tests/unit/airr/test_mouse_e2e.py\"",
+      "exitCode": 0,
+      "observation": "Collected 21 committed tests from the macaque and mouse e2e files; all 21 passed. Relevant passing tests included macaque mutational-analysis/HMM/germline/Kabat checks, macaque reference_name detection and no-human-fallback checks, and mouse mutational-analysis/HMM/germline/Kabat/reference_name checks. The macaque Airr.run_single test emitted a reference-module fallback warning for 'macaque' but still passed."
+    },
+    {
+      "command": "cd \"/Users/tmsincomb/sadie\" && poetry run pytest -vv -s -c \"/Users/tmsincomb/sadie/pytest.ini\" \"/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/test-hardening/airr-e2e/test_airr_e2e_evidence.py\"",
+      "exitCode": 0,
+      "observation": "The evidence-only helper printed `MACAQUE_FULL_PIPELINE_FAILURE sequence_id=772 allowed_species=['macaque'] hmm_names=['macaque_H', 'macaque_K', 'macaque_L'] j_call=nan sequence_alignment_aa=nan germline_alignment_aa=nan`, showing non-human routing but a failing raw-sequence macaque full pipeline before Kabat positions are produced. It also printed `REFERENCE_NAME_ROUTING species=macaque ... identity_species=macaque pos30=S mutations_column=True` and `REFERENCE_NAME_ROUTING species=mouse ... identity_species=mouse pos30=N mutations_column=True`, confirming successful mutational analysis plus macaque/mouse reference_name routing without human fallback."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TEST-001",
+      "status": "pass",
+      "reason": "Committed coverage exists in `tests/unit/airr/test_macaque_e2e.py`, and the targeted pytest run passed `test_mutational_analysis_completes`, `test_macaque_hmm_used_not_human`, `test_macaque_germline_species_correct`, and `test_kabat_positions_not_shifted`, which together validate macaque AirrTable mutational analysis plus macaque HMM/germline/Kabat behavior.",
+      "evidence": [
+        "tests/unit/airr/test_macaque_e2e.py",
+        "test-hardening/airr-e2e/committed_airr_e2e_pytest.log"
+      ]
+    },
+    {
+      "id": "VAL-TEST-002",
+      "status": "pass",
+      "reason": "Committed coverage exists in `tests/unit/airr/test_mouse_e2e.py`, and the targeted pytest run passed `test_mutational_analysis_completes`, `test_mouse_hmm_used_not_human`, `test_mouse_germline_species_correct`, `test_kabat_positions_not_shifted`, and `test_full_pipeline_mutational_analysis_produces_valid_output`, validating mouse AirrTable mutational analysis plus mouse HMM/germline/Kabat behavior.",
+      "evidence": [
+        "tests/unit/airr/test_mouse_e2e.py",
+        "test-hardening/airr-e2e/committed_airr_e2e_pytest.log"
+      ]
+    },
+    {
+      "id": "VAL-TEST-005",
+      "status": "pass",
+      "reason": "Committed reference_name tests in the macaque/mouse e2e files passed, and the evidence-only helper showed `run_mutational_analysis()` instantiating Renumbering with `allowed_species=['macaque']` / `['mouse']`, loading macaque/mouse HMMs, and returning mutational-analysis output with non-deleted Kabat position 30 observations (`S` for the macaque fixture row and `N` for the mouse fixture row) rather than falling back to human.",
+      "evidence": [
+        "tests/unit/airr/test_macaque_e2e.py",
+        "tests/unit/airr/test_mouse_e2e.py",
+        "test-hardening/airr-e2e/committed_airr_e2e_pytest.log",
+        "test-hardening/airr-e2e/test_airr_e2e_evidence.log"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-001",
+      "status": "fail",
+      "reason": "The exact raw-sequence macaque flow required by the contract does not currently succeed. Using the first productive real macaque IGH row (`sequence_id=772`) as input to `Airr(\"macaque\").run_single()` produced `reference_name='macaque'` and routed mutational analysis to macaque HMMs (`allowed_species=['macaque']`, `hmm_names=['macaque_H', 'macaque_K', 'macaque_L']`), but `j_call`, `sequence_alignment_aa`, and `germline_alignment_aa` were all `nan`; `run_mutational_analysis(..., \"kabat\")` then raised `KeyError: 'Id'` before any Kabat position 30 could be produced.",
+      "evidence": [
+        "test-hardening/airr-e2e/test_airr_e2e_evidence.py",
+        "test-hardening/airr-e2e/test_airr_e2e_evidence.log"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "status": "pass",
+      "reason": "The committed no-fallback tests passed, and the evidence-only helper directly observed `run_mutational_analysis()` using `allowed_species=['macaque']` with `macaque_H/K/L` HMMs and `allowed_species=['mouse']` with `mouse_H/K/L` HMMs when only `reference_name` was present. The helper also observed `identity_species=macaque` and `identity_species=mouse` respectively, with no human HMM names present.",
+      "evidence": [
+        "tests/unit/airr/test_macaque_e2e.py",
+        "tests/unit/airr/test_mouse_e2e.py",
+        "test-hardening/airr-e2e/committed_airr_e2e_pytest.log",
+        "test-hardening/airr-e2e/test_airr_e2e_evidence.log"
+      ]
+    }
+  ],
+  "frictions": [
+    "Both the committed pytest run and the evidence helper emitted a macaque reference-module fallback warning (`Reference module build failed for 'macaque' ... Falling back to direct germlines module path`) plus pandas `FutureWarning`s during `Airr(\"macaque\")` execution, but these warnings did not prevent the committed tests from passing."
+  ],
+  "blockers": [],
+  "evidenceFiles": [
+    "test-hardening/airr-e2e/committed_airr_e2e_pytest.log",
+    "test-hardening/airr-e2e/test_airr_e2e_evidence.py",
+    "test-hardening/airr-e2e/test_airr_e2e_evidence.log"
+  ]
+}

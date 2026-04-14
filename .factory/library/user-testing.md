@@ -32,6 +32,11 @@ No browser testing, no services to start.
 - Legacy ANARCI HMMs exist at `src/sadie/renumbering/data/anarci/HMMs/` and should not be modified
 - Guard-rail tests for intentionally unsupported species/chain pairs may print `Local HMM builder failed ... Falling back to G3/Numbering` warnings before the expected `ValueError` is asserted; if the targeted pytest command exits `0` and the descriptive-error tests pass, treat those warnings as expected friction rather than assertion failure.
 
+## Current Validation Findings
+
+- `Airr("rhesus")` is not currently an accepted AIRR dataset name. Test-hardening evidence showed `Airr("rhesus")` raises `BadDataSet`, even though downstream `run_mutational_analysis()` with `reference_name="rhesus"` still aliases to macaque and matches macaque mutation calls.
+- The exact raw-sequence macaque flow for `VAL-CROSS-001` is currently reproducible with productive IGH `sequence_id=772` from `tests/data/fixtures/airr_tables/bum_igl_assignment_macaque.feather`: `Airr("macaque").run_single()` routes to macaque HMMs but returns `j_call`, `sequence_alignment_aa`, and `germline_alignment_aa` as `nan`, and `run_mutational_analysis(..., "kabat")` then raises `KeyError: 'Id'`.
+
 ## Flow Validator Guidance: pytest
 
 - Use `poetry run pytest` for all validation commands.
