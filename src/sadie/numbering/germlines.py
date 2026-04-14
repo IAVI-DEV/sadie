@@ -60,7 +60,7 @@ all_germlines = {
                 "IGHJ6*01": "------------------------------------------------------------------------------------------------------------------MDLWGPGTLVTVSS",
                 "IGHJ6*02": "------------------------------------------------------------------------------------------------------------------MDPWGPGTLVTVSS",
             },
-            "rhesus": {
+            "macaque": {
                 "IGHJ5-1*01": "------------------------------------------------------------------------------------------------------------------FDVWGPGVLVTVSS",
                 "IGHJ5-2*01": "------------------------------------------------------------------------------------------------------------------LDVWGQGVLVTVSS",
             },
@@ -140,7 +140,7 @@ all_germlines = {
                 "IGKJ2-2*01": "------------------------------------------------------------------------------------------------------------------SNTFGAGTKVEIK-",
                 "IGKJ2-1*01": "-------------------------------------------------------------------------------------------------------------------LTFGAGTKVEIK-",
             },
-            "rhesus": {
+            "macaque": {
                 "IGKJ1*01": "-------------------------------------------------------------------------------------------------------------------WTFGQGTKVEIK-"
             },
             "pig": {
@@ -205,7 +205,7 @@ all_germlines = {
                 "IGLJ6*01": "-------------------------------------------------------------------------------------------------------------------VVFGGGTQLTVT-",
                 "IGLJ5*01": "-------------------------------------------------------------------------------------------------------------------YVFGGGTQLTVT-",
             },
-            "rhesus": {
+            "macaque": {
                 "IGLJ6*01": "-------------------------------------------------------------------------------------------------------------------DVFGSGTKLTVL-",
                 "IGLJ1*01": "-------------------------------------------------------------------------------------------------------------------YIFGAGTRLTVL-",
                 "IGLJ5*01": "-------------------------------------------------------------------------------------------------------------------WVFGEGTKLTIL-",
@@ -999,7 +999,7 @@ all_germlines = {
                 "IGHV1S7*01": "Q-QLKESGG-GLVKPGGSLKLCCKASGFTF----SSYYMCWVRQAPGKGLEWIGCIYAG--SGSTHYASWVN-GRFTLSRDNAQSTVCLQLNSLTAADTATYFCAR----------------------",
                 "IGHV1S8*01": "QKQLVESGG-GLDQPAGSLKLSCKDSGFTL----SSNAMCWVHQAPGKGLEWIACIDSY---GSTNYVSRVN-GRFTISSDNTQNMVDLEMNSLTAADMAIYFCAR----------------------",
             },
-            "rhesus": {
+            "macaque": {
                 "IGHV4-2*01": "QLQLQESGP-GLVKPSETLSLTCAVSGGSI----SSNYWSWIRQPPGKGLEWIGRISGS--GGSTDYNPSLK-SRVTISTDTSKNQFSLKLSSVTAADTAVYYCAR----------------------"
             },
             "pig": {
@@ -1312,7 +1312,7 @@ all_germlines = {
                 "IGKV1S5*01": "DPVMTQTPSSTSAAVGGTVTINCQSSQNVY----SNNYLSWFQQKPGQPPKLLIYGA-------SKLASGVP-SRFSGSG--SGKQFTLTISGVQCDDAATYYCAGYY--------------------",
                 "IGKV1S6*01": "DGVMTQTPAPVSAAVGGTVTINCQASQSI------GSDLSWYQQKPGQPPKLLIYSA-------SKLATGVP-SRFNGSG--SGTQFTLTISGVQCDDAATYYCQCTY--------------------",
             },
-            "rhesus": {
+            "macaque": {
                 "IGKV1S1*01": "DIQMTQSPSSLSASVGDRVTITCRASQGI------SSYLNWYQQKPGKAPKLLIYYA-------NRLESGVP-SRFSGSG--SGTEFTLTISSLQPEDFATYYCQQYN--------------------",
                 "IGKV1S10*01": "DIQMTQSPSSLSASVGDRVTITCRASQTI------SSYLAWYQQKPGKVPKLLIYAA-------STLQSGVP-SRFSGSG--SGTEFTLTISSLQPEDFATYYCQQHN--------------------",
                 "IGKV1S11*01": "DIQMTQSPSSLSASVGDTVTITCRASQGI------SSWLAWYQQKPGKAPKLLIYAA-------SSLQSGVP-SRFSGSG--SGTDFTLTISSLQPEDFAVYYCQQRN--------------------",
@@ -1598,7 +1598,7 @@ all_germlines = {
                 "IGLV6S6*01": "QFVLNQPQS-VSGSLGQTVSISCNRDSGNI----EEKYVHWYQQHPGKAPTTVIYSD-------DQRPSGVP-DRFSGSINSASNSASLTITGLLAEDEADYHCQSYD--------------------",
                 "IGLV6S7*01": "QFVLTQPQS-VSGSLGQTVSISCNRDSGNI----EDYYVHWYQQHPGKAPTTVIYND-------DQRPSGVP-DRFSGSIDSTSNSASLTITGLLAEDEADYYCLSSD--------------------",
             },
-            "rhesus": {
+            "macaque": {
                 "IGLV1-10*01": "QSVLTQPPS-ASGAPGQSVTISCSGSSSNI----GSNYVYWYQQLSGKAPKLLIYNN-------NQRPSGVP-DRFSGSK--SGTSASLAISGLQSEDEADYYCAAWD--------------------",
                 "IGLV1-12*01": "QSVLTQPPS-VSGDPGQRVTISCTGSSSNI----GGYDVYWYQQLPGTAPKLLIYEN-------NKRPSGVS-DRFSGSK--SGTSASLTITGLQSEDEAEYYCETWD--------------------",
                 "IGLV1-13*01": "QSVLTQPPS-VSGDPGQRVTISCTGSSSNI----GGYYVYWYQQFPGTAPKLLIYDN-------NKRPSGVS-DRFSGSK--SGTSASLTITGLQPGDEADYYCGAWD--------------------",

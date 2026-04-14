@@ -393,13 +393,17 @@ class Numbering:
 
         return vector_state
 
-    # Species aliases for germline lookup - maps alternative names to keys in all_germlines
+    # Species aliases for germline lookup - maps alternative names to canonical keys in all_germlines
     _SPECIES_ALIASES = {
-        "macaque": "rhesus",
+        "rhesus": "macaque",
     }
 
     def _resolve_germline_species(self, species_name):
-        """Resolve species name to the key used in all_germlines, applying aliases."""
+        """Resolve species name to the canonical key used in all_germlines, applying aliases.
+
+        For example, 'rhesus' is an alias that resolves to 'macaque' (the canonical key
+        in all_germlines). Species without an alias are returned unchanged.
+        """
         return self._SPECIES_ALIASES.get(species_name, species_name)
 
     def run_germline_assignment(self, state_vector, sequence, chain_type, allowed_species=None):

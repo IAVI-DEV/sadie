@@ -114,8 +114,8 @@ class TestSpeciesContract:
             f"macaque should not load human HMMs: {hmm_names}"
         )
 
-    def test_macaque_germline_resolves_to_rhesus(self):
-        """Regression: macaque sequences must resolve germline against rhesus entries."""
+    def test_macaque_germline_resolves_to_macaque(self):
+        """Regression: macaque sequences must resolve germline against macaque entries in all_germlines."""
         seq = SPECIES_TEST_SEQUENCES["macaque"]
         r = Renumbering(
             scheme="kabat",
@@ -126,9 +126,9 @@ class TestSpeciesContract:
         result = r.run_single("test_macaque_germline", seq)
         assert not result.empty
         identity_species = result["identity_species"].iloc[0]
-        assert identity_species == "rhesus", (
-            f"Expected identity_species='rhesus' but got '{identity_species}'."
-            f" The macaque->rhesus alias in Numbering._SPECIES_ALIASES may be broken."
+        assert identity_species == "macaque", (
+            f"Expected identity_species='macaque' but got '{identity_species}'."
+            f" The all_germlines keys should use 'macaque' as the canonical name."
         )
 
 
@@ -174,8 +174,8 @@ class TestAllowedScopingBug:
     """
 
     def test_macaque_in_allowed_species_resolves_and_iterates(self):
-        """allowed_species=['macaque'] must resolve through _SPECIES_ALIASES and
-        iterate as the 'rhesus' key in all_germlines, producing a valid v_gene."""
+        """allowed_species=['macaque'] must resolve to the 'macaque' key in all_germlines,
+        producing a valid v_gene."""
         from sadie.numbering.numbering import Numbering
 
         seq = SPECIES_TEST_SEQUENCES["macaque"]
@@ -193,8 +193,8 @@ class TestAllowedScopingBug:
             "macaque v_gene is None — _allowed scoping bug caused germline assignment to fail"
         )
         identity_species = result["identity_species"].iloc[0]
-        assert identity_species == "rhesus", (
-            f"Expected identity_species='rhesus' (resolved from macaque) but got '{identity_species}'"
+        assert identity_species == "macaque", (
+            f"Expected identity_species='macaque' but got '{identity_species}'"
         )
 
     def test_allowed_species_none_does_not_raise_nameerror(self):
@@ -217,4 +217,85 @@ class TestAllowedScopingBug:
         genes = n.run_germline_assignment(state_vector, padded, "H", allowed_species=None)
         assert genes["v_gene"][0] is not None, (
             "v_gene is None with allowed_species=None — the else branch is broken"
+        )
+
+
+class TestMacaqueGermlineKeyRename:
+    """Tests for the rhesus→macaque key rename in all_germlines (VAL-NAME-001, VAL-NAME-002).
+
+    Verifies that all_germlines uses 'macaque' as the canonical species key
+    and that no 'rhesus' keys remain. Also verifies the inverted _SPECIES_ALIASES.
+    """
+
+    def test_all_germlines_v_genes_use_macaque_key(self):
+        """all_germlines V-gene entries must use 'macaque' key, not 'rhesus'."""
+        from sadie.numbering.germlines import all_germlines
+
+        for chain in ["H", "K", "L"]:
+            assert "macaque" in all_germlines["V"][chain], (
+                f"'macaque' missing from all_germlines['V']['{chain}']"
+            )
+            assert len(all_germlines["V"][chain]["macaque"]) >= 1, (
+                f"all_germlines['V']['{chain}']['macaque'] is empty"
+            )
+            assert "rhesus" not in all_germlines["V"][chain], (
+                f"'rhesus' key still present in all_germlines['V']['{chain}'] — should be renamed to 'macaque'"
+            )
+
+    def test_all_germlines_j_genes_use_macaque_key(self):
+        """all_germlines J-gene entries must use 'macaque' key, not 'rhesus'."""
+        from sadie.numbering.germlines import all_germlines
+
+        for chain in ["H", "K", "L"]:
+            assert "macaque" in all_germlines["J"][chain], (
+                f"'macaque' missing from all_germlines['J']['{chain}']"
+            )
+            assert len(all_germlines["J"][chain]["macaque"]) >= 1, (
+                f"all_germlines['J']['{chain}']['macaque'] is empty"
+            )
+            assert "rhesus" not in all_germlines["J"][chain], (
+                f"'rhesus' key still present in all_germlines['J']['{chain}'] — should be renamed to 'macaque'"
+            )
+
+    def test_no_rhesus_keys_anywhere_in_all_germlines(self):
+        """No 'rhesus' keys should exist at any level in all_germlines."""
+        from sadie.numbering.germlines import all_germlines
+
+        for segment in all_germlines:
+            for chain in all_germlines[segment]:
+                assert "rhesus" not in all_germlines[segment][chain], (
+                    f"'rhesus' key found in all_germlines['{segment}']['{chain}']"
+                )
+
+    def test_species_aliases_maps_rhesus_to_macaque(self):
+        """_SPECIES_ALIASES must map 'rhesus' → 'macaque' (not the reverse)."""
+        from sadie.numbering.numbering import Numbering
+
+        assert "rhesus" in Numbering._SPECIES_ALIASES, (
+            "'rhesus' not in _SPECIES_ALIASES — it should be an alias for 'macaque'"
+        )
+        assert Numbering._SPECIES_ALIASES["rhesus"] == "macaque", (
+            f"Expected _SPECIES_ALIASES['rhesus'] == 'macaque', "
+            f"got '{Numbering._SPECIES_ALIASES['rhesus']}'"
+        )
+        assert "macaque" not in Numbering._SPECIES_ALIASES, (
+            "'macaque' should not be in _SPECIES_ALIASES — it is the canonical key, not an alias"
+        )
+
+    def test_rhesus_backward_compat_resolves_to_macaque_germlines(self):
+        """Using allowed_species=['rhesus'] must still produce valid results via macaque germlines."""
+        seq = SPECIES_TEST_SEQUENCES["rhesus"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["rhesus"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_rhesus_compat", seq)
+        assert not result.empty, "Renumbering returned empty for 'rhesus' — backward compat broken"
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, "v_gene is None for 'rhesus' — germline assignment failed"
+        identity_species = result["identity_species"].iloc[0]
+        assert identity_species == "macaque", (
+            f"Expected identity_species='macaque' (resolved from rhesus alias) but got '{identity_species}'"
         )
