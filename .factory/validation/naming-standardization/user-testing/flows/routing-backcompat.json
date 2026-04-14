@@ -1,0 +1,170 @@
+{
+  "groupId": "routing-backcompat",
+  "testedAt": "2026-04-14T05:23:37.406806Z",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "validationContract": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/validation-contract.md",
+    "flowValidatorGuidanceSection": "Flow Validator Guidance: pytest",
+    "testingTool": "pytest",
+    "sharedCheckoutReadOnly": true,
+    "servicesRequired": false
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-NAME-003",
+      "title": "rhesus uses macaque HMMs not legacy",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -p no:cacheprovider -o addopts='' -v tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_loads_macaque_hmms_not_legacy tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_no_fallback_warning tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_and_macaque_produce_identical_output tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_macaque_renumbering_unchanged_regression tests/unit/renumbering/test_species_contract.py::TestMacaqueGermlineKeyRename::test_rhesus_backward_compat_resolves_to_macaque_germlines"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "steps": [
+        {
+          "action": "Run targeted pytest checks for rhesus HMM routing and warning behavior.",
+          "expected": "rhesus loads macaque-named HMMs and emits no fallback warning.",
+          "observed": "Both targeted tests passed; cleaned pytest output contains no fallback-warning text."
+        }
+      ],
+      "observation": "Both `TestRhesusHMMRouting::test_rhesus_loads_macaque_hmms_not_legacy` and `::test_rhesus_no_fallback_warning` passed with exit code 0, confirming rhesus routes through macaque-built HMMs and does not fall back to legacy G3/Numbering behavior.",
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/routing-backcompat/pytest-terminal-snapshot.txt"
+        ],
+        "rawOutput": [
+          "naming-standardization/routing-backcompat/pytest-output.txt"
+        ],
+        "cleanOutput": [
+          "naming-standardization/routing-backcompat/pytest-output-clean.txt"
+        ],
+        "commandLog": [
+          "naming-standardization/routing-backcompat/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "naming-standardization/routing-backcompat/pytest-exit-code.txt"
+        ],
+        "summaryLog": [
+          "naming-standardization/routing-backcompat/pytest-summary.json"
+        ],
+        "matchedOutput": [
+          "tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_loads_macaque_hmms_not_legacy PASSED [ 20%]",
+          "tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_no_fallback_warning PASSED [ 40%]"
+        ],
+        "pytestSummary": "============================== 5 passed in 0.07s ==============================="
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    },
+    {
+      "id": "VAL-NAME-004",
+      "title": "macaque renumbering unchanged after rename",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -p no:cacheprovider -o addopts='' -v tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_loads_macaque_hmms_not_legacy tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_no_fallback_warning tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_and_macaque_produce_identical_output tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_macaque_renumbering_unchanged_regression tests/unit/renumbering/test_species_contract.py::TestMacaqueGermlineKeyRename::test_rhesus_backward_compat_resolves_to_macaque_germlines"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "steps": [
+        {
+          "action": "Run targeted macaque regression pytest check.",
+          "expected": "macaque renumbering remains stable and position 30 is a match state.",
+          "observed": "The macaque regression test passed in the targeted pytest run."
+        }
+      ],
+      "observation": "`TestRhesusHMMRouting::test_macaque_renumbering_unchanged_regression` passed with exit code 0, supporting that macaque renumbering remains correct after the key rename and HMM position 30 is not deleted.",
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/routing-backcompat/pytest-terminal-snapshot.txt"
+        ],
+        "rawOutput": [
+          "naming-standardization/routing-backcompat/pytest-output.txt"
+        ],
+        "cleanOutput": [
+          "naming-standardization/routing-backcompat/pytest-output-clean.txt"
+        ],
+        "commandLog": [
+          "naming-standardization/routing-backcompat/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "naming-standardization/routing-backcompat/pytest-exit-code.txt"
+        ],
+        "summaryLog": [
+          "naming-standardization/routing-backcompat/pytest-summary.json"
+        ],
+        "matchedOutput": [
+          "tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_macaque_renumbering_unchanged_regression PASSED [ 80%]"
+        ],
+        "pytestSummary": "============================== 5 passed in 0.07s ==============================="
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    },
+    {
+      "id": "VAL-NAME-005",
+      "title": "rhesus backward compatibility",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -p no:cacheprovider -o addopts='' -v tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_loads_macaque_hmms_not_legacy tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_no_fallback_warning tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_and_macaque_produce_identical_output tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_macaque_renumbering_unchanged_regression tests/unit/renumbering/test_species_contract.py::TestMacaqueGermlineKeyRename::test_rhesus_backward_compat_resolves_to_macaque_germlines"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "steps": [
+        {
+          "action": "Run targeted pytest checks comparing rhesus and macaque outputs and verifying rhesus alias germline resolution.",
+          "expected": "rhesus output matches macaque output and resolves through macaque germlines.",
+          "observed": "Both backward-compatibility tests passed in the targeted pytest run."
+        }
+      ],
+      "observation": "`TestRhesusHMMRouting::test_rhesus_and_macaque_produce_identical_output` and `TestMacaqueGermlineKeyRename::test_rhesus_backward_compat_resolves_to_macaque_germlines` both passed with exit code 0, confirming rhesus remains backward compatible with macaque output and germline resolution.",
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/routing-backcompat/pytest-terminal-snapshot.txt"
+        ],
+        "rawOutput": [
+          "naming-standardization/routing-backcompat/pytest-output.txt"
+        ],
+        "cleanOutput": [
+          "naming-standardization/routing-backcompat/pytest-output-clean.txt"
+        ],
+        "commandLog": [
+          "naming-standardization/routing-backcompat/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "naming-standardization/routing-backcompat/pytest-exit-code.txt"
+        ],
+        "summaryLog": [
+          "naming-standardization/routing-backcompat/pytest-summary.json"
+        ],
+        "matchedOutput": [
+          "tests/unit/renumbering/test_species_contract.py::TestRhesusHMMRouting::test_rhesus_and_macaque_produce_identical_output PASSED [ 60%]",
+          "tests/unit/renumbering/test_species_contract.py::TestMacaqueGermlineKeyRename::test_rhesus_backward_compat_resolves_to_macaque_germlines PASSED [100%]"
+        ],
+        "pytestSummary": "============================== 5 passed in 0.07s ==============================="
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Ran one targeted pytest command covering VAL-NAME-003, VAL-NAME-004, and VAL-NAME-005 (5 tests total). All selected tests passed with exit code 0 and no fallback warning text appeared in the output."
+}

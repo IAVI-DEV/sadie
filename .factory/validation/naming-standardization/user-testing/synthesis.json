@@ -1,0 +1,34 @@
+{
+  "milestone": "naming-standardization",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-NAME-001",
+    "VAL-NAME-002",
+    "VAL-NAME-003",
+    "VAL-NAME-004",
+    "VAL-NAME-005",
+    "VAL-NAME-006"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Generalized pytest flow-validator guidance for milestone assertions and added the AGENTS-approved full-suite command for milestone-level validation.",
+      "source": "setup"
+    },
+    {
+      "target": "user-testing.md",
+      "description": "Documented that long-running full-suite pytest runs may need direct Execute/background monitoring because flow-validator subagents can hit inactivity timeouts.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}

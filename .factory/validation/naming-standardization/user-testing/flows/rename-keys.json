@@ -1,0 +1,79 @@
+{
+  "groupId": "rename-keys",
+  "testedAt": "2026-04-14T05:22:21.125442+00:00",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "surface": "pytest",
+    "sharedCheckout": "read-only except assigned flow report and evidence outputs",
+    "servicesRequired": false
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commandsRun": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest \"/Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py\" -k \"all_germlines_v_genes_use_macaque_key or all_germlines_j_genes_use_macaque_key or no_rhesus_keys_anywhere_in_all_germlines\" -v -p no:cacheprovider",
+      "exitCode": 0,
+      "observed": "3 selected tests passed; 26 deselected; completed in 0.02s",
+      "evidence": "naming-standardization/rename-keys/VAL-NAME-001-VAL-NAME-002-pytest.log"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-NAME-001",
+      "title": "all_germlines V genes use macaque key",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run targeted pytest covering V-key rename and global no-rhesus checks",
+          "expected": "test_all_germlines_v_genes_use_macaque_key passes",
+          "observed": "test_all_germlines_v_genes_use_macaque_key PASSED"
+        },
+        {
+          "action": "Review global no-rhesus-key assertion in the same pytest run",
+          "expected": "No rhesus keys remain anywhere in all_germlines, including V segments",
+          "observed": "test_no_rhesus_keys_anywhere_in_all_germlines PASSED"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/rename-keys/VAL-NAME-001-VAL-NAME-002-pytest.log"
+        ],
+        "pytest": "test_all_germlines_v_genes_use_macaque_key PASSED; test_no_rhesus_keys_anywhere_in_all_germlines PASSED",
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest \"/Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py\" -k \"all_germlines_v_genes_use_macaque_key or all_germlines_j_genes_use_macaque_key or no_rhesus_keys_anywhere_in_all_germlines\" -v -p no:cacheprovider",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-NAME-002",
+      "title": "all_germlines J genes use macaque key",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run targeted pytest covering J-key rename and global no-rhesus checks",
+          "expected": "test_all_germlines_j_genes_use_macaque_key passes",
+          "observed": "test_all_germlines_j_genes_use_macaque_key PASSED"
+        },
+        {
+          "action": "Review global no-rhesus-key assertion in the same pytest run",
+          "expected": "No rhesus keys remain anywhere in all_germlines, including J segments",
+          "observed": "test_no_rhesus_keys_anywhere_in_all_germlines PASSED"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/rename-keys/VAL-NAME-001-VAL-NAME-002-pytest.log"
+        ],
+        "pytest": "test_all_germlines_j_genes_use_macaque_key PASSED; test_no_rhesus_keys_anywhere_in_all_germlines PASSED",
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest \"/Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py\" -k \"all_germlines_v_genes_use_macaque_key or all_germlines_j_genes_use_macaque_key or no_rhesus_keys_anywhere_in_all_germlines\" -v -p no:cacheprovider",
+        "exitCode": 0
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed. The targeted pytest run exited with code 0 and all macaque rename checks passed."
+}

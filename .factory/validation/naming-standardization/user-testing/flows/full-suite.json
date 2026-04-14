@@ -1,0 +1,53 @@
+{
+  "groupId": "full-suite",
+  "testedAt": "2026-04-14T06:43:55.123083+00:00",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "surface": "pytest",
+    "sharedCheckout": "read-only except assigned flow report and evidence outputs",
+    "servicesRequired": false
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commandsRun": [
+    {
+      "command": "env PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' --ignore=tests/unit/renumbering/test_renumbering.py --ignore=tests/migration/ --no-header",
+      "exitCode": 0,
+      "observed": "================ 622 passed, 785 warnings in 2277.70s (0:37:57) ================",
+      "evidence": "naming-standardization/full-suite/pytest-output.txt"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-NAME-006",
+      "title": "full test suite passes after rename",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the AGENTS-approved milestone-level pytest suite with known exclusions.",
+          "expected": "The suite exits cleanly with no regressions after the rhesus\u2192macaque rename.",
+          "observed": "================ 622 passed, 785 warnings in 2277.70s (0:37:57) ================"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "naming-standardization/full-suite/pytest-output.txt"
+        ],
+        "cleanOutput": [
+          "naming-standardization/full-suite/pytest-output-clean.txt"
+        ],
+        "command": "env PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' --ignore=tests/unit/renumbering/test_renumbering.py --ignore=tests/migration/ --no-header",
+        "exitCode": 0,
+        "summary": "================ 622 passed, 785 warnings in 2277.70s (0:37:57) ================"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    "Two user-testing-flow-validator subagent attempts timed out after 900s of inactivity while this long-running full-suite pytest command was still progressing; the main validator completed the run via Execute/background monitoring and wrote this flow report from the resulting evidence."
+  ],
+  "blockers": [],
+  "summary": "Tested 1 assertion: 1 passed. ================ 622 passed, 785 warnings in 2277.70s (0:37:57) ================"
+}
