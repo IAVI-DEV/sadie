@@ -120,6 +120,7 @@ class Renumbering:
             chains=self.allowed_chains,
             use_numbering_hmms=use_numbering_hmms,
             hmm_dir=hmm_dir,
+            validate_pairs=False,
         )
 
         # Guard rail: validate that every explicitly requested species/chain pair

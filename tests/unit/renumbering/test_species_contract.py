@@ -615,3 +615,40 @@ class TestMixedRequestGuardRails:
             run_multiproc=False,
         )
         assert len(r.hmmer.hmms) > 0, "Expected at least one HMM for alpaca H"
+
+
+class TestHMMERLayerGuardRails:
+    """Tests for guard rail validation at the HMMER layer itself.
+
+    Direct HMMER instantiation must also validate requested species/chain pairs,
+    not just Renumbering.__init__(). This prevents silent failures when HMMER
+    is used directly without going through Renumbering.
+    """
+
+    def test_hmmer_alpaca_h_and_k_raises_for_missing_k(self):
+        """HMMER(species=['alpaca'], chains=['H','K']) must raise ValueError for alpaca K.
+
+        Alpaca only has H-chain HMMs. Direct HMMER instantiation should catch
+        the missing K pair and raise a descriptive error.
+        """
+        from sadie.renumbering.aligners.hmmer import HMMER
+
+        with pytest.raises(ValueError, match="alpaca") as exc_info:
+            HMMER(species=["alpaca"], chains=["H", "K"])
+        error_msg = str(exc_info.value)
+        assert "K" in error_msg, f"Error must mention unsupported chain 'K': {error_msg}"
+        assert "alpaca" in error_msg, f"Error must mention species 'alpaca': {error_msg}"
+
+    def test_hmmer_supported_pair_does_not_raise(self):
+        """HMMER(species=['human'], chains=['H','K','L']) must NOT raise."""
+        from sadie.renumbering.aligners.hmmer import HMMER
+
+        h = HMMER(species=["human"], chains=["H", "K", "L"])
+        assert len(h.hmms) > 0, "Expected HMMs for human H/K/L"
+
+    def test_hmmer_defaults_do_not_raise(self):
+        """HMMER() with no species/chains must NOT raise (loads all defaults)."""
+        from sadie.renumbering.aligners.hmmer import HMMER
+
+        h = HMMER()
+        assert len(h.hmms) > 0, "Expected HMMs with default args"

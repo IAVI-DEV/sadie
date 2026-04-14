@@ -54,6 +54,7 @@ class HMMER:
         source: Source = "imgt",
         use_numbering_hmms: bool = False,
         hmm_dir: Optional[Path] = None,
+        validate_pairs: bool = True,
     ) -> None:
         """Initialize HMMER with optional custom HMM directory.
 
@@ -71,13 +72,18 @@ class HMMER:
             Path to custom HMM directory. When provided, HMMs are loaded from
             `{hmm_dir}/{species}_{chain}.hmm`. Falls back to default HMM sources
             if custom HMM not found. By default None.
+        validate_pairs : bool, optional
+            If True (default), validate that every explicitly requested
+            species/chain pair has a loaded HMM. Set to False when the caller
+            has its own validation (e.g., Renumbering). By default True.
         """
         # Store custom HMM directory path
         self._hmm_dir = Path(hmm_dir) if hmm_dir else None
 
         # Force Numbering local HMMs to be used -- mostely for primiary testing
         self.hmms = self.get_hmm_models(
-            species=species, chains=chains, source=source, use_numbering_hmms=use_numbering_hmms
+            species=species, chains=chains, source=source, use_numbering_hmms=use_numbering_hmms,
+            validate_pairs=validate_pairs,
         )
         # place holders for hmmer
         self.alphabet = pyhmmer.easel.Alphabet.amino()
@@ -88,6 +94,7 @@ class HMMER:
         chains: Optional[Union[List[Chain], Chain]] = None,
         source: Source = "imgt",
         use_numbering_hmms: bool = False,
+        validate_pairs: bool = True,
     ) -> List[pyhmmer.plan7.HMMFile]:
         """
         Return a HMMER model for a given specie.
@@ -188,18 +195,23 @@ class HMMER:
                     hmms.append(hmm)
                     self._loaded_pairs.add((canonical_species, chain))
 
-        # Guard rail: raise descriptive error when no HMMs were loaded
-        # and the user explicitly requested specific species/chain combinations
-        if not hmms and species is not None and chains is not None:
+        # Guard rail: when both species and chains were explicitly provided
+        # (not defaults), validate every requested pair has a loaded HMM.
+        # This catches mixed requests where some pairs load successfully but
+        # others are silently dropped (e.g., alpaca H+K where only H exists).
+        if validate_pairs and species is not None and chains is not None:
             errors = []
             for single_species in species_list:
                 canonical = _HMM_SPECIES_ALIASES.get(single_species, single_species)
-                supported = self._get_supported_chains(canonical, source, use_local, use_numbering_hmms)
                 for chain in chain_list:
-                    errors.append(
-                        f"No HMM available for {canonical} {chain}. " f"Supported chains for {canonical}: {supported}"
-                    )
-            raise ValueError("; ".join(errors))
+                    if (canonical, chain) not in self._loaded_pairs:
+                        supported = self._get_supported_chains(canonical, source, use_local, use_numbering_hmms)
+                        errors.append(
+                            f"No HMM available for {canonical} {chain}. "
+                            f"Supported chains for {canonical}: {supported}"
+                        )
+            if errors:
+                raise ValueError("; ".join(errors))
 
         return hmms
 
