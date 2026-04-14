@@ -428,14 +428,13 @@ class Numbering:
                     else:
                         _allowed.append(resolved)
             else:
-                allowed_species = _allowed
+                _allowed = list(all_germlines["V"][chain_type].keys())
             seq_ids = {}
-            for species in allowed_species:
-                resolved = self._resolve_germline_species(species)
-                if resolved not in all_germlines["V"][chain_type]:
+            for species in _allowed:
+                if species not in all_germlines["V"][chain_type]:
                     continue
-                for gene, germline_sequence in all_germlines["V"][chain_type][resolved].items():
-                    seq_ids[(resolved, gene)] = self.get_identity(state_sequence, germline_sequence)
+                for gene, germline_sequence in all_germlines["V"][chain_type][species].items():
+                    seq_ids[(species, gene)] = self.get_identity(state_sequence, germline_sequence)
             genes["v_gene"][0] = max(seq_ids, key=lambda x: seq_ids[x])
             genes["v_gene"][1] = seq_ids[genes["v_gene"][0]]
 

@@ -130,3 +130,60 @@ class TestSpeciesContract:
             f"Expected identity_species='rhesus' but got '{identity_species}'."
             f" The macaque->rhesus alias in Numbering._SPECIES_ALIASES may be broken."
         )
+
+
+class TestAllowedScopingBug:
+    """Tests for the _allowed variable scoping bug in run_germline_assignment().
+
+    Bug 1: The resolved species list _allowed is built but the iteration loop
+    uses the original allowed_species instead of _allowed.
+
+    Bug 2: The else branch (allowed_species=None) references _allowed before
+    it's defined, causing NameError.
+    """
+
+    def test_macaque_in_allowed_species_resolves_and_iterates(self):
+        """allowed_species=['macaque'] must resolve through _SPECIES_ALIASES and
+        iterate as the 'rhesus' key in all_germlines, producing a valid v_gene."""
+        from sadie.numbering.numbering import Numbering
+
+        seq = SPECIES_TEST_SEQUENCES["macaque"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["macaque"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_macaque_scoping", seq)
+        assert not result.empty, "Renumbering returned empty result for macaque"
+
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, (
+            "macaque v_gene is None — _allowed scoping bug caused germline assignment to fail"
+        )
+        identity_species = result["identity_species"].iloc[0]
+        assert identity_species == "rhesus", (
+            f"Expected identity_species='rhesus' (resolved from macaque) but got '{identity_species}'"
+        )
+
+    def test_allowed_species_none_does_not_raise_nameerror(self):
+        """allowed_species=None in run_germline_assignment() must not raise NameError.
+
+        Bug: The else branch (when allowed_species is None) references _allowed
+        before it's defined. This tests the Numbering method directly since
+        Renumbering.__init__ defaults allowed_species to ["human"].
+        """
+        from sadie.numbering.numbering import Numbering
+
+        n = Numbering(scheme="kabat")
+        seq = SPECIES_TEST_SEQUENCES["human"]
+
+        # Build a simple state_vector with match states for positions 1-128
+        padded = seq + "-" * (128 - len(seq)) if len(seq) < 128 else seq[:128]
+        state_vector = [((i + 1, "m"), i) for i in range(min(len(seq), 128))]
+
+        # This must not raise NameError for undefined _allowed
+        genes = n.run_germline_assignment(state_vector, padded, "H", allowed_species=None)
+        assert genes["v_gene"][0] is not None, (
+            "v_gene is None with allowed_species=None — the else branch is broken"
+        )
