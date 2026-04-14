@@ -474,7 +474,11 @@ class Airr:
             available_names = list(full_config.keys())
             raise BadDataSet(reference_name, available_names)
 
-        # Filter the config to only include the requested reference_name and providers
+        # Filter the config to include requested providers, but ensure all
+        # gene segments (V, D, J) are covered.  Some species (e.g., macaque)
+        # have V genes only in custom/vdjbase, not imgt.  When the filtered
+        # set lacks V genes, expand to include all available sources so the
+        # reference build can succeed.
         ref_config = full_config[reference_name]
         filtered_ref: Dict[str, Dict[str, List[str]]] = {}
         for provider in providers:
@@ -486,6 +490,20 @@ class Airr:
                 f"No alleles found for reference '{reference_name}' with providers {providers}. "
                 f"Available sources in reference config: {list(ref_config.keys())}."
             )
+
+        # Check if filtered set has V genes.  If not, expand to all sources.
+        has_v_genes = any(
+            gene_name.startswith(("IGHV", "IGKV", "IGLV", "TRAV", "TRBV", "TRDV", "TRGV"))
+            for source_genes in filtered_ref.values()
+            for species_genes in source_genes.values()
+            for gene_name in species_genes
+        )
+        if not has_v_genes:
+            logger.info(
+                f"Providers {providers} lack V genes for '{reference_name}'; "
+                f"expanding to all available sources: {list(ref_config.keys())}"
+            )
+            filtered_ref = dict(ref_config)
 
         # Build a single-reference YAML config with only the requested data
         filtered_config = {reference_name: filtered_ref}

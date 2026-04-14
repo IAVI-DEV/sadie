@@ -109,9 +109,13 @@ class TestMacaqueE2eMutationalAnalysis:
         result = r.run_single("macaque_hmm_check", MACAQUE_VH_AA)
         assert not result.empty, "Renumbering returned empty for macaque VH AA"
 
-        # Check HMM names to confirm macaque HMM is loaded
+        # Check HMM names to confirm a macaque-compatible HMM is loaded (not human).
+        # The legacy ANARCI HMM for macaque is named 'rhesus_H'; LocalHMMBuilder
+        # would name it 'macaque_H'. Both are valid macaque HMMs.
         hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
-        assert any("macaque" in n for n in hmm_names), f"Expected macaque HMM but got: {hmm_names}"
+        assert any(
+            "macaque" in n or "rhesus" in n for n in hmm_names
+        ), f"Expected macaque or rhesus HMM but got: {hmm_names}"
         assert not any("human" in n for n in hmm_names), f"Should not load human HMMs: {hmm_names}"
 
         # Position 30 must be a match state (residue present, not a deletion)
@@ -258,7 +262,9 @@ class TestNoSilentSpeciesFallback:
             run_multiproc=False,
         )
         hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
-        assert any("macaque" in n for n in hmm_names), f"Expected macaque HMM but got: {hmm_names}"
+        assert any(
+            "macaque" in n or "rhesus" in n for n in hmm_names
+        ), f"Expected macaque or rhesus HMM but got: {hmm_names}"
         assert not any("human" in n for n in hmm_names), f"Should not load human HMMs: {hmm_names}"
 
     @skip_no_mouse
@@ -428,4 +434,74 @@ class TestMacaqueFullPipelineChain:
             assert pos30 == "S", (
                 f"Kabat position 30 = '{pos30}', expected 'S'. "
                 f"A deletion here indicates the human HMM was used instead of macaque."
+            )
+
+
+@skip_no_macaque
+class TestMacaqueJCallAndAlignmentFields:
+    """Regression tests for macaque IgBLAST J/alignment failure.
+
+    Fulfills:
+      VAL-MAC-001: j_call non-null for raw macaque run_single
+      VAL-MAC-002: alignment fields non-null for raw macaque run_single
+      VAL-MAC-003: full pipeline chain works end-to-end for raw macaque
+      VAL-MAC-004: reference build or fallback produces complete annotations
+      VAL-MAC-006: productive flag trustworthy when j_call present
+    """
+
+    def test_j_call_non_null_for_raw_macaque(self) -> None:
+        """Airr('macaque').run_single() must return non-null j_call for productive IGH.
+
+        Validates VAL-MAC-001.
+        """
+        result = Airr("macaque").run_single("mac_jcall_test", MACAQUE_IGH_NT)
+        assert not result.empty
+        j_call = result["j_call"].iloc[0]
+        assert str(j_call) != "nan", (
+            f"j_call is NaN for productive macaque IGH. "
+            f"Reference build likely failed; check that all sources are included."
+        )
+        assert "IGHJ" in str(j_call), f"j_call should contain IGHJ gene, got: {j_call}"
+
+    def test_alignment_fields_non_null(self) -> None:
+        """sequence_alignment_aa and germline_alignment_aa must be non-null.
+
+        Validates VAL-MAC-002.
+        """
+        result = Airr("macaque").run_single("mac_align_test", MACAQUE_IGH_NT)
+        assert not result.empty
+        seq_aa = result["sequence_alignment_aa"].iloc[0]
+        germ_aa = result["germline_alignment_aa"].iloc[0]
+        assert str(seq_aa) != "nan", "sequence_alignment_aa should not be NaN"
+        assert str(germ_aa) != "nan", "germline_alignment_aa should not be NaN"
+        assert len(str(seq_aa)) > 10, f"sequence_alignment_aa too short: {seq_aa}"
+        assert len(str(germ_aa)) > 10, f"germline_alignment_aa too short: {germ_aa}"
+
+    def test_full_pipeline_chain_from_raw_input(self) -> None:
+        """run_mutational_analysis() must work on raw run_single() output.
+
+        Validates VAL-MAC-003: full pipeline chain from raw nucleotide input
+        through Airr annotation to mutational analysis.
+        """
+        result = Airr("macaque").run_single("mac_pipeline_test", MACAQUE_IGH_NT)
+        assert not result.empty
+        productive = result[result["productive"] == True]  # noqa: E712
+        assert not productive.empty, "No productive rows from raw macaque IGH"
+
+        mut_result = run_mutational_analysis(AirrTable(productive), scheme="kabat", run_multiproc=False)
+        assert isinstance(mut_result, AirrTable)
+        assert "mutations" in mut_result.columns
+
+    def test_productive_implies_j_call_not_nan(self) -> None:
+        """productive=True must always have non-null j_call.
+
+        Validates VAL-MAC-006.
+        """
+        result = Airr("macaque").run_single("mac_productive_test", MACAQUE_IGH_NT)
+        productive = result[result["productive"] == True]  # noqa: E712
+        if not productive.empty:
+            nan_j_calls = productive[productive["j_call"].isna()]
+            assert nan_j_calls.empty, (
+                f"Found {len(nan_j_calls)} productive rows with NaN j_call. "
+                f"productive=True should always have a valid j_call."
             )
