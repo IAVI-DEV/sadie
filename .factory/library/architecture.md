@@ -8,10 +8,11 @@ The main annotation entry point. `Airr(species_name)` constructs an IgBLAST runn
 
 **Database resolution flow:**
 1. `Airr.__init__()` calls `_resolve_database_via_reference()` which tries `References.from_yaml()` → `make_airr_database()`
-2. If reference build fails, falls back to `GermlineData(name, receptor, None, scheme)` (direct germlines path)
-3. The fallback is at `airr.py:362-372` — catches any exception, logs warning, uses direct path
+2. If a provider-filtered reference resolves with no V genes (the macaque failure mode fixed in milestone `macaque-fix`), `_resolve_database_via_reference()` expands to all supported sources before giving up on the reference build path
+3. If reference build still fails, it falls back to `GermlineData(name, receptor, None, scheme)` (direct germlines path)
+4. The fallback remains at `airr.py:362-372` — it catches exceptions, logs a warning, and uses the direct path
 
-**Bug P1 impact:** For macaque, step 1 fails because `make_airr_database()` at `reference.py:591-609` requires IMGT position columns (`imgt.fwr1_start` through `imgt.fwr3_end`) that the macaque germline dataframe lacks. The fallback produces annotations missing `j_call` and alignment fields.
+**Bug P1 impact:** The original macaque failure came from the reference-build path producing an incomplete database and then dropping into the direct-germlines fallback, which yielded `productive=True` rows with missing `j_call` and alignment fields. The current fix in `src/sadie/airr/airr.py` keeps macaque on the reference-build path by expanding sources when the filtered config lacks V genes.
 
 ### Reference Module (`src/sadie/reference/`)
 
@@ -20,7 +21,7 @@ Builds IgBLAST databases from YAML configuration.
 **`make_airr_database()` flow:**
 1. Loads germline genes from `GermlineManager`
 2. Checks for required IMGT position columns in the dataframe
-3. If columns are missing, raises `ValueError` — this is where macaque fails
+3. If columns are missing for specific V genes, those alleles are skipped from BLAST-db generation instead of crashing the entire build
 4. Builds blastdb, aux_db, internal_data files
 
 ### Renumbering Module (`src/sadie/renumbering/`)

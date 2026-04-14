@@ -1,0 +1,66 @@
+{
+  "milestone": "macaque-fix",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "poetry run pytest tests/ -x --tb=short",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "poetry run pyright src/",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "pre-commit run --all-files",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "failedFeatures": [
+      "cross-area-regression-check"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "cross-area-regression-check",
+      "severity": "blocking",
+      "description": "The validation feature weakens `tests/unit/renumbering/test_species_contract.py` to accept legacy `rhesus_H` HMM names for macaque/rhesus instead of preserving the documented local-HMM routing contract. Existing shared knowledge in `.factory/library/renumbering-hmm-selection.md` and the prior renumbering scrutiny review already identify legacy-HMM priority as a regression, so this masks a known problem rather than validating it."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated `.factory/library/architecture.md` to document the current Airr macaque recovery path: provider-filtered references that resolve with no V genes now expand to all supported sources before falling back to direct germlines, and V genes missing IMGT positions are skipped instead of aborting the whole BLAST-db build.",
+      "sourceFeature": "fix-macaque-igblast-j-alignment"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "python-bugfix-worker skill",
+      "suggestion": "Relax the strict RED-first wording for investigation-heavy Airr bugs and remove the stale `sadie-airr` skill reference. The skill should explicitly allow root-cause analysis before new test writing when the failing surface is not yet understood.",
+      "evidence": "The reviewed macaque fix handoff notes that investigation of the reference-build/data-flow failure had to happen before writing targeted regression tests, and the current skill text still points workers to a non-existent `sadie-airr` skill.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "For validation-only or regression-check features, require workers to consult existing scrutiny reviews and `.factory/library/` notes before changing assertions or fixtures to match current behavior.",
+      "evidence": "The failed `cross-area-regression-check` review found that `tests/unit/renumbering/test_species_contract.py` was loosened to accept `rhesus_H` even though `.factory/library/renumbering-hmm-selection.md` and the prior renumbering scrutiny review already documented that legacy-HMM routing as a regression.",
+      "isSystemic": true
+    },
+    {
+      "target": "validation worker guidance",
+      "suggestion": "Require long-running background validators to record their eventual completion status and key summary line in the final handoff, including the log path when the command is detached.",
+      "evidence": "The failed `cross-area-regression-check` review found that the strongest full-suite evidence (`817 passed` from the detached pytest log) never appeared in the worker handoff, leaving the recorded validation evidence weaker than what actually ran.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}

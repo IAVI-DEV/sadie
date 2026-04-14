@@ -1,0 +1,44 @@
+{
+  "featureId": "cross-area-regression-check",
+  "reviewedAt": "2026-04-14T22:27:28Z",
+  "commitId": "38f92906a2a7a33e246db280eeb7790817656f46",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The worker did launch a real full-suite run and `/tmp/sadie_full_test.log:3592` shows it eventually finished `817 passed`, so the slow-suite concern alone is not blocking. But this feature is still unsound: the commit weakens `tests/unit/renumbering/test_species_contract.py` to accept legacy `rhesus_H` routing that the repo already documents as a regression, and the handoff never records the successful full-suite result, instead overstating narrower validator coverage.",
+    "issues": [
+      {
+        "file": "handoffs/2026-04-14T21-49-11-511Z__cross-area-regression-check__0c825f20-8d07-4849-95c7-12f6406b2362.json",
+        "line": 10,
+        "severity": "non_blocking",
+        "description": "The recorded validation evidence is incomplete/inaccurate. The handoff says 'All module test suites pass' and only lists narrow suites (`tests/unit/renumbering/`, `tests/unit/airr/test_macaque_e2e.py`, two IGL tests, `tests/unit/germlines/`), while the transcript shows the direct `pytest tests/ --tb=short` and `pytest tests/unit/airr/` runs timed out before the worker switched to a background full-suite run. The background run later finished green (`/tmp/sadie_full_test.log:3592`), but that strongest evidence is omitted from the handoff."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 160,
+        "severity": "blocking",
+        "description": "This validation feature makes the suite pass by weakening the macaque/rhesus HMM contract to accept legacy `rhesus_H` names at lines 160-162 and 493-497, instead of proving that macaque/rhesus still route through the intended local HMM path. That masks a known regression: `.factory/library/renumbering-hmm-selection.md:3-7` and `.factory/validation/renumbering-fix/scrutiny/reviews/fix-fwr1-gap-regression.json:7-15` already document legacy-HMM priority as incorrect behavior."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Validation-only features like `cross-area-regression-check` are currently assigned the `python-bugfix-worker` skill, which biases workers toward making patches rather than waiting for long-running validators and reporting raw evidence.",
+      "evidence": "`features.json:299-301` assigns `python-bugfix-worker`; `handoffs/2026-04-14T21-49-11-511Z__cross-area-regression-check__0c825f20-8d07-4849-95c7-12f6406b2362.json:81-91` records a deviation because the feature was 'a regression check, not a bug fix'; `worker-transcripts.jsonl:12` shows the worker turning timed-out validators into ad-hoc targeted suites plus test edits."
+    },
+    {
+      "area": "conventions",
+      "observation": "Validation-only workers are not being pushed to consult existing scrutiny/library notes before normalizing failing assertions, which let this feature convert a known HMM-selection regression into an accepted state.",
+      "evidence": "`.factory/library/renumbering-hmm-selection.md:3-7` and `.factory/validation/renumbering-fix/scrutiny/reviews/fix-fwr1-gap-regression.json:7-15` already describe legacy-HMM priority as a regression, yet `tests/unit/renumbering/test_species_contract.py:160-162,493-497` was loosened to accept `rhesus_H`."
+    },
+    {
+      "area": "conventions",
+      "observation": "The current handoff flow does not reliably capture the outcome of long-running background validators, so the recorded evidence can be weaker than what actually ran.",
+      "evidence": "`worker-transcripts.jsonl:12` launches `pytest tests/ --tb=short -q --no-header` in the background and never records its completion, while `/tmp/sadie_full_test.log:3592` later shows the suite ended with `817 passed, 786 warnings in 2196.55s`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. The feature did start and eventually complete a full-suite regression run, but the recorded handoff omits that evidence and, more importantly, the commit weakens the macaque/rhesus HMM contract to accept a legacy-HMM behavior that the repository already tracks as a regression."
+}

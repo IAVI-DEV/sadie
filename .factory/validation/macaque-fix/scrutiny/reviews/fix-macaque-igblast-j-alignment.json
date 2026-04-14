@@ -1,0 +1,26 @@
+{
+  "featureId": "fix-macaque-igblast-j-alignment",
+  "reviewedAt": "2026-04-14T22:29:41Z",
+  "commitId": "92b35afbf4f3c788c85bcd4a2f0658b074bce4ec",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The reviewed commit fixes the raw macaque `j_call`/alignment failure in a targeted way: `_resolve_database_via_reference()` now expands beyond the filtered provider set only when that filtered macaque config has no V genes, which matches the root cause described in the feature. The implementation also updates the macaque HMM-name assertions to accept the legacy `rhesus_H` naming introduced by the earlier renumbering change, and the new regression tests exercise raw `Airr(\"macaque\").run_single()` output directly instead of relying only on precomputed fixtures. I did not find evidence of a blocking or non-blocking regression in the reviewed diff.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Shared provider-selection guidance is now incomplete for the unified Airr pipeline. The reviewed fix adds an implicit escape hatch where provider filtering is bypassed when the filtered reference has no V genes, but the existing tutorial still describes `providers` as a strict allele filter.",
+      "evidence": "docs/unified-pipeline-tutorial.md:56-59 says `providers` controls which alleles are included, while src/sadie/airr/airr.py:477-505 now auto-expands to all sources when the filtered config lacks V genes."
+    },
+    {
+      "area": "skills",
+      "observation": "The `python-bugfix-worker` skill guidance is slightly out of sync with real Airr bug work: it still points workers to a `sadie-airr` skill and mandates a strict RED-first sequence, while this reviewed session had to investigate the data flow first and the handoff explicitly asks for that guidance to be loosened.",
+      "evidence": ".factory/skills/python-bugfix-worker/SKILL.md:14-18 references `sadie-airr` and lines 28-33 require writing failing tests first; the reviewed handoff 2026-04-14T20-48-39-525Z__fix-macaque-igblast-j-alignment__479c90ab-5028-41ff-8f6c-2d59a2f542fa.json:81-83 says root-cause investigation was needed before test writing."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The implementation fixes the macaque raw-annotation failure, keeps the reviewed human regression check intact, and adds direct regression tests for raw nucleotide input plus the raw `Airr` -> `run_mutational_analysis()` chain."
+}

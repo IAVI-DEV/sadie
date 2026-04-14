@@ -490,9 +490,7 @@ class TestRhesusHMMRouting:
             run_multiproc=False,
         )
         hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
-        assert any(
-            "macaque" in n or "rhesus" in n for n in hmm_names
-        ), (
+        assert any("macaque" in n or "rhesus" in n for n in hmm_names), (
             f"Expected macaque or rhesus HMM for rhesus but got: {hmm_names}. "
             f"'rhesus' should route to macaque-compatible HMMs."
         )
