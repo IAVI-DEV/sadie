@@ -33,6 +33,9 @@ SPECIES_TEST_SEQUENCES = {
     ),
     "rat": ("EVQLVESGGGLVQPKGSLKLSCAASGFTFSNYGMHWVRQAPGKGLEWVAYISSGSSTIY" "YPDTVKGRFTISRDNAKNTLYLQMSSLKSEDTAMYYCTR"),
     "cow": ("QVQLRESGPSLVKPSQTLSLTCTVSGFSLSSYGVGWVRQAPGKALECLGGISSGGSTGY" "NPALKYRLSITKDNSKSQVSLSLSSVTTEDTATYYCAK"),
+    "chicken": (
+        "AVTLDESGGGLQTPRGALSLVCKASGFTFSSYGMGWVRQAPGKGLEWVAGIGSS" "GSGTAYGSAVKGRATISRDNGQSTVRLQLNNLRAEDTGTYYCAKAAG"
+    ),
 }
 
 
@@ -428,3 +431,77 @@ class TestCowSpeciesContract:
                 assert (
                     len(all_germlines[segment][chain]["cow"]) >= 1
                 ), f"all_germlines['{segment}']['{chain}']['cow'] is empty"
+
+
+class TestChickenSpeciesContract:
+    """Tests for chicken as a supported species (VAL-EXP-004, VAL-EXP-005, VAL-EXP-006, VAL-EXP-008)."""
+
+    def test_chicken_in_allowed_species(self):
+        """'chicken' must appear in Renumbering.get_allowed_species()."""
+        allowed = Renumbering.get_allowed_species()
+        assert "chicken" in allowed, f"'chicken' not in get_allowed_species(): {allowed}"
+
+    def test_chicken_hmms_load_successfully(self):
+        """Renumbering(allowed_species=['chicken']) must load chicken HMMs without error."""
+        r = Renumbering(
+            allowed_species=["chicken"],
+            allowed_chain=["H", "L"],
+            run_multiproc=False,
+        )
+        assert len(r.hmmer.hmms) > 0, "No HMMs loaded for chicken"
+        hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
+        assert any("chicken" in n for n in hmm_names), f"Expected chicken HMM but got: {hmm_names}"
+
+    def test_chicken_vh_produces_numbered_result(self):
+        """Chicken VH sequence must produce a non-empty numbered result."""
+        seq = SPECIES_TEST_SEQUENCES["chicken"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["chicken"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_chicken_vh", seq)
+        assert not result.empty, "Renumbering returned empty result for chicken VH"
+        assert result.shape[1] > 5, f"Too few columns in chicken result: {result.shape[1]}"
+
+    def test_chicken_germline_assignment_returns_chicken_vgene(self):
+        """Chicken VH must get a chicken-species V-gene assignment."""
+        seq = SPECIES_TEST_SEQUENCES["chicken"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["chicken"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_chicken_germline", seq)
+        assert not result.empty, "Renumbering returned empty result for chicken"
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, "v_gene is None for chicken — germline assignment failed"
+        identity_species = result["identity_species"].iloc[0]
+        assert identity_species == "chicken", (
+            f"Expected identity_species='chicken' but got '{identity_species}'. "
+            f"Chicken germline assignment should return a chicken V-gene."
+        )
+
+    def test_chicken_germline_data_exists_in_all_germlines(self):
+        """all_germlines must have chicken entries for V/H, J/H, V/L, J/L."""
+        from sadie.numbering.germlines import all_germlines
+
+        for segment in ["V", "J"]:
+            for chain in ["H", "L"]:
+                assert (
+                    "chicken" in all_germlines[segment][chain]
+                ), f"'chicken' missing from all_germlines['{segment}']['{chain}']"
+                assert (
+                    len(all_germlines[segment][chain]["chicken"]) >= 1
+                ), f"all_germlines['{segment}']['{chain}']['chicken'] is empty"
+
+    def test_chicken_has_no_kappa(self):
+        """Chicken biologically has no kappa chain — V/K and J/K should not have chicken entries."""
+        from sadie.numbering.germlines import all_germlines
+
+        for segment in ["V", "J"]:
+            assert (
+                "chicken" not in all_germlines[segment]["K"]
+            ), f"Chicken should NOT have entries in all_germlines['{segment}']['K'] — chickens lack kappa"

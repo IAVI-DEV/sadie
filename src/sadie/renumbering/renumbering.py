@@ -287,6 +287,7 @@ class Renumbering:
             "dog",
             "cat",
             "cow",
+            "chicken",
         ]
         return _allowed_species
 
