@@ -1,0 +1,259 @@
+{
+  "groupId": "guardrail-python-api",
+  "testedAt": "2026-04-14T18:18:03.993679+00:00",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+    "validationContract": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/validation-contract.md",
+    "flowGuidance": "/Users/tmsincomb/sadie/.factory/library/user-testing.md#flow-validator-guidance-python-api",
+    "surface": "python-api",
+    "sharedCheckout": "read-only except assigned flow report and evidence outputs",
+    "servicesRequired": false,
+    "assignedAssertions": [
+      "VAL-QF-005",
+      "VAL-QF-006",
+      "VAL-QF-007",
+      "VAL-QF-009",
+      "VAL-QF-010",
+      "VAL-QF-011"
+    ]
+  },
+  "toolsUsed": [
+    "poetry",
+    "python"
+  ],
+  "commandsRun": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+      "exitCode": 0,
+      "observed": "Exit code 0. The one-off Python API script exercised all 6 assigned `Renumbering` constructor assertions and wrote both a terminal log and structured results JSON under the mission evidence directory.",
+      "evidence": [
+        "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log",
+        "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-QF-005",
+      "title": "Guard rail fires when full default chain set explicitly passed",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['alpaca'], allowed_chain=['H','K','L','A','B','G','D'])`.",
+          "expected": "Constructor raises `ValueError` instead of silently accepting only the supported alpaca H chain.",
+          "observed": "Raised `ValueError`; the message reported missing alpaca chain support and `Supported chains for alpaca: ['H']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "error",
+          "error_type": "ValueError",
+          "message": "No HMM available for alpaca K. Supported chains for alpaca: ['H']; No HMM available for alpaca L. Supported chains for alpaca: ['H']; No HMM available for alpaca A. Supported chains for alpaca: ['H']; No HMM available for alpaca B. Supported chains for alpaca: ['H']; No HMM available for alpaca G. Supported chains for alpaca: ['H']; No HMM available for alpaca D. Supported chains for alpaca: ['H']"
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-006",
+      "title": "Default Renumbering constructor still works",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['human'])`.",
+          "expected": "Constructor succeeds without raising `ValueError`.",
+          "observed": "Succeeded with default `allowed_chains=['H','K','L']`, `hmm_count=3`, and `loaded_pairs=['human_H','human_K','human_L']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "success",
+          "allowed_species": [
+            "human"
+          ],
+          "allowed_chains": [
+            "H",
+            "K",
+            "L"
+          ],
+          "hmm_count": 3,
+          "loaded_pairs": [
+            "human_H",
+            "human_K",
+            "human_L"
+          ]
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-007",
+      "title": "Guard rail fires for narrowed chain list with unsupported species",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['alpaca'], allowed_chain=['H','K'])`.",
+          "expected": "Constructor raises `ValueError` mentioning unsupported alpaca K.",
+          "observed": "Raised `ValueError`: `No HMM available for alpaca K. Supported chains for alpaca: ['H']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "error",
+          "error_type": "ValueError",
+          "message": "No HMM available for alpaca K. Supported chains for alpaca: ['H']"
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-009",
+      "title": "Guard rail error message lists all unsupported chains",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['alpaca'], allowed_chain=['H','K','L','A','B','G','D'])` and inspect the exception text.",
+          "expected": "The `ValueError` message lists all unsupported explicit alpaca chains: K, L, A, B, G, and D.",
+          "observed": "Raised `ValueError` listing all 6 unsupported alpaca chains (K, L, A, B, G, D), each with `Supported chains for alpaca: ['H']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "error",
+          "error_type": "ValueError",
+          "message": "No HMM available for alpaca K. Supported chains for alpaca: ['H']; No HMM available for alpaca L. Supported chains for alpaca: ['H']; No HMM available for alpaca A. Supported chains for alpaca: ['H']; No HMM available for alpaca B. Supported chains for alpaca: ['H']; No HMM available for alpaca G. Supported chains for alpaca: ['H']; No HMM available for alpaca D. Supported chains for alpaca: ['H']"
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-010",
+      "title": "Explicitly passed supported chain list succeeds",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['human'], allowed_chain=['H','K','L'])`.",
+          "expected": "Constructor succeeds without `ValueError` when all explicit species/chain pairs are supported.",
+          "observed": "Succeeded with `hmm_count=3` and `loaded_pairs=['human_H','human_K','human_L']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "success",
+          "allowed_species": [
+            "human"
+          ],
+          "allowed_chains": [
+            "H",
+            "K",
+            "L"
+          ],
+          "hmm_count": 3,
+          "loaded_pairs": [
+            "human_H",
+            "human_K",
+            "human_L"
+          ]
+        }
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-011",
+      "title": "Default constructor with alpaca uses broad search",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate `Renumbering(allowed_species=['alpaca'])` without passing `allowed_chain`.",
+          "expected": "Constructor succeeds via the broad-search path and loads the available alpaca H HMM without raising `ValueError`.",
+          "observed": "Succeeded with default `allowed_chains=['H','K','L']`, `hmm_count=1`, and `loaded_pairs=['alpaca_H']`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log"
+        ],
+        "structuredResults": [
+          "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+        ],
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run python - <<'PY' > \"/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/quick-fixes/guardrail-python-api/guardrail-python-api-checks.log\" 2>&1",
+        "exitCode": 0,
+        "observed": {
+          "outcome": "success",
+          "allowed_species": [
+            "alpaca"
+          ],
+          "allowed_chains": [
+            "H",
+            "K",
+            "L"
+          ],
+          "hmm_count": 1,
+          "loaded_pairs": [
+            "alpaca_H"
+          ]
+        }
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Constructor checks that touched unsupported alpaca chains emitted fallback warnings from the local HMM builder before the final Renumbering guard rail result was returned.",
+      "resolved": true,
+      "resolution": "No workaround was required. The warnings were captured in the evidence log, and all assigned assertions still matched the contract.",
+      "affectedAssertions": [
+        "VAL-QF-005",
+        "VAL-QF-007",
+        "VAL-QF-009",
+        "VAL-QF-011"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions: 6 passed. Direct `Renumbering` constructor checks confirmed unsupported explicit alpaca chains raise descriptive `ValueError`s, while default and supported explicit human constructors succeed.",
+  "evidenceFiles": [
+    "quick-fixes/guardrail-python-api/guardrail-python-api-checks.log",
+    "quick-fixes/guardrail-python-api/guardrail-python-api-results.json"
+  ]
+}

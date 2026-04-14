@@ -1,0 +1,170 @@
+{
+  "groupId": "shell-static",
+  "testedAt": "2026-04-14T18:19:16.201900Z",
+  "surface": "shell",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+    "validationSurface": "shell",
+    "assignedAssertions": [
+      "VAL-QF-001",
+      "VAL-QF-003",
+      "VAL-CROSS-007"
+    ],
+    "sharedCheckout": "read-only except assigned flow report and evidence outputs",
+    "servicesRequired": false
+  },
+  "toolsUsed": [
+    "grep",
+    "poetry check",
+    "poetry run pytest --collect-only"
+  ],
+  "commandsRun": [
+    {
+      "command": "grep -n \"reportUnknownVariableType\" \"/Users/tmsincomb/sadie/pyproject.toml\"",
+      "exitCode": 0,
+      "observed": "Matched the corrected pyright key at line 185: reportUnknownVariableType = false.",
+      "evidence": "quick-fixes/shell-static/VAL-QF-001-correct-key.log"
+    },
+    {
+      "command": "grep -n \"reportUnkown\" \"/Users/tmsincomb/sadie/pyproject.toml\"",
+      "exitCode": 1,
+      "observed": "No matches for the old typo; grep exited 1 as expected for zero matches.",
+      "evidence": "quick-fixes/shell-static/VAL-QF-001-old-typo.log"
+    },
+    {
+      "command": "grep -nA 1 'sys.executable, \"-m\", \"pytest\", \"-xvs\",' \"/Users/tmsincomb/sadie/scripts/regenerate_catnap_references.py\"",
+      "exitCode": 0,
+      "observed": "Matched the subprocess list entry using sys.executable, -m pytest, -xvs, with the CATNAP integration test path preserved on the next line.",
+      "evidence": "quick-fixes/shell-static/VAL-QF-003-subprocess-snippet.log"
+    },
+    {
+      "command": "grep -nE '^[[:space:]]*\"pytest\"' \"/Users/tmsincomb/sadie/scripts/regenerate_catnap_references.py\"",
+      "exitCode": 1,
+      "observed": "No subprocess list item begins with a bare \"pytest\" string; grep exited 1 as expected.",
+      "evidence": "quick-fixes/shell-static/VAL-QF-003-bare-pytest-first-arg.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" check",
+      "exitCode": 0,
+      "observed": "Poetry parsed pyproject.toml successfully and exited 0; output contained only deprecation warnings about legacy [tool.poetry] fields.",
+      "evidence": "quick-fixes/shell-static/VAL-CROSS-007-poetry-check.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts=\"\" --collect-only",
+      "exitCode": 0,
+      "observed": "Pytest collected 813 items and exited 0 in collect-only mode; warnings were emitted but collection completed successfully.",
+      "evidence": "quick-fixes/shell-static/VAL-CROSS-007-pytest-collect-only.log"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-QF-001",
+      "title": "Pyright config typo corrected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect pyproject.toml for the expected pyright key.",
+          "expected": "The file contains reportUnknownVariableType = false.",
+          "observed": "Line 185 reads reportUnknownVariableType = false."
+        },
+        {
+          "action": "Search pyproject.toml for the legacy misspelling reportUnkown.",
+          "expected": "Zero matches.",
+          "observed": "grep returned no matches and exited 1, which is the expected zero-match result."
+        }
+      ],
+      "commands": [
+        "grep -n \"reportUnknownVariableType\" \"/Users/tmsincomb/sadie/pyproject.toml\"",
+        "grep -n \"reportUnkown\" \"/Users/tmsincomb/sadie/pyproject.toml\""
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/shell-static/VAL-QF-001-correct-key.log",
+          "quick-fixes/shell-static/VAL-QF-001-old-typo.log"
+        ],
+        "matchedOutput": [
+          "185:reportUnknownVariableType = false",
+          "[no matches]"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-QF-003",
+      "title": "regenerate_catnap_references.py uses sys.executable for pytest",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect the CATNAP regeneration subprocess command.",
+          "expected": "The command starts with sys.executable, then -m pytest, retains -xvs, and preserves the CATNAP integration test path.",
+          "observed": "The file shows sys.executable, \"-m\", \"pytest\", \"-xvs\", followed by tests/integration/airr/test_airr_intergration.py::test_catnap_integration."
+        },
+        {
+          "action": "Search for a subprocess list entry whose first item is a bare \"pytest\" string.",
+          "expected": "No bare \"pytest\" first-argument match.",
+          "observed": "grep returned no matches and exited 1, confirming no bare \"pytest\" list item."
+        }
+      ],
+      "commands": [
+        "grep -nA 1 'sys.executable, \"-m\", \"pytest\", \"-xvs\",' \"/Users/tmsincomb/sadie/scripts/regenerate_catnap_references.py\"",
+        "grep -nE '^[[:space:]]*\"pytest\"' \"/Users/tmsincomb/sadie/scripts/regenerate_catnap_references.py\""
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/shell-static/VAL-QF-003-subprocess-snippet.log",
+          "quick-fixes/shell-static/VAL-QF-003-bare-pytest-first-arg.log"
+        ],
+        "matchedOutput": [
+          "242:        sys.executable, \"-m\", \"pytest\", \"-xvs\",",
+          "243-        \"tests/integration/airr/test_airr_intergration.py::test_catnap_integration\"",
+          "[no matches]"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-007",
+      "title": "pyproject.toml remains valid",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run poetry check against the repo root.",
+          "expected": "pyproject.toml is parseable and poetry check exits 0.",
+          "observed": "poetry check exited 0. Poetry emitted only deprecation warnings about legacy metadata placement."
+        },
+        {
+          "action": "Run pytest in collect-only mode from the Poetry environment.",
+          "expected": "pytest collects successfully and exits 0.",
+          "observed": "pytest --collect-only exited 0 after collecting 813 items in 1.29s; warning summary lines were present but non-fatal."
+        }
+      ],
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" check",
+        "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts=\"\" --collect-only"
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "quick-fixes/shell-static/VAL-CROSS-007-poetry-check.log",
+          "quick-fixes/shell-static/VAL-CROSS-007-pytest-collect-only.log"
+        ],
+        "matchedOutput": [
+          "EXIT_CODE=0",
+          "========================= 813 tests collected in 1.29s ========================="
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "evidenceFiles": [
+    "quick-fixes/shell-static/VAL-QF-001-correct-key.log",
+    "quick-fixes/shell-static/VAL-QF-001-old-typo.log",
+    "quick-fixes/shell-static/VAL-QF-003-subprocess-snippet.log",
+    "quick-fixes/shell-static/VAL-QF-003-bare-pytest-first-arg.log",
+    "quick-fixes/shell-static/VAL-CROSS-007-poetry-check.log",
+    "quick-fixes/shell-static/VAL-CROSS-007-pytest-collect-only.log"
+  ],
+  "summary": "Tested 3 assigned shell/static assertions: 3 passed. VAL-QF-001 confirmed the corrected pyright key and no misspelled fallback key, VAL-QF-003 confirmed sys.executable -m pytest -xvs with the original CATNAP test path preserved, and VAL-CROSS-007 confirmed both poetry check and pytest --collect-only exit 0."
+}

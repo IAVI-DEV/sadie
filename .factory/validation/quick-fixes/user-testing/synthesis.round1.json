@@ -1,0 +1,32 @@
+{
+  "milestone": "quick-fixes",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CROSS-007",
+    "VAL-QF-001",
+    "VAL-QF-003",
+    "VAL-QF-005",
+    "VAL-QF-006",
+    "VAL-QF-007",
+    "VAL-QF-009",
+    "VAL-QF-010",
+    "VAL-QF-011"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added a note that the full commands.test suite is too slow/noisy for quick-fixes user testing and added read-only flow-validator guidance sections for shell and python-api surfaces.",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null
+}
