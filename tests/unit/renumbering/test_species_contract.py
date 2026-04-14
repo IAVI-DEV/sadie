@@ -32,6 +32,7 @@ SPECIES_TEST_SEQUENCES = {
         "QEQLVESGGGLVQPGESLRLSCAASGFTFDDYAMHWVRQAPGKGLEWVSGISWNSGSIG" "YADSVKGRFTISRDNAKNSLYLQMNSLRAEDTALYYCAKG"
     ),
     "rat": ("EVQLVESGGGLVQPKGSLKLSCAASGFTFSNYGMHWVRQAPGKGLEWVAYISSGSSTIY" "YPDTVKGRFTISRDNAKNTLYLQMSSLKSEDTAMYYCTR"),
+    "cow": ("QVQLRESGPSLVKPSQTLSLTCTVSGFSLSSYGVGWVRQAPGKALECLGGISSGGSTGY" "NPALKYRLSITKDNSKSQVSLSLSSVTTEDTATYYCAK"),
 }
 
 
@@ -361,3 +362,69 @@ class TestMacaqueGermlineKeyRename:
         assert (
             identity_species == "macaque"
         ), f"Expected identity_species='macaque' (resolved from rhesus alias) but got '{identity_species}'"
+
+
+class TestCowSpeciesContract:
+    """Tests for cow as a fully supported species (VAL-EXP-001, VAL-EXP-002, VAL-EXP-003)."""
+
+    def test_cow_in_allowed_species(self):
+        """'cow' must appear in Renumbering.get_allowed_species()."""
+        allowed = Renumbering.get_allowed_species()
+        assert "cow" in allowed, f"'cow' not in get_allowed_species(): {allowed}"
+
+    def test_cow_hmms_load_successfully(self):
+        """Renumbering(allowed_species=['cow']) must load cow HMMs without error."""
+        r = Renumbering(
+            allowed_species=["cow"],
+            allowed_chain=["H", "K", "L"],
+            run_multiproc=False,
+        )
+        assert len(r.hmmer.hmms) > 0, "No HMMs loaded for cow"
+        hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
+        assert any("cow" in n for n in hmm_names), f"Expected cow HMM but got: {hmm_names}"
+
+    def test_cow_vh_produces_numbered_result(self):
+        """Cow VH sequence must produce a non-empty numbered result with Kabat positions."""
+        seq = SPECIES_TEST_SEQUENCES["cow"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["cow"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_cow_vh", seq)
+        assert not result.empty, "Renumbering returned empty result for cow VH"
+        # Verify at least some Kabat positions are assigned
+        assert result.shape[1] > 5, f"Too few columns in cow result: {result.shape[1]}"
+
+    def test_cow_germline_assignment_returns_cow_vgene(self):
+        """Cow VH sequence must get a cow-species V-gene assignment (not human)."""
+        seq = SPECIES_TEST_SEQUENCES["cow"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["cow"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_cow_germline", seq)
+        assert not result.empty, "Renumbering returned empty result for cow"
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, "v_gene is None for cow — germline assignment failed"
+        identity_species = result["identity_species"].iloc[0]
+        assert identity_species == "cow", (
+            f"Expected identity_species='cow' but got '{identity_species}'. "
+            f"Cow germline assignment should return a cow V-gene, not {identity_species}."
+        )
+
+    def test_cow_germline_data_exists_in_all_germlines(self):
+        """all_germlines must have cow entries for V and J segments."""
+        from sadie.numbering.germlines import all_germlines
+
+        for segment in ["V", "J"]:
+            for chain in ["H", "K", "L"]:
+                assert (
+                    "cow" in all_germlines[segment][chain]
+                ), f"'cow' missing from all_germlines['{segment}']['{chain}']"
+                assert (
+                    len(all_germlines[segment][chain]["cow"]) >= 1
+                ), f"all_germlines['{segment}']['{chain}']['cow'] is empty"

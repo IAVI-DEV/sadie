@@ -286,6 +286,7 @@ class Renumbering:
             "alpaca",
             "dog",
             "cat",
+            "cow",
         ]
         return _allowed_species
 
