@@ -121,6 +121,29 @@ class Renumbering:
             use_numbering_hmms=use_numbering_hmms,
             hmm_dir=hmm_dir,
         )
+
+        # Guard rail: validate that every explicitly requested species/chain pair
+        # has a loaded HMM. This catches mixed requests where some pairs load
+        # successfully but others are silently dropped (e.g., alpaca H+K where
+        # only H exists). Only enforced when the chain list differs from the
+        # full default set, indicating the user explicitly narrowed chains.
+        from sadie.renumbering.aligners.hmmer import _HMM_SPECIES_ALIASES
+
+        default_chains = set(self.get_allowed_chains())
+        if set(self.allowed_chains) != default_chains:
+            errors = []
+            for sp in self.allowed_species:
+                canonical = _HMM_SPECIES_ALIASES.get(sp, sp)
+                for ch in self.allowed_chains:
+                    if (canonical, ch) not in self.hmmer._loaded_pairs:
+                        supported = self.hmmer._get_supported_chains(canonical, "imgt", True, use_numbering_hmms)
+                        errors.append(
+                            f"No HMM available for {canonical} {ch}. "
+                            f"Supported chains for {canonical}: {supported}"
+                        )
+            if errors:
+                raise ValueError("; ".join(errors))
+
         self.numbering = Numbering()
 
         # TODO: move this out of aligner and into it's own class for checks

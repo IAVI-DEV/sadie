@@ -563,3 +563,55 @@ class TestUnsupportedChainGuardRails:
             run_multiproc=False,
         )
         assert len(r.hmmer.hmms) > 0, f"Expected HMMs loaded for {species} {chain}"
+
+
+class TestMixedRequestGuardRails:
+    """Tests for mixed request validation where some species/chain pairs are valid and others are not.
+
+    The guard rail must validate EVERY explicitly requested species/chain pair individually,
+    not just check whether zero HMMs were loaded total. This prevents silent dropping of
+    unsupported pairs when at least one valid pair exists.
+    """
+
+    def test_alpaca_h_and_k_raises_for_missing_k(self):
+        """allowed_species=['alpaca'], allowed_chain=['H','K'] must raise for alpaca K.
+
+        alpaca has H but not K. The guard rail must catch the missing K even though
+        alpaca H loads successfully (hmms is non-empty).
+        """
+        with pytest.raises(ValueError, match="alpaca") as exc_info:
+            Renumbering(
+                allowed_species=["alpaca"],
+                allowed_chain=["H", "K"],
+                run_multiproc=False,
+            )
+        error_msg = str(exc_info.value)
+        assert "K" in error_msg, f"Error must mention unsupported chain 'K': {error_msg}"
+
+    def test_human_and_alpaca_k_raises_for_alpaca_k(self):
+        """allowed_species=['human','alpaca'], allowed_chain=['K'] must raise for alpaca K.
+
+        human K is valid, alpaca K is not. The guard rail must catch alpaca K even
+        though human K loads successfully.
+        """
+        with pytest.raises(ValueError, match="alpaca") as exc_info:
+            Renumbering(
+                allowed_species=["human", "alpaca"],
+                allowed_chain=["K"],
+                run_multiproc=False,
+            )
+        error_msg = str(exc_info.value)
+        assert "alpaca" in error_msg, f"Error must mention species 'alpaca': {error_msg}"
+        assert "K" in error_msg, f"Error must mention unsupported chain 'K': {error_msg}"
+
+    def test_alpaca_h_only_does_not_raise(self):
+        """allowed_species=['alpaca'], allowed_chain=['H'] must NOT raise.
+
+        This is a fully supported combination — no error expected.
+        """
+        r = Renumbering(
+            allowed_species=["alpaca"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        assert len(r.hmmer.hmms) > 0, "Expected at least one HMM for alpaca H"

@@ -121,10 +121,9 @@ class HMMER:
         # Check if we should use local HMM builder from germlines
         use_local = _use_local_hmm_builder() and not use_numbering_hmms
 
-        # Guard rail: track whether we need to validate HMM availability.
-        # Only enforced when both species AND chains are explicitly specified.
-        _species_explicit = species is not None
-        _chains_explicit = chains is not None
+        # Track which (species, chain) pairs successfully loaded an HMM.
+        # Used by callers (e.g. Renumbering) to validate requested pairs.
+        self._loaded_pairs: set[tuple[str, str]] = set()
 
         for single_species in species_list:
             # Resolve species aliases (e.g., "rhesus" → "macaque") so that
@@ -137,6 +136,7 @@ class HMMER:
                     if custom_hmm_path.exists():
                         with pyhmmer.plan7.HMMFile(custom_hmm_path) as hmm_file:
                             hmms.append(next(hmm_file))
+                        self._loaded_pairs.add((canonical_species, chain))
                         continue
 
                 # Priority 1: Local germlines HMM builder (new default)
@@ -151,6 +151,7 @@ class HMMER:
 
                         hmm = self._local_hmm_builder.get_hmm(species=canonical_species, chain=chain, source=source)
                         hmms.append(hmm)
+                        self._loaded_pairs.add((canonical_species, chain))
                         continue
                     except Exception as e:
                         # Fall through to G3/Numbering on error
@@ -175,6 +176,7 @@ class HMMER:
                         with pyhmmer.plan7.HMMFile(hmm_path) as hmm_file:
                             hmm = next(hmm_file)
                             hmms.append(hmm)
+                    self._loaded_pairs.add((canonical_species, chain))
                 # Priority 3: Build G3 HMMs (legacy fallback)
                 else:
                     hmm = self.g3.get_hmm(
@@ -184,10 +186,11 @@ class HMMER:
                         limit=None,
                     )
                     hmms.append(hmm)
+                    self._loaded_pairs.add((canonical_species, chain))
 
         # Guard rail: raise descriptive error when no HMMs were loaded
         # and the user explicitly requested specific species/chain combinations
-        if not hmms and _species_explicit and _chains_explicit:
+        if not hmms and species is not None and chains is not None:
             errors = []
             for single_species in species_list:
                 canonical = _HMM_SPECIES_ALIASES.get(single_species, single_species)
