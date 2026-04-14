@@ -12,8 +12,11 @@ import pytest
 
 from sadie.renumbering import Renumbering
 
-# Representative VH sequences per species for testing.
+# ---------------------------------------------------------------------------
+# Representative VH (heavy chain) sequences per species for testing.
 # These are real germline-derived sequences that should number correctly.
+# Every species returned by get_allowed_species() must have an entry here.
+# ---------------------------------------------------------------------------
 SPECIES_TEST_SEQUENCES = {
     "human": (
         "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTY"
@@ -36,6 +39,58 @@ SPECIES_TEST_SEQUENCES = {
     "chicken": (
         "AVTLDESGGGLQTPRGALSLVCKASGFTFSSYGMGWVRQAPGKGLEWVAGIGSS" "GSGTAYGSAVKGRATISRDNGQSTVRLQLNNLRAEDTGTYYCAKAAG"
     ),
+    "alpaca": ("EVQLVESGGGLVQPGGSLRLSCAASGFTFDDYAMSWVRQAPGKGLEWVSAISWNGGSTYYAESMKGRFTISRDNAKNTLYLQMNSLKSEDTAVYYCAK"),
+    "cat": ("DVQLVESGGDLVQPGGSLRLTCVASGFTFSSYEMNWVRQAPGKGLQWVAYISSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLKTEDTATYYCA"),
+    "dog": ("EVQLVQSGAEVKKPGASVKVSCKTSGYTFINYYMIWVRQAPGAGLDWMGQIDPEDGATSYAQKFQGRVTLTADTSTSTAYMELSSLRAGDIAVYYCAR"),
+    "pig": ("EVKLVESGGGLVQPGGSLRLSCVGSGFTFSSTYINWVRQAPGKGLEWLAAISTSGGSTYYADSVKGRFTISRDDSQNTAYLQMNSLRTEDTARYYCAT"),
+}
+
+# ---------------------------------------------------------------------------
+# Representative kappa (VK) and lambda (VL) light chain sequences per species.
+# Only species that have K/L HMM support are included.
+# ---------------------------------------------------------------------------
+SPECIES_KAPPA_SEQUENCES = {
+    "human": ("DIQMTQSPSSVSASVGDRVTITCRASQGISSWLAWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQAN"),
+    "mouse": ("DVVMTQTPLSLPVSLGDQASISCRSSQSLVHSNGNTYLHWYLQKPGQSPKLLIYKVSNRFSGVPDRFSGSGSGTDFTLKISRVEAEDLGVYFCSQST"),
+    "macaque": ("DIQMTQSPSSLSASVGDRVTITCRASQGISSYLNWYQQKPGKAPKLLIYYANRLESGVPSRFSGSGSGTEFTLTISSLQPEDFATYYCQQYN"),
+    "rabbit": ("AQVLTQTESPVSAPVGGTVTINCQASQSVYDNNWLSWYQQKPGQPPKLLIYDASKLASGVPSRFSGSGSGTQFTLTISGVQCDDAATYYCQGSY"),
+    "rat": ("AIQVTQSPTSLSASLGDRVTLTCRASQDINNKMAWYQQKPGEVPQLLIYYASTLQSGTPSRFSGSGAGTDFSFTISHLQSEDFATYYCLQGY"),
+    "cow": ("DIQVTQSPSYLSASLGDRVSITCQANQSVSHYLNWYQQKPGEAPKLLIYYATSRYTRVPSRFSGSGSGTDFTLTISSLEADDAANYYCQQDY"),
+    "cat": ("EIQMTQSPSSLSASPGDRVTITCRASQNVNTWLAWYQQKPGKVPKLLIYRASTLQTGVPSRFSGSGSGTDFTLTISSLEPEDAATYYCQQHN"),
+    "dog": ("DIVMTQTPLSLSVSPGETASISCKASQSLLHSDGNTYLNWFRQKPGQSPQRLIYKVSNRDPGVPDRFSGSGSGTDFTLRISRVEADDTGVYYCMQGT"),
+    "pig": ("AIQLTQSPASLAASLGDTVSITCRASQSINKWLAWYQQQAGKAPKLLIYSASTLQSGVPSRFKGSGSGTDFTLTISGLQAEDVATYYCQQHH"),
+}
+
+SPECIES_LAMBDA_SEQUENCES = {
+    "human": ("QSVLTQPPSVSEAPRQRVTISCSGSSSNIGNNAVNWYQQLPGKAPKLLIYYDDLLPSGVSDRFSGSKSGTSASLAISGLQSEDEADYYCAAWD"),
+    "mouse": ("QAVVTQESALTTSPGETVTLTCRSSTGAVTTSNYANWVQEKPDHLFTGLIGGTNNRAPGVPARFSGSLIGDKAALTITGAQTEDEAIYFCALWY"),
+    "macaque": ("QSVLTQPPSASGAPGQSVTISCSGSSSNIGSNYVYWYQQLSGKAPKLLIYNNNQRPSGVPDRFSGSKSGTSASLAISGLQSEDEADYYCAAWD"),
+    "rabbit": ("QPALTQPSSAFGALGGSVTISCTGTSDDVGYTNAVYWYRQLPGMSPTLLIYYDSKRPSGIPERFSGSKSGNTASLTISWLQPEDEAAYYCSSYR"),
+    "rat": ("QAVVTQESALTTLPGGTVTLTCHSSTGAVTTSNYANWIQEKADHLFTGIVGDTSNRAPGAPARFSGSLLEGKAALTITGAQIEDEATYFCSLWY"),
+    "cow": ("QAVLTQPPSVSGSLGQTVTISCTGSSNNIGILGVSWYQQIPGSAPRTLIYNSNKRPSGVPDRFSGTKSGNTGTLTIASLQAEDEADYYCASAD"),
+    "cat": ("QSVLAQPSSVSGSLGQRVTISCSGSSSNIGSNYVSWYQQLPGTTPKTIIYWDNSRPSGVSERFSGSKSGSTGTLTITGLQAEDEADYYCSAWD"),
+    "dog": ("QSVLTQPTSVSGSLGQRVTISCSGSTNNIGIVGASWYQQLPGKAPKLLVDSDGDRPSGVPDRFSGSKSGNSATLTITGLQAEDEADYYCQSFD"),
+    "pig": ("QSALTQPPSVSRNLKEMETISCAGTSSDIGGYVSWYQQHPGLAPKFLIYYVNTRASGIPDGFCGSKSGNTASLTISGLQAEDEADYYCSSPR"),
+    "chicken": ("QAALTQPSSVSANPGETVKITCSGDRSYYGWYQQKAPGSAPVTLIYDNTNRPSNIPSRFSGSKSGSTATLTITGVQADDEAVYYCGSADSSSTA"),
+}
+
+# ---------------------------------------------------------------------------
+# Mapping of species to their supported chains (those with HMMs).
+# Used to dynamically parametrize light chain tests.
+# ---------------------------------------------------------------------------
+SPECIES_SUPPORTED_CHAINS: dict[str, list[str]] = {
+    "human": ["H", "K", "L"],
+    "mouse": ["H", "K", "L"],
+    "macaque": ["H", "K", "L"],
+    "rhesus": ["H", "K", "L"],  # alias for macaque
+    "rabbit": ["H", "K", "L"],
+    "rat": ["H", "K", "L"],
+    "cow": ["H", "K", "L"],
+    "cat": ["H", "K", "L"],
+    "dog": ["H", "K", "L"],
+    "pig": ["H", "K", "L"],
+    "alpaca": ["H"],
+    "chicken": ["H", "L"],
 }
 
 
@@ -116,6 +171,214 @@ class TestSpeciesContract:
         assert identity_species == "macaque", (
             f"Expected identity_species='macaque' but got '{identity_species}'."
             f" The all_germlines keys should use 'macaque' as the canonical name."
+        )
+
+
+class TestSpeciesContractCompleteness:
+    """Verify that SPECIES_TEST_SEQUENCES covers every species in get_allowed_species().
+
+    This is a meta-test: if a new species is added to get_allowed_species()
+    without a representative test sequence, these tests will fail.
+    """
+
+    def test_all_allowed_species_have_vh_test_sequences(self):
+        """Every species in get_allowed_species() must have an entry in SPECIES_TEST_SEQUENCES."""
+        allowed = set(Renumbering.get_allowed_species())
+        tested = set(SPECIES_TEST_SEQUENCES.keys())
+        missing = allowed - tested
+        assert not missing, (
+            f"Species {missing} are in get_allowed_species() but have no VH test sequence "
+            f"in SPECIES_TEST_SEQUENCES. Add representative VH AA sequences for them."
+        )
+
+    def test_all_kappa_species_have_test_sequences(self):
+        """Every species with K-chain HMMs must have an entry in SPECIES_KAPPA_SEQUENCES."""
+        species_with_kappa = {sp for sp, chains in SPECIES_SUPPORTED_CHAINS.items() if "K" in chains and sp != "rhesus"}
+        tested = set(SPECIES_KAPPA_SEQUENCES.keys())
+        missing = species_with_kappa - tested
+        assert not missing, (
+            f"Species {missing} support kappa chain but have no test sequence "
+            f"in SPECIES_KAPPA_SEQUENCES. Add representative VK AA sequences."
+        )
+
+    def test_all_lambda_species_have_test_sequences(self):
+        """Every species with L-chain HMMs must have an entry in SPECIES_LAMBDA_SEQUENCES."""
+        species_with_lambda = {
+            sp for sp, chains in SPECIES_SUPPORTED_CHAINS.items() if "L" in chains and sp != "rhesus"
+        }
+        tested = set(SPECIES_LAMBDA_SEQUENCES.keys())
+        missing = species_with_lambda - tested
+        assert not missing, (
+            f"Species {missing} support lambda chain but have no test sequence "
+            f"in SPECIES_LAMBDA_SEQUENCES. Add representative VL AA sequences."
+        )
+
+
+class TestLightChainContract:
+    """Light chain (kappa/lambda) contract tests (VAL-TEST-004).
+
+    Verifies that species with K/L HMM support can renumber light chain
+    sequences and get valid germline assignments.
+    """
+
+    @pytest.mark.parametrize(
+        "species,seq",
+        [(sp, seq) for sp, seq in SPECIES_KAPPA_SEQUENCES.items()],
+        ids=[f"{sp}-K" for sp in SPECIES_KAPPA_SEQUENCES],
+    )
+    def test_kappa_produces_numbered_result(self, species, seq):
+        """A representative VK sequence for each species must produce a non-empty result."""
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=[species],
+            allowed_chain=["K"],
+            run_multiproc=False,
+        )
+        result = r.run_single(f"test_{species}_kappa", seq)
+        assert not result.empty, f"Renumbering returned empty result for {species} kappa"
+
+    @pytest.mark.parametrize(
+        "species,seq",
+        [(sp, seq) for sp, seq in SPECIES_KAPPA_SEQUENCES.items()],
+        ids=[f"{sp}-K" for sp in SPECIES_KAPPA_SEQUENCES],
+    )
+    def test_kappa_gets_germline_assignment(self, species, seq):
+        """Kappa germline assignment must succeed for species with K HMMs."""
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=[species],
+            allowed_chain=["K"],
+            run_multiproc=False,
+        )
+        result = r.run_single(f"test_{species}_kappa_gl", seq)
+        assert not result.empty
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, f"Species '{species}' kappa got None v_gene — germline assignment failed."
+
+    @pytest.mark.parametrize(
+        "species,seq",
+        [(sp, seq) for sp, seq in SPECIES_LAMBDA_SEQUENCES.items()],
+        ids=[f"{sp}-L" for sp in SPECIES_LAMBDA_SEQUENCES],
+    )
+    def test_lambda_produces_numbered_result(self, species, seq):
+        """A representative VL sequence for each species must produce a non-empty result."""
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=[species],
+            allowed_chain=["L"],
+            run_multiproc=False,
+        )
+        result = r.run_single(f"test_{species}_lambda", seq)
+        assert not result.empty, f"Renumbering returned empty result for {species} lambda"
+
+    @pytest.mark.parametrize(
+        "species,seq",
+        [(sp, seq) for sp, seq in SPECIES_LAMBDA_SEQUENCES.items()],
+        ids=[f"{sp}-L" for sp in SPECIES_LAMBDA_SEQUENCES],
+    )
+    def test_lambda_gets_germline_assignment(self, species, seq):
+        """Lambda germline assignment must succeed for species with L HMMs."""
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=[species],
+            allowed_chain=["L"],
+            run_multiproc=False,
+        )
+        result = r.run_single(f"test_{species}_lambda_gl", seq)
+        assert not result.empty
+        v_gene = result["v_gene"].iloc[0]
+        assert v_gene is not None, f"Species '{species}' lambda got None v_gene — germline assignment failed."
+
+
+class TestGermlineVAndJCompleteness:
+    """Verify every species has both V AND J entries in all_germlines for its supported chains.
+
+    A species with V-gene data but no J-gene data (or vice versa) will silently
+    produce incomplete germline assignments. This test catches such asymmetries.
+    """
+
+    @pytest.mark.parametrize(
+        "species,chain",
+        [
+            (sp, ch)
+            for sp, chains in SPECIES_SUPPORTED_CHAINS.items()
+            if sp != "rhesus"  # rhesus is an alias, macaque covers it
+            for ch in chains
+        ],
+        ids=[f"{sp}-{ch}" for sp, chains in SPECIES_SUPPORTED_CHAINS.items() if sp != "rhesus" for ch in chains],
+    )
+    def test_species_has_v_and_j_germline_entries(self, species, chain):
+        """Each species/chain combo must have both V and J entries in all_germlines."""
+        from sadie.numbering.germlines import all_germlines
+
+        assert (
+            species in all_germlines["V"][chain]
+        ), f"'{species}' missing from all_germlines['V']['{chain}'] — no V-gene data"
+        assert len(all_germlines["V"][chain][species]) >= 1, f"all_germlines['V']['{chain}']['{species}'] is empty"
+        assert (
+            species in all_germlines["J"][chain]
+        ), f"'{species}' missing from all_germlines['J']['{chain}'] — no J-gene data"
+        assert len(all_germlines["J"][chain][species]) >= 1, f"all_germlines['J']['{chain}']['{species}'] is empty"
+
+
+class TestRhesusBackwardCompatE2E:
+    """Dedicated rhesus backward compat e2e test (VAL-NAME-005, VAL-CROSS-002).
+
+    Verifies that processing the same macaque VH sequence with
+    allowed_species=['rhesus'] produces identical renumbering output
+    to allowed_species=['macaque'] — same HMM, same germline, same Kabat positions.
+    """
+
+    def test_rhesus_macaque_identical_renumbering_output(self):
+        """rhesus and macaque must produce byte-identical renumbering for the same VH."""
+        seq = SPECIES_TEST_SEQUENCES["macaque"]
+
+        r_macaque = Renumbering(
+            scheme="kabat",
+            allowed_species=["macaque"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        r_rhesus = Renumbering(
+            scheme="kabat",
+            allowed_species=["rhesus"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+
+        result_macaque = r_macaque.run_single("test_vh", seq)
+        result_rhesus = r_rhesus.run_single("test_vh", seq)
+
+        assert not result_macaque.empty
+        assert not result_rhesus.empty
+
+        # Compare ALL shared columns except 'allowed_species' (which reflects
+        # the input parameter, not the renumbering output)
+        shared_cols = sorted(set(result_macaque.columns) & set(result_rhesus.columns))
+        skip_cols = {"allowed_species"}
+        for col in shared_cols:
+            if col in skip_cols:
+                continue
+            mac_val = result_macaque[col].iloc[0]
+            rhe_val = result_rhesus[col].iloc[0]
+            assert mac_val == rhe_val, (
+                f"Column '{col}' differs: macaque='{mac_val}', rhesus='{rhe_val}'. "
+                f"rhesus backward compat is broken."
+            )
+
+    def test_rhesus_identity_species_is_macaque(self):
+        """rhesus must resolve identity_species='macaque' (the canonical name)."""
+        seq = SPECIES_TEST_SEQUENCES["macaque"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["rhesus"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_rhesus_identity", seq)
+        assert not result.empty
+        assert result["identity_species"].iloc[0] == "macaque", (
+            f"rhesus should resolve to identity_species='macaque', " f"got '{result['identity_species'].iloc[0]}'"
         )
 
 
