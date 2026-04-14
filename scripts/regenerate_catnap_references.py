@@ -239,7 +239,7 @@ def run_integration_tests() -> bool:
     console.print("\n[cyan]Running integration tests...[/cyan]")
 
     cmd = [
-        "pytest", "-xvs",
+        sys.executable, "-m", "pytest", "-xvs",
         "tests/integration/airr/test_airr_intergration.py::test_catnap_integration"
     ]
 
