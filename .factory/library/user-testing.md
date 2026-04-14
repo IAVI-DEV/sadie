@@ -41,3 +41,11 @@ Each validation instance runs a Python script or pytest command — lightweight 
 - Run API checks with one-off `poetry run python - <<'PY'` scripts.
 - Keep checks side-effect-free: instantiate classes, inspect return values, and capture exceptions/messages only.
 - Do not edit source files, install dependencies, or write temporary files outside your assigned evidence directory.
+
+## Flow Validator Guidance: pytest
+
+- Use the shared checkout at `/Users/tmsincomb/sadie` as read-only except for your assigned flow report and evidence files.
+- Prefer assertion-focused `poetry run pytest ... -v` commands over broad suites so each flow validates only its assigned contract IDs.
+- Concurrent renumbering validators may share the same checkout because these tests are read-only and do not require unique ports, databases, or seed data.
+- Save the exact pytest command, exit code, and the relevant `PASSED` lines or assertion summaries into your flow report and evidence files.
+- Do not run formatters, fixture regeneration, or unrelated test files outside your assigned assertions.

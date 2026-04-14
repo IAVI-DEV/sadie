@@ -1,0 +1,70 @@
+{
+  "groupId": "full-renumbering-file",
+  "milestone": "renumbering-fix",
+  "testedAt": "2026-04-14T20:04:19.495109+00:00",
+  "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+  "validationSurface": "pytest",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "sharedCheckoutMode": "read-only except assigned flow report and evidence files",
+    "allowedTestFile": "tests/unit/renumbering/test_renumbering.py",
+    "evidenceDirectory": "renumbering-fix/full-renumbering-file",
+    "reportPath": "/Users/tmsincomb/sadie/.factory/validation/renumbering-fix/user-testing/flows/full-renumbering-file.json"
+  },
+  "toolsUsed": [
+    "python",
+    "poetry",
+    "pytest"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-REN-009",
+      "title": "Full renumbering test file passes",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py -v",
+      "executedCommand": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/renumbering/test_renumbering.py -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/full-renumbering-file/VAL-REN-009-pytest.log"
+      ],
+      "observed": "Pytest collected 32 items and exited 0. Contract-highlighted tests test_alternate_numbering, test_io, and test_bad_sequences passed, and the run finished with 32 passed, 1 warning in 45.54s.",
+      "relevantOutput": [
+        "tests/unit/renumbering/test_renumbering.py::test_alternate_numbering PASSED [ 25%]",
+        "tests/unit/renumbering/test_renumbering.py::test_bad_sequences PASSED    [ 40%]",
+        "tests/unit/renumbering/test_renumbering.py::test_io ",
+        "PASSED                                                                   [ 31%]",
+        "======================== 32 passed, 1 warning in 45.54s ========================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    }
+  ],
+  "commandsRun": [
+    {
+      "name": "full-renumbering-suite",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/renumbering/test_renumbering.py -v",
+      "requiredCheckCommand": "poetry run pytest tests/unit/renumbering/test_renumbering.py -v",
+      "exitCode": 0,
+      "evidenceFile": "renumbering-fix/full-renumbering-file/VAL-REN-009-pytest.log",
+      "stdoutTail": [
+        "tests/unit/renumbering/test_renumbering.py::test_renumbering_database_missing_hmms_raises PASSED [ 93%]",
+        "tests/unit/renumbering/test_renumbering.py::test_renumbering_database_parameter_none PASSED [ 96%]",
+        "tests/unit/renumbering/test_renumbering.py::test_renumbering_with_database_runs_numbering PASSED [100%]",
+        "=============================== warnings summary ===============================",
+        "tests/unit/renumbering/test_renumbering.py::test_trouble_seqs",
+        "  /Users/tmsincomb/sadie/src/sadie/numbering/numbering.py:510: UserWarning: Skipping POS",
+        "    warnings.warn(f\"Skipping {details['query_name']}\", UserWarning)",
+        "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+        "======================== 32 passed, 1 warning in 45.54s ========================",
+        "EXIT_CODE=0"
+      ],
+      "observation": "The assigned full-file renumbering suite completed successfully with all 32 tests passing. Live-log warnings appeared during test_io and several alpaca guard-rail cases, but they were non-fatal and the command exited 0."
+    }
+  ],
+  "evidenceFiles": [
+    "renumbering-fix/full-renumbering-file/VAL-REN-009-pytest.log"
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Executed the assigned full-file pytest validation for VAL-REN-009; all 32 tests in tests/unit/renumbering/test_renumbering.py passed with exit code 0."
+}

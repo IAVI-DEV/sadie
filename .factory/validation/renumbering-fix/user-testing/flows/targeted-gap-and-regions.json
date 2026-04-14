@@ -1,0 +1,202 @@
+{
+  "groupId": "targeted-gap-and-regions",
+  "milestone": "renumbering-fix",
+  "testedAt": "2026-04-14T20:03:06.017057+00:00",
+  "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+  "validationSurface": "pytest",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "sharedCheckoutMode": "read-only except assigned flow report and evidence files",
+    "allowedTestFile": "tests/unit/renumbering/test_renumbering.py",
+    "evidenceDirectory": "renumbering-fix/targeted-gap-and-regions",
+    "reportPath": "/Users/tmsincomb/sadie/.factory/validation/renumbering-fix/user-testing/flows/targeted-gap-and-regions.json"
+  },
+  "toolsUsed": [
+    "python",
+    "poetry",
+    "pytest"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-REN-001",
+      "title": "IMGT position 10 gap in FWR1 for human heavy chain",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_single_seq -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_single_seq.log"
+      ],
+      "observed": "test_single_seq passed; the test asserts fwr1_aa_gaps == \"EVQLVESGG-GLEQPGGSLRLSCAGS\" at tests/unit/renumbering/test_renumbering.py:128."
+    },
+    {
+      "id": "VAL-REN-002",
+      "title": "IMGT position 10 gap preserved in multi-input processing",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_numbering_multi_input -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_numbering_multi_input.log"
+      ],
+      "observed": "test_numbering_multi_input passed; the test asserts DupulimabH fwr1_aa_gaps == \"EVQLVESGG-GLEQPGGSLRLSCAGS\" at line 176."
+    },
+    {
+      "id": "VAL-REN-003",
+      "title": "Light chain FWR1 has no spurious gap at position 10",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_numbering_multi_input -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_numbering_multi_input.log"
+      ],
+      "observed": "test_numbering_multi_input passed; the test asserts DupulimabL fwr1_aa_gaps == \"DIVMTQSPLSLPVTPGEPASISCRSS\" at line 184."
+    },
+    {
+      "id": "VAL-REN-004",
+      "title": "IMGT position 10 gap in FWR1 for dog heavy chain",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_dog -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_dog.log"
+      ],
+      "observed": "test_dog passed; the first dog assertion checks fwr1_aa_gaps == \"EVQLVESGG-DLVKPGGTLRLSCVAS\" at line 231."
+    },
+    {
+      "id": "VAL-REN-005",
+      "title": "Dog light chain FWR1 has no gap at position 10",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_dog -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_dog.log"
+      ],
+      "observed": "test_dog passed; the second dog assertion checks fwr1_aa_gaps == \"EIVMTQSPASLSLSQEEKVTITCRAS\" at line 247."
+    },
+    {
+      "id": "VAL-REN-006",
+      "title": "IMGT position 10 gap in FWR1 for cat heavy chain",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_cat -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_cat.log"
+      ],
+      "observed": "test_cat passed; the cat heavy-chain assertion checks fwr1_aa_gaps == \"DVQLVESGG-DLAKPGGSLRLTCVAS\" at line 267."
+    },
+    {
+      "id": "VAL-REN-007",
+      "title": "All CDR and FWR regions remain correct after gap fix",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_single_seq -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_single_seq.log"
+      ],
+      "observed": "test_single_seq passed; region assertions for leader, cdr1_aa_gaps, fwr2_aa_gaps, cdr2_aa_gaps, fwr3_aa_gaps, cdr3_aa_gaps, fwr4_aa_gaps, and follow are at lines 127 and 129-135."
+    },
+    {
+      "id": "VAL-REN-008",
+      "title": "Germline gene assignment and identity scores preserved",
+      "status": "pass",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_single_seq -v && poetry run pytest tests/unit/renumbering/test_renumbering.py::test_dog -v",
+      "commandExitCode": 0,
+      "evidence": [
+        "renumbering-fix/targeted-gap-and-regions/test_single_seq.log",
+        "renumbering-fix/targeted-gap-and-regions/test_dog.log"
+      ],
+      "observed": "test_single_seq passed with v_gene/j_gene/v_identity/j_identity assertions at lines 136-140, and test_dog passed with heavy-chain v_gene/j_gene/v_identity/j_identity assertions at lines 238-241."
+    }
+  ],
+  "commandsRun": [
+    {
+      "name": "test_single_seq",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_single_seq -v",
+      "exitCode": 0,
+      "durationSeconds": 2.792,
+      "evidenceFile": "renumbering-fix/targeted-gap-and-regions/test_single_seq.log",
+      "stdoutTail": [
+        "platform darwin -- Python 3.14.2, pytest-8.4.2, pluggy-1.6.0 -- /Users/tmsincomb/miniforge3/envs/sadie-dev/bin/python",
+        "cachedir: .pytest_cache",
+        "rootdir: /Users/tmsincomb/sadie",
+        "configfile: pytest.ini",
+        "plugins: anyio-4.12.1, cov-6.3.0",
+        "\u001b[1mcollecting ... \u001b[0mcollected 1 item",
+        "",
+        "tests/unit/renumbering/test_renumbering.py::test_single_seq \u001b[32mPASSED\u001b[0m\u001b[32m       [100%]\u001b[0m",
+        "",
+        "\u001b[32m============================== \u001b[32m\u001b[1m1 passed\u001b[0m\u001b[32m in 1.24s\u001b[0m\u001b[32m ===============================\u001b[0m"
+      ],
+      "stderrTail": []
+    },
+    {
+      "name": "test_numbering_multi_input",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_numbering_multi_input -v",
+      "exitCode": 0,
+      "durationSeconds": 2.296,
+      "evidenceFile": "renumbering-fix/targeted-gap-and-regions/test_numbering_multi_input.log",
+      "stdoutTail": [
+        "platform darwin -- Python 3.14.2, pytest-8.4.2, pluggy-1.6.0 -- /Users/tmsincomb/miniforge3/envs/sadie-dev/bin/python",
+        "cachedir: .pytest_cache",
+        "rootdir: /Users/tmsincomb/sadie",
+        "configfile: pytest.ini",
+        "plugins: anyio-4.12.1, cov-6.3.0",
+        "\u001b[1mcollecting ... \u001b[0mcollected 1 item",
+        "",
+        "tests/unit/renumbering/test_renumbering.py::test_numbering_multi_input \u001b[32mPASSED\u001b[0m\u001b[32m [100%]\u001b[0m",
+        "",
+        "\u001b[32m============================== \u001b[32m\u001b[1m1 passed\u001b[0m\u001b[32m in 1.21s\u001b[0m\u001b[32m ===============================\u001b[0m"
+      ],
+      "stderrTail": []
+    },
+    {
+      "name": "test_dog",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_dog -v",
+      "exitCode": 0,
+      "durationSeconds": 3.541,
+      "evidenceFile": "renumbering-fix/targeted-gap-and-regions/test_dog.log",
+      "stdoutTail": [
+        "platform darwin -- Python 3.14.2, pytest-8.4.2, pluggy-1.6.0 -- /Users/tmsincomb/miniforge3/envs/sadie-dev/bin/python",
+        "cachedir: .pytest_cache",
+        "rootdir: /Users/tmsincomb/sadie",
+        "configfile: pytest.ini",
+        "plugins: anyio-4.12.1, cov-6.3.0",
+        "\u001b[1mcollecting ... \u001b[0mcollected 1 item",
+        "",
+        "tests/unit/renumbering/test_renumbering.py::test_dog \u001b[32mPASSED\u001b[0m\u001b[32m              [100%]\u001b[0m",
+        "",
+        "\u001b[32m============================== \u001b[32m\u001b[1m1 passed\u001b[0m\u001b[32m in 2.43s\u001b[0m\u001b[32m ===============================\u001b[0m"
+      ],
+      "stderrTail": []
+    },
+    {
+      "name": "test_cat",
+      "command": "poetry run pytest tests/unit/renumbering/test_renumbering.py::test_cat -v",
+      "exitCode": 0,
+      "durationSeconds": 2.312,
+      "evidenceFile": "renumbering-fix/targeted-gap-and-regions/test_cat.log",
+      "stdoutTail": [
+        "platform darwin -- Python 3.14.2, pytest-8.4.2, pluggy-1.6.0 -- /Users/tmsincomb/miniforge3/envs/sadie-dev/bin/python",
+        "cachedir: .pytest_cache",
+        "rootdir: /Users/tmsincomb/sadie",
+        "configfile: pytest.ini",
+        "plugins: anyio-4.12.1, cov-6.3.0",
+        "\u001b[1mcollecting ... \u001b[0mcollected 1 item",
+        "",
+        "tests/unit/renumbering/test_renumbering.py::test_cat \u001b[32mPASSED\u001b[0m\u001b[32m              [100%]\u001b[0m",
+        "",
+        "\u001b[32m============================== \u001b[32m\u001b[1m1 passed\u001b[0m\u001b[32m in 1.20s\u001b[0m\u001b[32m ===============================\u001b[0m"
+      ],
+      "stderrTail": []
+    }
+  ],
+  "evidenceFiles": [
+    "renumbering-fix/targeted-gap-and-regions/command-summary.json",
+    "renumbering-fix/targeted-gap-and-regions/test_cat.log",
+    "renumbering-fix/targeted-gap-and-regions/test_dog.log",
+    "renumbering-fix/targeted-gap-and-regions/test_numbering_multi_input.log",
+    "renumbering-fix/targeted-gap-and-regions/test_single_seq.log"
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Executed 4 assertion-focused pytest commands for VAL-REN-001 through VAL-REN-008; all 8 assigned assertions passed with exit code 0 and no blockers."
+}

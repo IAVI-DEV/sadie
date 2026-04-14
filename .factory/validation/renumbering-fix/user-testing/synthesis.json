@@ -1,0 +1,32 @@
+{
+  "milestone": "renumbering-fix",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-REN-001",
+    "VAL-REN-002",
+    "VAL-REN-003",
+    "VAL-REN-004",
+    "VAL-REN-005",
+    "VAL-REN-006",
+    "VAL-REN-007",
+    "VAL-REN-008",
+    "VAL-REN-009"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added pytest-specific flow validator isolation and evidence guidance for renumbering validation flows.",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null
+}
