@@ -1,0 +1,72 @@
+{
+  "groupId": "typing-species",
+  "testedAt": "2026-04-14T02:52:29.208480Z",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "surface": "pytest",
+    "readOnlyCheckout": true
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-BUG-002",
+      "title": "macaca_mulatta resolves to macaque",
+      "status": "pass",
+      "commands": [
+        "poetry run pytest -o addopts='' -v tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_macaca_mulatta_resolves_to_macaque tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_cow_direct_key"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "toolsUsed": [
+        "pytest"
+      ],
+      "observation": "Targeted pytest passed and the assertion-specific output shows test_macaca_mulatta_resolves_to_macaque PASSED, confirming Species.validate(\"macaca_mulatta\") resolves to \"macaque\".",
+      "evidence": {
+        "raw": [
+          "bug-fixes/typing-species/pytest-command.txt",
+          "bug-fixes/typing-species/pytest-output.txt",
+          "bug-fixes/typing-species/pytest-exit-code.txt",
+          "bug-fixes/typing-species/pytest-summary.json"
+        ],
+        "matchedOutput": "tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_macaca_mulatta_resolves_to_macaque PASSED [ 50%]",
+        "pytestSummary": "============================== 2 passed in 0.02s ==============================="
+      },
+      "blockers": [],
+      "frictions": []
+    },
+    {
+      "id": "VAL-BUG-003",
+      "title": "cow is a direct SPECIES key",
+      "status": "pass",
+      "commands": [
+        "poetry run pytest -o addopts='' -v tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_macaca_mulatta_resolves_to_macaque tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_cow_direct_key"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "toolsUsed": [
+        "pytest"
+      ],
+      "observation": "Targeted pytest passed and the assertion-specific output shows test_cow_direct_key PASSED, confirming \"cow\" is accepted directly and validates to \"cow\".",
+      "evidence": {
+        "raw": [
+          "bug-fixes/typing-species/pytest-command.txt",
+          "bug-fixes/typing-species/pytest-output.txt",
+          "bug-fixes/typing-species/pytest-exit-code.txt",
+          "bug-fixes/typing-species/pytest-summary.json"
+        ],
+        "matchedOutput": "tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_cow_direct_key PASSED [100%]",
+        "pytestSummary": "============================== 2 passed in 0.02s ==============================="
+      },
+      "blockers": [],
+      "frictions": []
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Ran the assigned targeted pytest command for typing species validation; both VAL-BUG-002 and VAL-BUG-003 passed with exit code 0."
+}

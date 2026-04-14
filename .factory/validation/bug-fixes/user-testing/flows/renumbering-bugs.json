@@ -1,0 +1,107 @@
+{
+  "groupId": "renumbering-bugs",
+  "testedAt": "2026-04-14T02:52:21.455692Z",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "validationContract": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/validation-contract.md",
+    "testingTool": "pytest",
+    "sharedCheckoutReadOnly": true,
+    "servicesRequired": false
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-BUG-001",
+      "title": "_allowed variable used in iteration",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -o addopts= -v tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_macaque_in_allowed_species_resolves_and_iterates tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_allowed_species_none_does_not_raise_nameerror tests/unit/renumbering/test_species_contract.py::TestRatIGHJData"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "observation": "`test_macaque_in_allowed_species_resolves_and_iterates` passed; a macaque run produced a non-null `v_gene` and `identity_species='rhesus'`, showing iteration used the resolved species alias path.",
+      "evidence": {
+        "rawOutput": [
+          "bug-fixes/renumbering-bugs/pytest-targeted-output.txt"
+        ],
+        "commandLog": [
+          "bug-fixes/renumbering-bugs/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "bug-fixes/renumbering-bugs/pytest-exit-code.txt"
+        ]
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    },
+    {
+      "id": "VAL-BUG-004",
+      "title": "No NameError when allowed_species is None",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -o addopts= -v tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_macaque_in_allowed_species_resolves_and_iterates tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_allowed_species_none_does_not_raise_nameerror tests/unit/renumbering/test_species_contract.py::TestRatIGHJData"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "observation": "`test_allowed_species_none_does_not_raise_nameerror` passed; direct `run_germline_assignment(..., allowed_species=None)` execution completed without `NameError` and returned a non-null `v_gene`.",
+      "evidence": {
+        "rawOutput": [
+          "bug-fixes/renumbering-bugs/pytest-targeted-output.txt"
+        ],
+        "commandLog": [
+          "bug-fixes/renumbering-bugs/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "bug-fixes/renumbering-bugs/pytest-exit-code.txt"
+        ]
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    },
+    {
+      "id": "VAL-BUG-005",
+      "title": "rat J/H germline data exists",
+      "status": "pass",
+      "toolsUsed": [
+        "pytest"
+      ],
+      "commands": [
+        "poetry run pytest -o addopts= -v tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_macaque_in_allowed_species_resolves_and_iterates tests/unit/renumbering/test_species_contract.py::TestAllowedScopingBug::test_allowed_species_none_does_not_raise_nameerror tests/unit/renumbering/test_species_contract.py::TestRatIGHJData"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "observation": "All `TestRatIGHJData` checks passed: rat appears under `all_germlines['J']['H']`, entries are present/non-empty with expected formatting, and gene names follow the `IGHJ` convention.",
+      "evidence": {
+        "rawOutput": [
+          "bug-fixes/renumbering-bugs/pytest-targeted-output.txt"
+        ],
+        "commandLog": [
+          "bug-fixes/renumbering-bugs/pytest-command.txt"
+        ],
+        "exitCodeLog": [
+          "bug-fixes/renumbering-bugs/pytest-exit-code.txt"
+        ]
+      },
+      "issues": null,
+      "frictions": [],
+      "blockers": []
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Ran one targeted pytest command covering the 3 assigned assertions (5 tests total); all tests passed with exit code 0."
+}
