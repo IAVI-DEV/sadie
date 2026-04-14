@@ -1,0 +1,7 @@
+{
+  "milestone": "quick-fixes",
+  "status": "overridden",
+  "overrideJustification": "Scrutiny completed all feature reviews successfully. The only test failures are pre-existing issues unrelated to quick-fixes: (1) tests/unit/germlines/test_multi_species.py::test_all_species_have_databases (_template directory treated as species), (2) tests/unit/renumbering/test_renumbering.py::test_single_seq (FWR1 gap regression tracked in renumbering-fix milestone). Pyright clean (0 errors), pre-commit clean on milestone files. All 4 quick-fixes features reviewed and approved.",
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": []
+}
