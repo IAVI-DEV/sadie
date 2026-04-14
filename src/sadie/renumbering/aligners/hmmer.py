@@ -11,12 +11,19 @@ import pyhmmer
 def _ensure_str(value: str | bytes) -> str:
     """Convert bytes to str, handling both pyhmmer <0.12 (bytes) and >=0.12 (str)."""
     return value if isinstance(value, str) else value.decode()
+
+
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from sadie.renumbering.clients import G3
 from sadie.renumbering.numbering_translator import NumberingTranslator
 from sadie.typing import Chain, Source, Species
+
+# Species aliases for HMM lookup: maps backward-compat names to canonical HMM filenames
+_HMM_SPECIES_ALIASES: Dict[str, str] = {
+    "rhesus": "macaque",
+}
 
 
 def _use_local_hmm_builder() -> bool:
@@ -111,10 +118,13 @@ class HMMER:
         use_local = _use_local_hmm_builder() and not use_numbering_hmms
 
         for single_species in species:
+            # Resolve species aliases (e.g., "rhesus" → "macaque") so that
+            # LocalHMMBuilder and custom-dir lookups find the correct HMM files.
+            canonical_species = _HMM_SPECIES_ALIASES.get(single_species, single_species)
             for chain in chains:
                 # Priority 0: Custom HMM directory (highest priority)
                 if self._hmm_dir:
-                    custom_hmm_path = self._hmm_dir / f"{single_species}_{chain}.hmm"
+                    custom_hmm_path = self._hmm_dir / f"{canonical_species}_{chain}.hmm"
                     if custom_hmm_path.exists():
                         with pyhmmer.plan7.HMMFile(custom_hmm_path) as hmm_file:
                             hmms.append(next(hmm_file))
@@ -130,7 +140,7 @@ class HMMER:
 
                             self._local_hmm_builder = LocalHMMBuilder()
 
-                        hmm = self._local_hmm_builder.get_hmm(species=single_species, chain=chain, source=source)
+                        hmm = self._local_hmm_builder.get_hmm(species=canonical_species, chain=chain, source=source)
                         hmms.append(hmm)
                         continue
                     except Exception as e:
@@ -138,7 +148,7 @@ class HMMER:
                         import logging
 
                         logging.warning(
-                            f"Local HMM builder failed for {single_species} {chain}: {e}. "
+                            f"Local HMM builder failed for {canonical_species} {chain}: {e}. "
                             f"Falling back to G3/Numbering."
                         )
 

@@ -7,6 +7,7 @@ assignment -- without silent fallback or empty results.
 This catches naming mismatches like macaque/rhesus where one layer
 uses a different species key than another.
 """
+
 import pytest
 
 from sadie.renumbering import Renumbering
@@ -18,10 +19,7 @@ SPECIES_TEST_SEQUENCES = {
         "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTY"
         "YADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDQGAMGYWGQGTLVTVSS"
     ),
-    "mouse": (
-        "EVQLQQSGPELVKPGASVKISCKASGYTFTDYNMDWVKQSHGKSLEWIGDINPNNGGT"
-        "IYNQKFKGKATLTVDKSSSTAYMELRSLTSEDTAVYYCAR"
-    ),
+    "mouse": ("EVQLQQSGPELVKPGASVKISCKASGYTFTDYNMDWVKQSHGKSLEWIGDINPNNGGT" "IYNQKFKGKATLTVDKSSSTAYMELRSLTSEDTAVYYCAR"),
     "macaque": (
         "EVQLVESGGGLVQPGGSLRLSCVISGFTFSSHGMYWVRQAPGKGLQWVAAISSGGSAWY"
         "TNSLKGRFTISRDNAKDTLYLQMDSLRTEDTAVYYCAKEVSSGYSYMDSWGQGVLVTVSS"
@@ -31,13 +29,9 @@ SPECIES_TEST_SEQUENCES = {
         "TNSLKGRFTISRDNAKDTLYLQMDSLRTEDTAVYYCAKEVSSGYSYMDSWGQGVLVTVSS"
     ),
     "rabbit": (
-        "QEQLVESGGGLVQPGESLRLSCAASGFTFDDYAMHWVRQAPGKGLEWVSGISWNSGSIG"
-        "YADSVKGRFTISRDNAKNSLYLQMNSLRAEDTALYYCAKG"
+        "QEQLVESGGGLVQPGESLRLSCAASGFTFDDYAMHWVRQAPGKGLEWVSGISWNSGSIG" "YADSVKGRFTISRDNAKNSLYLQMNSLRAEDTALYYCAKG"
     ),
-    "rat": (
-        "EVQLVESGGGLVQPKGSLKLSCAASGFTFSNYGMHWVRQAPGKGLEWVAYISSGSSTIY"
-        "YPDTVKGRFTISRDNAKNTLYLQMSSLKSEDTAMYYCTR"
-    ),
+    "rat": ("EVQLVESGGGLVQPKGSLKLSCAASGFTFSNYGMHWVRQAPGKGLEWVAYISSGSSTIY" "YPDTVKGRFTISRDNAKNTLYLQMSSLKSEDTAMYYCTR"),
 }
 
 
@@ -52,9 +46,7 @@ class TestSpeciesContract:
                 allowed_chain=["H", "K", "L"],
                 run_multiproc=False,
             )
-            assert len(r.hmmer.hmms) > 0, (
-                f"Species '{species}' loaded 0 HMMs -- it will silently fail."
-            )
+            assert len(r.hmmer.hmms) > 0, f"Species '{species}' loaded 0 HMMs -- it will silently fail."
 
     @pytest.mark.parametrize(
         "species,seq",
@@ -70,9 +62,7 @@ class TestSpeciesContract:
             run_multiproc=False,
         )
         result = r.run_single(f"test_{species}", seq)
-        assert not result.empty, (
-            f"Renumbering returned empty result for species '{species}'"
-        )
+        assert not result.empty, f"Renumbering returned empty result for species '{species}'"
 
     @pytest.mark.parametrize(
         "species,seq",
@@ -103,16 +93,9 @@ class TestSpeciesContract:
             allowed_chain=["H"],
             run_multiproc=False,
         )
-        hmm_names = [
-            (h.name if isinstance(h.name, str) else h.name.decode())
-            for h in r.hmmer.hmms
-        ]
-        assert any("macaque" in n for n in hmm_names), (
-            f"Expected macaque HMM but got: {hmm_names}"
-        )
-        assert not any("human" in n for n in hmm_names), (
-            f"macaque should not load human HMMs: {hmm_names}"
-        )
+        hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
+        assert any("macaque" in n for n in hmm_names), f"Expected macaque HMM but got: {hmm_names}"
+        assert not any("human" in n for n in hmm_names), f"macaque should not load human HMMs: {hmm_names}"
 
     def test_macaque_germline_resolves_to_macaque(self):
         """Regression: macaque sequences must resolve germline against macaque entries in all_germlines."""
@@ -189,13 +172,9 @@ class TestAllowedScopingBug:
         assert not result.empty, "Renumbering returned empty result for macaque"
 
         v_gene = result["v_gene"].iloc[0]
-        assert v_gene is not None, (
-            "macaque v_gene is None — _allowed scoping bug caused germline assignment to fail"
-        )
+        assert v_gene is not None, "macaque v_gene is None — _allowed scoping bug caused germline assignment to fail"
         identity_species = result["identity_species"].iloc[0]
-        assert identity_species == "macaque", (
-            f"Expected identity_species='macaque' but got '{identity_species}'"
-        )
+        assert identity_species == "macaque", f"Expected identity_species='macaque' but got '{identity_species}'"
 
     def test_allowed_species_none_does_not_raise_nameerror(self):
         """allowed_species=None in run_germline_assignment() must not raise NameError.
@@ -215,9 +194,101 @@ class TestAllowedScopingBug:
 
         # This must not raise NameError for undefined _allowed
         genes = n.run_germline_assignment(state_vector, padded, "H", allowed_species=None)
-        assert genes["v_gene"][0] is not None, (
-            "v_gene is None with allowed_species=None — the else branch is broken"
+        assert genes["v_gene"][0] is not None, "v_gene is None with allowed_species=None — the else branch is broken"
+
+
+class TestRhesusHMMRouting:
+    """Tests for rhesus → macaque HMM routing (VAL-NAME-003, VAL-NAME-004, VAL-NAME-005).
+
+    Verifies that 'rhesus' loads macaque HMMs through LocalHMMBuilder (not legacy
+    ANARCI HMMs), produces no fallback warnings, and gives identical output to 'macaque'.
+    """
+
+    def test_rhesus_loads_macaque_hmms_not_legacy(self):
+        """Renumbering(allowed_species=['rhesus']) must load macaque HMMs, not legacy ANARCI rhesus HMMs.
+
+        The HMM name should contain 'macaque', proving it came from LocalHMMBuilder
+        (not the legacy Numbering HMMs which use 'rhesus' naming).
+        """
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["rhesus"],
+            allowed_chain=["H"],
+            run_multiproc=False,
         )
+        hmm_names = [(h.name if isinstance(h.name, str) else h.name.decode()) for h in r.hmmer.hmms]
+        assert any("macaque" in n for n in hmm_names), (
+            f"Expected macaque HMM for rhesus but got: {hmm_names}. "
+            f"'rhesus' should route to macaque HMMs via _HMM_SPECIES_ALIASES."
+        )
+
+    def test_rhesus_no_fallback_warning(self, caplog):
+        """No 'Falling back to G3/Numbering' warning when using rhesus."""
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            r = Renumbering(
+                scheme="kabat",
+                allowed_species=["rhesus"],
+                allowed_chain=["H"],
+                run_multiproc=False,
+            )
+        fallback_msgs = [rec for rec in caplog.records if "Falling back" in rec.message]
+        assert len(fallback_msgs) == 0, (
+            f"Got fallback warnings for rhesus: {[m.message for m in fallback_msgs]}. "
+            f"rhesus should route to macaque HMMs without fallback."
+        )
+
+    def test_rhesus_and_macaque_produce_identical_output(self):
+        """rhesus and macaque must produce identical renumbering output for the same VH sequence."""
+        seq = SPECIES_TEST_SEQUENCES["macaque"]
+
+        r_macaque = Renumbering(
+            scheme="kabat",
+            allowed_species=["macaque"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        r_rhesus = Renumbering(
+            scheme="kabat",
+            allowed_species=["rhesus"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+
+        result_macaque = r_macaque.run_single("test_macaque", seq)
+        result_rhesus = r_rhesus.run_single("test_rhesus", seq)
+
+        assert not result_macaque.empty
+        assert not result_rhesus.empty
+
+        # Compare key columns (scheme, chain_type, v_gene, j_gene, numbered positions)
+        for col in ["scheme", "chain_type", "v_gene", "j_gene"]:
+            if col in result_macaque.columns and col in result_rhesus.columns:
+                assert result_macaque[col].iloc[0] == result_rhesus[col].iloc[0], (
+                    f"Column '{col}' differs: macaque={result_macaque[col].iloc[0]}, "
+                    f"rhesus={result_rhesus[col].iloc[0]}"
+                )
+
+    def test_macaque_renumbering_unchanged_regression(self):
+        """macaque renumbering must be stable — HMM position 30 is a match (not deletion)."""
+        seq = SPECIES_TEST_SEQUENCES["macaque"]
+        r = Renumbering(
+            scheme="kabat",
+            allowed_species=["macaque"],
+            allowed_chain=["H"],
+            run_multiproc=False,
+        )
+        result = r.run_single("test_macaque_regression", seq)
+        assert not result.empty
+
+        # Position 30 must have a residue (not be deleted)
+        if "30" in result.columns:
+            pos30 = result["30"].iloc[0]
+            assert pos30 != "-" and pos30 is not None, (
+                f"HMM position 30 is '{pos30}' — expected a match state, not a deletion. "
+                f"This indicates wrong HMM was used."
+            )
 
 
 class TestMacaqueGermlineKeyRename:
@@ -232,30 +303,22 @@ class TestMacaqueGermlineKeyRename:
         from sadie.numbering.germlines import all_germlines
 
         for chain in ["H", "K", "L"]:
-            assert "macaque" in all_germlines["V"][chain], (
-                f"'macaque' missing from all_germlines['V']['{chain}']"
-            )
-            assert len(all_germlines["V"][chain]["macaque"]) >= 1, (
-                f"all_germlines['V']['{chain}']['macaque'] is empty"
-            )
-            assert "rhesus" not in all_germlines["V"][chain], (
-                f"'rhesus' key still present in all_germlines['V']['{chain}'] — should be renamed to 'macaque'"
-            )
+            assert "macaque" in all_germlines["V"][chain], f"'macaque' missing from all_germlines['V']['{chain}']"
+            assert len(all_germlines["V"][chain]["macaque"]) >= 1, f"all_germlines['V']['{chain}']['macaque'] is empty"
+            assert (
+                "rhesus" not in all_germlines["V"][chain]
+            ), f"'rhesus' key still present in all_germlines['V']['{chain}'] — should be renamed to 'macaque'"
 
     def test_all_germlines_j_genes_use_macaque_key(self):
         """all_germlines J-gene entries must use 'macaque' key, not 'rhesus'."""
         from sadie.numbering.germlines import all_germlines
 
         for chain in ["H", "K", "L"]:
-            assert "macaque" in all_germlines["J"][chain], (
-                f"'macaque' missing from all_germlines['J']['{chain}']"
-            )
-            assert len(all_germlines["J"][chain]["macaque"]) >= 1, (
-                f"all_germlines['J']['{chain}']['macaque'] is empty"
-            )
-            assert "rhesus" not in all_germlines["J"][chain], (
-                f"'rhesus' key still present in all_germlines['J']['{chain}'] — should be renamed to 'macaque'"
-            )
+            assert "macaque" in all_germlines["J"][chain], f"'macaque' missing from all_germlines['J']['{chain}']"
+            assert len(all_germlines["J"][chain]["macaque"]) >= 1, f"all_germlines['J']['{chain}']['macaque'] is empty"
+            assert (
+                "rhesus" not in all_germlines["J"][chain]
+            ), f"'rhesus' key still present in all_germlines['J']['{chain}'] — should be renamed to 'macaque'"
 
     def test_no_rhesus_keys_anywhere_in_all_germlines(self):
         """No 'rhesus' keys should exist at any level in all_germlines."""
@@ -263,24 +326,23 @@ class TestMacaqueGermlineKeyRename:
 
         for segment in all_germlines:
             for chain in all_germlines[segment]:
-                assert "rhesus" not in all_germlines[segment][chain], (
-                    f"'rhesus' key found in all_germlines['{segment}']['{chain}']"
-                )
+                assert (
+                    "rhesus" not in all_germlines[segment][chain]
+                ), f"'rhesus' key found in all_germlines['{segment}']['{chain}']"
 
     def test_species_aliases_maps_rhesus_to_macaque(self):
         """_SPECIES_ALIASES must map 'rhesus' → 'macaque' (not the reverse)."""
         from sadie.numbering.numbering import Numbering
 
-        assert "rhesus" in Numbering._SPECIES_ALIASES, (
-            "'rhesus' not in _SPECIES_ALIASES — it should be an alias for 'macaque'"
-        )
+        assert (
+            "rhesus" in Numbering._SPECIES_ALIASES
+        ), "'rhesus' not in _SPECIES_ALIASES — it should be an alias for 'macaque'"
         assert Numbering._SPECIES_ALIASES["rhesus"] == "macaque", (
-            f"Expected _SPECIES_ALIASES['rhesus'] == 'macaque', "
-            f"got '{Numbering._SPECIES_ALIASES['rhesus']}'"
+            f"Expected _SPECIES_ALIASES['rhesus'] == 'macaque', " f"got '{Numbering._SPECIES_ALIASES['rhesus']}'"
         )
-        assert "macaque" not in Numbering._SPECIES_ALIASES, (
-            "'macaque' should not be in _SPECIES_ALIASES — it is the canonical key, not an alias"
-        )
+        assert (
+            "macaque" not in Numbering._SPECIES_ALIASES
+        ), "'macaque' should not be in _SPECIES_ALIASES — it is the canonical key, not an alias"
 
     def test_rhesus_backward_compat_resolves_to_macaque_germlines(self):
         """Using allowed_species=['rhesus'] must still produce valid results via macaque germlines."""
@@ -296,6 +358,6 @@ class TestMacaqueGermlineKeyRename:
         v_gene = result["v_gene"].iloc[0]
         assert v_gene is not None, "v_gene is None for 'rhesus' — germline assignment failed"
         identity_species = result["identity_species"].iloc[0]
-        assert identity_species == "macaque", (
-            f"Expected identity_species='macaque' (resolved from rhesus alias) but got '{identity_species}'"
-        )
+        assert (
+            identity_species == "macaque"
+        ), f"Expected identity_species='macaque' (resolved from rhesus alias) but got '{identity_species}'"
