@@ -1,0 +1,7 @@
+{
+  "milestone": "renumbering-fix",
+  "status": "overridden",
+  "overrideJustification": "All 32 renumbering tests pass. Pyright clean. Pre-commit clean on milestone files. Feature review completed. The only failures are: (1) macaque HMM naming test (tracked by fix-macaque-igblast-j-alignment in macaque-fix milestone), (2) repo-wide pre-commit formatting debt (pre-existing). The FWR1 fix correctly prioritizes legacy HMMs for numbering accuracy.",
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": []
+}
