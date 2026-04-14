@@ -1,16 +1,11 @@
 commands:
   install: poetry install --with dev
-  test: poetry run pytest
-  test_milestone: poetry run pytest -o addopts='' --ignore=tests/unit/renumbering/test_renumbering.py --ignore=tests/migration/ --no-header
-  test_unit: poetry run pytest tests/unit/
-  test_unit_renumbering: poetry run pytest tests/unit/renumbering/
-  test_unit_renumbering_fast: poetry run pytest tests/unit/renumbering --ignore=tests/unit/renumbering/test_renumbering.py --no-header -q
-  test_unit_airr: poetry run pytest tests/unit/airr/
-  test_integration: poetry run pytest tests/integration/
-  test_species_contract: poetry run pytest tests/unit/renumbering/test_species_contract.py -v
-  lint: poetry run pre-commit run --all-files
-  lint_files: poetry run pre-commit run --files
+  test: poetry run pytest tests/ -x --tb=short
+  test_unit: poetry run pytest tests/unit/ -x --tb=short
+  test_renumbering: poetry run pytest tests/unit/renumbering/test_renumbering.py -v
+  test_macaque: poetry run pytest tests/unit/airr/test_macaque_e2e.py -v
   typecheck: poetry run pyright src/
-  format: poetry run black src/
+  lint: pre-commit run --all-files
+  format: poetry run black src/ tests/
 
 services: {}

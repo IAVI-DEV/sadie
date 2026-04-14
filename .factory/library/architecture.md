@@ -1,79 +1,55 @@
 # Architecture
 
-## Species Flow Through the Pipeline
+## Subsystems Affected by This Mission
 
-```
-User input: species name (e.g., "macaque", "rhesus", "cow")
-    │
-    ▼
-LAYER 1: Species Typing (src/sadie/typing/species.py)
-    SPECIES dict normalizes input → canonical name
-    e.g., "rhesus" → "macaque", "bos_taurus" → "cow"
-    │
-    ▼
-LAYER 2: Airr Class (src/sadie/airr/airr.py)
-    Airr(reference_name=<canonical>) → builds IgBLAST DB
-    reference_name stored in AirrTable output
-    │
-    ▼
-LAYER 3: Reference Module (src/sadie/reference/)
-    References.from_yaml() → GermlineManager → GermlineToG3Adapter
-    Builds IgBLAST database files (blastdb, aux_db, internal_data)
-    │
-    ▼
-LAYER 4: Renumbering (src/sadie/renumbering/renumbering.py)
-    Renumbering(allowed_species=[...])
-    get_allowed_species() = allowlist of supported species
-    │
-    ▼
-LAYER 5: HMMER Aligner (src/sadie/renumbering/aligners/hmmer.py)
-    get_hmm_models() priority chain:
-      1. Custom HMM dir
-      2. LocalHMMBuilder (germlines module, modern)
-      3. G3 API HMMs when the species/chain is supported there
-      4. Legacy ANARCI HMMs only when G3 lacks support or numbering HMMs are forced
-    Backward-compat alias: "rhesus" is resolved to "macaque" before custom/local HMM lookup
-    `HMMER` is also a directly exported/tested API surface, not just an internal `Renumbering` helper,
-    so feature contracts that name `HMMER.get_hmm_models()` must be enforced at this layer too.
-    HMM name format: {species}_{chain}.hmm
-    │
-    ▼
-LAYER 6: Numbering (src/sadie/numbering/numbering.py)
-    _SPECIES_ALIASES resolves species for all_germlines lookup
-    run_germline_assignment() → all_germlines[segment][chain][species]
-    │
-    ▼
-LAYER 7: Germline Data (src/sadie/numbering/germlines.py)
-    all_germlines dict: {segment: {chain: {species: {gene: sequence}}}}
-    Hand-maintained dict from ANARCI, ~2089 lines
-```
+### Airr Module (`src/sadie/airr/`)
 
-## HMM File Locations (3 directories)
+The main annotation entry point. `Airr(species_name)` constructs an IgBLAST runner.
 
-| Directory | Source | Naming |
-|-----------|--------|--------|
-| `src/sadie/germlines/hmms/` | LocalHMMBuilder output | macaque_H.hmm |
-| `src/sadie/renumbering/data/hmms/` | Newer renumbering HMMs | macaque_H.hmm |
-| `src/sadie/renumbering/data/anarci/HMMs/` | Legacy ANARCI | rhesus_H.hmm |
+**Database resolution flow:**
+1. `Airr.__init__()` calls `_resolve_database_via_reference()` which tries `References.from_yaml()` → `make_airr_database()`
+2. If reference build fails, falls back to `GermlineData(name, receptor, None, scheme)` (direct germlines path)
+3. The fallback is at `airr.py:362-372` — catches any exception, logs warning, uses direct path
 
-## Key Modules
+**Bug P1 impact:** For macaque, step 1 fails because `make_airr_database()` at `reference.py:591-609` requires IMGT position columns (`imgt.fwr1_start` through `imgt.fwr3_end`) that the macaque germline dataframe lacks. The fallback produces annotations missing `j_call` and alignment fields.
 
-| Module | Purpose |
-|--------|---------|
-| `airr/` | AIRR-standard annotation, main entry point |
-| `airr/methods.py` | run_mutational_analysis(), species detection from reference_name |
-| `germlines/` | Multi-source germline manager with provider priority |
-| `germlines/renumbering_integration.py` | LocalHMMBuilder — builds HMMs from germline data |
-| `reference/` | YAML config → IgBLAST database builder |
-| `renumbering/` | Antibody numbering (IMGT, Kabat schemes) |
-| `renumbering/aligners/hmmer.py` | HMM model loading with priority fallback chain |
-| `numbering/numbering.py` | Numbering logic, germline assignment, species aliases |
-| `numbering/germlines.py` | all_germlines dict (hand-maintained) |
-| `typing/species.py` | SPECIES dict for name normalization |
+### Reference Module (`src/sadie/reference/`)
 
-## Critical Invariants
+Builds IgBLAST databases from YAML configuration.
 
-1. Species names must be consistent across all layers — canonical name is used everywhere
-2. HMM selection must match the species of the input sequence (never silently use human HMMs for non-human)
-3. Germline assignment must use germlines from the same species as the HMM alignment
-4. Backward compat: old species names (e.g., "rhesus") must be accepted as aliases
+**`make_airr_database()` flow:**
+1. Loads germline genes from `GermlineManager`
+2. Checks for required IMGT position columns in the dataframe
+3. If columns are missing, raises `ValueError` — this is where macaque fails
+4. Builds blastdb, aux_db, internal_data files
+
+### Renumbering Module (`src/sadie/renumbering/`)
+
+IMGT/Kabat/Chothia antibody numbering.
+
+**Constructor flow (`__init__`):**
+1. Accepts `allowed_species` and `allowed_chain` parameters
+2. `allowed_chain` defaults to `["H", "K", "L"]`
+3. Loads HMM models for each species+chain pair
+4. Guard-rail validation at line 133: only runs when `set(allowed_chains) != set(get_allowed_chains())`
+5. `get_allowed_chains()` returns full set `["H","K","L","A","B","G","D"]`
+
+**Bug P3 impact:** When caller passes the full 7-chain set explicitly, condition is False, validation skipped.
+
+**FWR1 gap insertion pipeline:**
+1. `Renumbering.run_single()` → `Numbering.numbering()` → `number_sequence_from_alignment()`
+2. IMGT scheme numbering at `schemes.py` → `number_imgt()` → `_number_regions()`
+3. Region extraction: `_get_region()` → `_add_segment_regions()` builds FWR1 from numbered positions
+4. IMGT position 10 gap is a conserved deletion in heavy chains
+
+**Bug P2 impact:** The gap at IMGT position 10 in FWR1 is not being inserted — affects human, dog, cat heavy chains.
+
+### Numbering Module (`src/sadie/numbering/`)
+
+Low-level sequence numbering. `numbering.py` contains `number_sequence_from_alignment()` and `get_vector_state()`. `schemes.py` contains IMGT/Kabat/Chothia numbering functions.
+
+## Data Flow Invariants
+
+- `productive=True` should imply `j_call is not NaN` (currently violated for macaque)
+- IMGT FWR1 for heavy chains is always 26 positions (25 residues + 1 gap at position 10)
+- `allowed_chain` validation must fire whenever chains are explicitly requested
