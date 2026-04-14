@@ -121,6 +121,11 @@ class HMMER:
         # Check if we should use local HMM builder from germlines
         use_local = _use_local_hmm_builder() and not use_numbering_hmms
 
+        # Guard rail: track whether we need to validate HMM availability.
+        # Only enforced when both species AND chains are explicitly specified.
+        _species_explicit = species is not None
+        _chains_explicit = chains is not None
+
         for single_species in species_list:
             # Resolve species aliases (e.g., "rhesus" → "macaque") so that
             # LocalHMMBuilder and custom-dir lookups find the correct HMM files.
@@ -180,7 +185,61 @@ class HMMER:
                     )
                     hmms.append(hmm)
 
+        # Guard rail: raise descriptive error when no HMMs were loaded
+        # and the user explicitly requested specific species/chain combinations
+        if not hmms and _species_explicit and _chains_explicit:
+            errors = []
+            for single_species in species_list:
+                canonical = _HMM_SPECIES_ALIASES.get(single_species, single_species)
+                supported = self._get_supported_chains(canonical, source, use_local, use_numbering_hmms)
+                for chain in chain_list:
+                    errors.append(
+                        f"No HMM available for {canonical} {chain}. " f"Supported chains for {canonical}: {supported}"
+                    )
+            raise ValueError("; ".join(errors))
+
         return hmms
+
+    def _get_supported_chains(self, species: str, source: str, use_local: bool, use_numbering_hmms: bool) -> List[str]:
+        """Determine which chains have HMMs available for a given species.
+
+        Parameters
+        ----------
+        species : str
+            Canonical species name (e.g., "alpaca", "chicken")
+        source : str
+            Data source (e.g., "imgt")
+        use_local : bool
+            Whether to check LocalHMMBuilder
+        use_numbering_hmms : bool
+            Whether legacy Numbering HMMs are forced
+
+        Returns
+        -------
+        List[str]
+            List of chain types with available HMMs (e.g., ["H"] or ["H", "K", "L"])
+        """
+        all_chains = ["H", "K", "L", "A", "B", "G", "D"]
+        supported = []
+        for chain in all_chains:
+            # Check custom HMM directory
+            if self._hmm_dir:
+                if (self._hmm_dir / f"{species}_{chain}.hmm").exists():
+                    supported.append(chain)
+                    continue
+            # Check local HMM builder
+            if use_local and not use_numbering_hmms:
+                try:
+                    if self._local_hmm_builder is not None:
+                        self._local_hmm_builder.get_hmm(species=species, chain=chain, source=source)
+                        supported.append(chain)
+                        continue
+                except Exception:
+                    pass
+            # Check legacy Numbering paths
+            if (species, chain) in self.numbering.species_chain_to_paths:
+                supported.append(chain)
+        return supported
 
     def digitize_seq(self, name: str | bytes, seq: Seq | str) -> pyhmmer.easel.DigitalSequence:
         """

@@ -43,11 +43,11 @@ class TestSpeciesContract:
     """Verify every allowed species can complete the full renumbering pipeline."""
 
     def test_all_allowed_species_have_hmms(self):
-        """Every species in get_allowed_species() must load at least one HMM."""
+        """Every species in get_allowed_species() must load at least one HMM (H chain)."""
         for species in Renumbering.get_allowed_species():
             r = Renumbering(
                 allowed_species=[species],
-                allowed_chain=["H", "K", "L"],
+                allowed_chain=["H"],
                 run_multiproc=False,
             )
             assert len(r.hmmer.hmms) > 0, f"Species '{species}' loaded 0 HMMs -- it will silently fail."
@@ -505,3 +505,61 @@ class TestChickenSpeciesContract:
             assert (
                 "chicken" not in all_germlines[segment]["K"]
             ), f"Chicken should NOT have entries in all_germlines['{segment}']['K'] — chickens lack kappa"
+
+
+class TestUnsupportedChainGuardRails:
+    """Tests for unsupported species/chain combinations (VAL-EXP-007).
+
+    When a user requests renumbering for a species/chain combo that has no HMM
+    (e.g., alpaca kappa, alpaca lambda, chicken kappa), the system should raise
+    a descriptive ValueError rather than silently failing.
+    """
+
+    @pytest.mark.parametrize(
+        "species,chain,expected_supported",
+        [
+            ("alpaca", "K", ["H"]),
+            ("alpaca", "L", ["H"]),
+            ("chicken", "K", ["H", "L"]),
+        ],
+        ids=["alpaca-K", "alpaca-L", "chicken-K"],
+    )
+    def test_unsupported_chain_raises_descriptive_error(self, species, chain, expected_supported):
+        """Requesting an unsupported species/chain combo must raise ValueError with descriptive message."""
+        with pytest.raises(ValueError, match=species) as exc_info:
+            Renumbering(
+                allowed_species=[species],
+                allowed_chain=[chain],
+                run_multiproc=False,
+            )
+        error_msg = str(exc_info.value)
+        # Error message must include the species name
+        assert species in error_msg, f"Error message should include species '{species}': {error_msg}"
+        # Error message must include the unsupported chain
+        assert chain in error_msg, f"Error message should include chain '{chain}': {error_msg}"
+        # Error message must mention supported chains for that species
+        for supported_chain in expected_supported:
+            assert (
+                supported_chain in error_msg
+            ), f"Error message should include supported chain '{supported_chain}' for {species}: {error_msg}"
+
+    @pytest.mark.parametrize(
+        "species,chain",
+        [
+            ("alpaca", "H"),
+            ("chicken", "H"),
+            ("chicken", "L"),
+            ("human", "H"),
+            ("human", "K"),
+            ("human", "L"),
+        ],
+        ids=["alpaca-H", "chicken-H", "chicken-L", "human-H", "human-K", "human-L"],
+    )
+    def test_supported_chain_does_not_raise(self, species, chain):
+        """Supported species/chain combos must work normally without raising errors."""
+        r = Renumbering(
+            allowed_species=[species],
+            allowed_chain=[chain],
+            run_multiproc=False,
+        )
+        assert len(r.hmmer.hmms) > 0, f"Expected HMMs loaded for {species} {chain}"
