@@ -82,7 +82,10 @@ class HMMER:
 
         # Force Numbering local HMMs to be used -- mostely for primiary testing
         self.hmms = self.get_hmm_models(
-            species=species, chains=chains, source=source, use_numbering_hmms=use_numbering_hmms,
+            species=species,
+            chains=chains,
+            source=source,
+            use_numbering_hmms=use_numbering_hmms,
             validate_pairs=validate_pairs,
         )
         # place holders for hmmer

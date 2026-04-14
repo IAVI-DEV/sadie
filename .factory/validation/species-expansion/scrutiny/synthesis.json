@@ -1,6 +1,6 @@
 {
   "milestone": "species-expansion",
-  "round": 2,
+  "round": 3,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -24,31 +24,24 @@
     "passed": 0,
     "failed": 1,
     "failedFeatures": [
-      "fix-mixed-request-guard-rails"
+      "fix-hmmer-layer-guard-rail"
     ]
   },
   "blockingIssues": [
     {
-      "featureId": "fix-mixed-request-guard-rails",
+      "featureId": "fix-hmmer-layer-guard-rail",
       "severity": "blocking",
-      "description": "The follow-up fix moved pairwise validation into `Renumbering.__init__`, but `src/sadie/renumbering/aligners/hmmer.py:get_hmm_models()` still silently skips explicitly requested unsupported pairs whenever at least one HMM loads. Direct `HMMER(species=['alpaca'], chains=['H', 'K'])` reproduces the gap by returning only `('alpaca', 'H')` without raising, so the original HMMER-layer contract is still unmet."
+      "description": "`Renumbering` disables `HMMER` pair validation by passing `validate_pairs=False`, then only revalidates when the requested chains differ from the full default set `['H', 'K', 'L', 'A', 'B', 'G', 'D']`. An explicit full-chain request therefore still silently drops unsupported pairs: `Renumbering(allowed_species=['alpaca'], allowed_chain=['H', 'K', 'L', 'A', 'B', 'G', 'D'], run_multiproc=False)` succeeded during scrutiny and loaded only `('alpaca', 'H')` instead of raising for the missing `alpaca K/L/A/B/G/D` pairs."
     }
   ],
-  "nonBlockingIssues": [
-    {
-      "featureId": "fix-mixed-request-guard-rails",
-      "severity": "non_blocking",
-      "description": "The new regression tests cover only `Renumbering` with narrowed chain lists; they do not exercise the direct `HMMER(...)` mixed-request path, so the remaining escape hatch is left untested."
-    }
-  ],
-  "appliedUpdates": [
-    {
-      "target": "library",
-      "description": "Updated `.factory/library/architecture.md` to note that `renumbering/aligners/hmmer.py` is both an internal pipeline layer and a directly exported/tested API surface, so contracts that target `HMMER.get_hmm_models()` must be enforced there as well as in `Renumbering`.",
-      "sourceFeature": "fix-mixed-request-guard-rails"
-    }
-  ],
+  "nonBlockingIssues": [],
+  "appliedUpdates": [],
   "suggestedGuidanceUpdates": [],
-  "rejectedObservations": [],
-  "previousRound": ".factory/validation/species-expansion/scrutiny/synthesis.round1.json"
+  "rejectedObservations": [
+    {
+      "observation": "Update the `python-library-worker` skill to better encode timeout-aware scoped validation so workers do not overstate procedure adherence.",
+      "reason": "duplicate; materially the same guidance update was already recorded in `synthesis.round1.json` for this milestone and in naming-standardization scrutiny."
+    }
+  ],
+  "previousRound": ".factory/validation/species-expansion/scrutiny/synthesis.round2.json"
 }

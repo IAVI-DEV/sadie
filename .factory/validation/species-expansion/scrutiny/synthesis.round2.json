@@ -1,0 +1,54 @@
+{
+  "milestone": "species-expansion",
+  "round": 2,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "poetry run pytest tests/unit/renumbering/ --ignore=tests/unit/renumbering/test_renumbering.py -q --no-header",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "poetry run pyright src/",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "poetry run pre-commit run --files src/sadie/renumbering/aligners/hmmer.py src/sadie/renumbering/renumbering.py tests/unit/renumbering/test_species_contract.py",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": [
+      "fix-mixed-request-guard-rails"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "fix-mixed-request-guard-rails",
+      "severity": "blocking",
+      "description": "The follow-up fix moved pairwise validation into `Renumbering.__init__`, but `src/sadie/renumbering/aligners/hmmer.py:get_hmm_models()` still silently skips explicitly requested unsupported pairs whenever at least one HMM loads. Direct `HMMER(species=['alpaca'], chains=['H', 'K'])` reproduces the gap by returning only `('alpaca', 'H')` without raising, so the original HMMER-layer contract is still unmet."
+    }
+  ],
+  "nonBlockingIssues": [
+    {
+      "featureId": "fix-mixed-request-guard-rails",
+      "severity": "non_blocking",
+      "description": "The new regression tests cover only `Renumbering` with narrowed chain lists; they do not exercise the direct `HMMER(...)` mixed-request path, so the remaining escape hatch is left untested."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated `.factory/library/architecture.md` to note that `renumbering/aligners/hmmer.py` is both an internal pipeline layer and a directly exported/tested API surface, so contracts that target `HMMER.get_hmm_models()` must be enforced there as well as in `Renumbering`.",
+      "sourceFeature": "fix-mixed-request-guard-rails"
+    }
+  ],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/species-expansion/scrutiny/synthesis.round1.json"
+}

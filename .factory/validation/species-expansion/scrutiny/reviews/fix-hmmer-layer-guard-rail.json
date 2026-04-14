@@ -1,0 +1,34 @@
+{
+  "featureId": "fix-hmmer-layer-guard-rail",
+  "reviewedAt": "2026-04-14T10:24:32Z",
+  "commitId": "add31fd42277570bf7d86793e64985623cced297",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The follow-up does add pairwise validation for direct `HMMER(...)` calls and the new regression tests cover that surface, but it does not fully close the prior scrutiny failure. `Renumbering` now explicitly opts out of the new HMMER-level guard rail and still suppresses its own pairwise check for the default H/K/L chain set, so one of the original escape hatches remains. I also found that the shared supported-chain helper still ignores the G3 fallback path, which can make the new error text misleading.",
+    "issues": [
+      {
+        "file": "src/sadie/renumbering/renumbering.py",
+        "line": 123,
+        "severity": "blocking",
+        "description": "`Renumbering` now passes `validate_pairs=False` into `HMMER`, then keeps its own validation gated behind `set(self.allowed_chains) != default_chains` at lines 133-145. That means explicit requests using the default H/K/L chain set still bypass pairwise validation entirely. One concrete example is `Renumbering(allowed_species=['alpaca'], allowed_chain=['H', 'K', 'L'], run_multiproc=False)`: the new HMMER guard rail is disabled, the Renumbering guard rail is skipped because the chain set matches the default, and unsupported `alpaca K/L` pairs are still silently dropped. The prior review for `fix-mixed-request-guard-rails` explicitly called out this escape hatch, so the original failure is only partially addressed by this follow-up."
+      },
+      {
+        "file": "src/sadie/renumbering/aligners/hmmer.py",
+        "line": 221,
+        "severity": "non_blocking",
+        "description": "`_get_supported_chains()` still only consults the custom HMM dir, the local builder, and legacy Numbering paths; it never checks the G3 fallback even though `get_hmm_models()` can successfully load HMMs through G3. As a result, the new `ValueError` can advertise the wrong supported-chain list for species whose real support comes from G3. The worker transcript hit exactly this during the CLI regression investigation (`rat H` was reported unsupported while it still loaded through G3), and the final code leaves the helper unchanged."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `python-library-worker` skill still treats broader `tests/unit/airr/` and full-suite pytest runs as mandatory, but this repo's mission guidance already allows scoped alternatives and this worker hit timeouts on both commands before still reporting `followedProcedure: true`. The skill and/or handoff guidance should better encode timeout-aware scoped validation so adherence is not overstated.",
+      "evidence": "/Users/tmsincomb/sadie/.factory/skills/python-library-worker/SKILL.md:52-60 requires the broader renumbering, airr, and full-suite pytest steps; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73-79 allows scoped feature-relevant commands instead; the transcript skeleton for session `14badf89-df32-4090-8456-038590900b2a` shows the full-suite and `tests/unit/airr/` attempts timing out before commit, while handoff `2026-04-14T10-11-21-764Z__fix-hmmer-layer-guard-rail__14badf89-df32-4090-8456-038590900b2a.json:56-57` still records `followedProcedure: true` with no deviations."
+    }
+  ],
+  "addressesFailureFrom": "/Users/tmsincomb/sadie/.factory/validation/species-expansion/scrutiny/reviews/fix-mixed-request-guard-rails.json",
+  "summary": "Fail. Direct HMMER instantiation is now covered, but `Renumbering` still opts out of the new HMMER validation and continues to silently skip explicit default-chain requests such as H/K/L for species with missing light chains, so the prior scrutiny failure is only partially resolved."
+}
