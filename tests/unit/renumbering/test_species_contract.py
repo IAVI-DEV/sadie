@@ -132,6 +132,37 @@ class TestSpeciesContract:
         )
 
 
+class TestRatIGHJData:
+    """Tests for rat IGHJ data gap in all_germlines (VAL-BUG-005)."""
+
+    def test_rat_ighj_exists_in_all_germlines(self):
+        """all_germlines['J']['H'] must contain 'rat' with at least 1 IGHJ gene."""
+        from sadie.numbering.germlines import all_germlines
+
+        assert "rat" in all_germlines["J"]["H"], "rat missing from all_germlines['J']['H']"
+        rat_j = all_germlines["J"]["H"]["rat"]
+        assert len(rat_j) >= 1, f"Expected at least 1 rat IGHJ entry, got {len(rat_j)}"
+
+    def test_rat_ighj_entries_have_correct_format(self):
+        """Rat IGHJ entries must be 128 chars with dash padding and WGxG motif."""
+        from sadie.numbering.germlines import all_germlines
+
+        rat_j = all_germlines["J"]["H"]["rat"]
+        for gene, seq in rat_j.items():
+            assert len(seq) == 128, f"{gene}: expected 128 chars, got {len(seq)}"
+            aa_part = seq.lstrip("-")
+            assert len(aa_part) == 14, f"{gene}: expected 14 aa, got {len(aa_part)}"
+            assert "W" in aa_part, f"{gene}: missing conserved W in WGxG motif"
+
+    def test_rat_ighj_gene_names_start_with_ighj(self):
+        """Rat IGHJ gene names must follow IGHJ naming convention."""
+        from sadie.numbering.germlines import all_germlines
+
+        rat_j = all_germlines["J"]["H"]["rat"]
+        for gene in rat_j:
+            assert gene.startswith("IGHJ"), f"Unexpected gene name: {gene}"
+
+
 class TestAllowedScopingBug:
     """Tests for the _allowed variable scoping bug in run_germline_assignment().
 
