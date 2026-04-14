@@ -1,0 +1,195 @@
+{
+  "groupId": "chicken-support",
+  "testedAt": "2026-04-14T10:41:35.252525Z",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "surface": "pytest",
+    "sharedCheckoutMode": "read-only except assigned flow report and evidence outputs"
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "commands": [
+    {
+      "id": "assigned-species-contract",
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' -v /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestChickenSpeciesContract /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestUnsupportedChainGuardRails::test_supported_chain_does_not_raise[chicken-L]",
+      "exitCode": 0,
+      "log": "species-expansion/chicken-support/01-assigned-pytest.log"
+    },
+    {
+      "id": "typing-chicken",
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' -v /Users/tmsincomb/sadie/tests/unit/typing/test_typing.py::TestSpeciesDictConsistency::test_chicken_direct_key",
+      "exitCode": 0,
+      "log": "species-expansion/chicken-support/02-typing-chicken.log"
+    },
+    {
+      "id": "chicken-helper",
+      "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' -s -v /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/evidence/species-expansion/chicken-support/test_chicken_support_evidence.py",
+      "exitCode": 0,
+      "log": "species-expansion/chicken-support/03-chicken-helper.log"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-EXP-004",
+      "title": "chicken in allowed species and SPECIES dict",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestChickenSpeciesContract::test_chicken_in_allowed_species",
+          "expected": "Renumbering.get_allowed_species() includes 'chicken'",
+          "observed": "Passed in 01-assigned-pytest.log"
+        },
+        {
+          "action": "Run TestSpeciesDictConsistency::test_chicken_direct_key",
+          "expected": "SPECIES includes 'chicken' and Species.validate('chicken') returns 'chicken'",
+          "observed": "Passed in 02-typing-chicken.log"
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "species-expansion/chicken-support/01-assigned-pytest.log",
+          "species-expansion/chicken-support/02-typing-chicken.log"
+        ],
+        "commands": [
+          {
+            "commandId": "assigned-species-contract",
+            "exitCode": 0
+          },
+          {
+            "commandId": "typing-chicken",
+            "exitCode": 0
+          }
+        ],
+        "observations": [
+          "test_chicken_in_allowed_species PASSED",
+          "test_chicken_direct_key PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EXP-005",
+      "title": "chicken H renumbering works",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestChickenSpeciesContract::test_chicken_hmms_load_successfully",
+          "expected": "Chicken H/L HMM loading succeeds with a chicken HMM present",
+          "observed": "Passed in 01-assigned-pytest.log"
+        },
+        {
+          "action": "Run TestChickenSpeciesContract::test_chicken_vh_produces_numbered_result",
+          "expected": "A representative chicken VH sequence produces a non-empty numbered result",
+          "observed": "Passed in 01-assigned-pytest.log"
+        },
+        {
+          "action": "Run TestChickenSpeciesContract::test_chicken_germline_assignment_returns_chicken_vgene",
+          "expected": "Chicken VH germline assignment resolves to chicken",
+          "observed": "Passed in 01-assigned-pytest.log"
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "species-expansion/chicken-support/01-assigned-pytest.log"
+        ],
+        "commands": [
+          {
+            "commandId": "assigned-species-contract",
+            "exitCode": 0
+          }
+        ],
+        "observations": [
+          "test_chicken_hmms_load_successfully PASSED",
+          "test_chicken_vh_produces_numbered_result PASSED",
+          "test_chicken_germline_assignment_returns_chicken_vgene PASSED"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EXP-006",
+      "title": "chicken germline data in all_germlines",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestChickenSpeciesContract::test_chicken_germline_data_exists_in_all_germlines",
+          "expected": "Chicken entries exist for V/H, J/H, V/L, and J/L with non-empty data",
+          "observed": "Passed in 01-assigned-pytest.log"
+        },
+        {
+          "action": "Run helper pytest test_chicken_germline_gene_names_match_normalized_fastas",
+          "expected": "Representative gene names from normalized FASTA files appear in all_germlines",
+          "observed": "Passed in 03-chicken-helper.log; printed IGHV1-1*01, IGHJ*01, IGLV1-1*01, and IGLJ*01"
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "species-expansion/chicken-support/01-assigned-pytest.log",
+          "species-expansion/chicken-support/03-chicken-helper.log"
+        ],
+        "commands": [
+          {
+            "commandId": "assigned-species-contract",
+            "exitCode": 0
+          },
+          {
+            "commandId": "chicken-helper",
+            "exitCode": 0
+          }
+        ],
+        "observations": [
+          "test_chicken_germline_data_exists_in_all_germlines PASSED",
+          "V/H chicken genes sample included IGHV1-1*01",
+          "J/H chicken genes sample included IGHJ*01",
+          "V/L chicken genes sample included IGLV1-1*01",
+          "J/L chicken genes sample included IGLJ*01"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EXP-008",
+      "title": "chicken L chain handling",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run TestUnsupportedChainGuardRails::test_supported_chain_does_not_raise[chicken-L]",
+          "expected": "Chicken/L is accepted as a supported species-chain combination",
+          "observed": "Passed in 01-assigned-pytest.log"
+        },
+        {
+          "action": "Run helper pytest test_chicken_l_renumbering_behavior using chicken IGLV1-1*01",
+          "expected": "Either chicken L renumbering succeeds with a valid result or a clear chicken/L ValueError is raised",
+          "observed": "Chicken L renumbering succeeded; 03-chicken-helper.log printed shape=(1, 38), v_gene=IGLV1-1*01, identity_species=chicken, chain_type=L"
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "species-expansion/chicken-support/01-assigned-pytest.log",
+          "species-expansion/chicken-support/03-chicken-helper.log"
+        ],
+        "commands": [
+          {
+            "commandId": "assigned-species-contract",
+            "exitCode": 0
+          },
+          {
+            "commandId": "chicken-helper",
+            "exitCode": 0
+          }
+        ],
+        "observations": [
+          "test_supported_chain_does_not_raise[chicken-L] PASSED",
+          "Using chicken L sequence from IGLV1-1*01: length=94",
+          "Observed chicken L result: shape=(1, 38), v_gene=IGLV1-1*01, identity_species=chicken, chain_type=L"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 4 assigned assertions via pytest: VAL-EXP-004, VAL-EXP-005, VAL-EXP-006, and VAL-EXP-008 all passed. Chicken is allowed and validates in SPECIES, chicken heavy-chain renumbering works, chicken germline data includes expected H and L genes, and chicken lambda renumbering succeeds with chicken-specific output."
+}

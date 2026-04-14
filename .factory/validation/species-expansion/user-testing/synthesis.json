@@ -1,0 +1,31 @@
+{
+  "milestone": "species-expansion",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-EXP-001",
+    "VAL-EXP-002",
+    "VAL-EXP-003",
+    "VAL-EXP-004",
+    "VAL-EXP-005",
+    "VAL-EXP-006",
+    "VAL-EXP-007",
+    "VAL-EXP-008"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Documented that unsupported-pair guard-rail pytest runs may emit fallback warnings before the expected ValueError, and that evidence-only pytest helpers may be written under the assigned mission evidence directory when repo tests do not print contract-required runtime details.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}

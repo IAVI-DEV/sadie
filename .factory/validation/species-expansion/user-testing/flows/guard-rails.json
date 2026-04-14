@@ -1,0 +1,74 @@
+{
+  "groupId": "guard-rails",
+  "testedAt": "2026-04-14T10:40:12.555617+00:00",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "validationSurface": "pytest",
+    "assignedAssertions": [
+      "VAL-EXP-007"
+    ]
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-EXP-007",
+      "title": "unsupported chain raises clear error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the suggested pytest class command for `TestUnsupportedChainGuardRails`.",
+          "expected": "Targeted guard-rail tests complete successfully and include the unsupported pairs in scope.",
+          "observed": "Exit code 0; 9/9 tests passed, including `alpaca-K`, `alpaca-L`, and `chicken-K` under `test_unsupported_chain_raises_descriptive_error`."
+        },
+        {
+          "action": "Run the assertion-only pytest node for `test_unsupported_chain_raises_descriptive_error`.",
+          "expected": "Only the three VAL-EXP-007 parametrized cases run and pass.",
+          "observed": "Exit code 0; 3/3 targeted cases passed for `alpaca-K`, `alpaca-L`, and `chicken-K`."
+        },
+        {
+          "action": "Review the targeted test and guard-rail source paths.",
+          "expected": "The contract requires a descriptive ValueError that includes species, chain, and supported chains.",
+          "observed": "The test asserts species, chain, and expected supported chains appear in the ValueError, and the guard-rail source formats the error as `No HMM available for {species} {chain}. Supported chains for {species}: {supported}`."
+        }
+      ],
+      "evidence": {
+        "terminalLogs": [
+          "species-expansion/guard-rails/VAL-EXP-007-test-class.log",
+          "species-expansion/guard-rails/VAL-EXP-007-assertion.log"
+        ],
+        "notes": "species-expansion/guard-rails/VAL-EXP-007-observations.md",
+        "commandMetadata": "species-expansion/guard-rails/VAL-EXP-007-command-metadata.json",
+        "commands": [
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' -v /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestUnsupportedChainGuardRails",
+            "exitCode": 0,
+            "log": "species-expansion/guard-rails/VAL-EXP-007-test-class.log"
+          },
+          {
+            "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory \"/Users/tmsincomb/sadie\" run pytest -p no:cacheprovider -o addopts='' -vv /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestUnsupportedChainGuardRails::test_unsupported_chain_raises_descriptive_error",
+            "exitCode": 0,
+            "log": "species-expansion/guard-rails/VAL-EXP-007-assertion.log"
+          }
+        ],
+        "network": "not applicable",
+        "consoleErrors": "not applicable"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Pytest showed live WARNING lines for unsupported pairs (`Local HMM builder failed ... Falling back to G3/Numbering`) before the ValueError assertions completed.",
+      "resolved": true,
+      "resolution": "No workaround was required; both pytest commands still exited 0 and the descriptive-error assertions passed.",
+      "affectedAssertions": [
+        "VAL-EXP-007"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Validated VAL-EXP-007 via pytest. Both targeted commands exited 0, and the required unsupported pairs `alpaca-K`, `alpaca-L`, and `chicken-K` all passed the descriptive-error guard-rail test."
+}

@@ -1,0 +1,90 @@
+{
+  "groupId": "cow-support",
+  "testedAt": "2026-04-14T10:39:14.523847+00:00",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e",
+    "surface": "pytest",
+    "sharedCheckoutMode": "read-only except assigned report output"
+  },
+  "toolsUsed": [
+    "pytest"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-EXP-001",
+      "title": "cow in allowed species",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest nodeid TestCowSpeciesContract::test_cow_in_allowed_species",
+          "expected": "Renumbering.get_allowed_species() includes 'cow'.",
+          "observed": "Pytest reported PASS for test_cow_in_allowed_species, confirming 'cow' is present in the allowed species list."
+        }
+      ],
+      "evidence": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory /Users/tmsincomb/sadie run pytest -p no:cacheprovider -o addopts= -vv /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_in_allowed_species /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_hmms_load_successfully /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_vh_produces_numbered_result /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_germline_assignment_returns_cow_vgene",
+        "exitCode": 0,
+        "pytestLog": "species-expansion/cow-support/pytest-cow-support.log",
+        "metadata": "species-expansion/cow-support/pytest-cow-support-meta.json",
+        "matchingTests": [
+          "tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_in_allowed_species"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EXP-002",
+      "title": "cow renumbering works",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest nodeid TestCowSpeciesContract::test_cow_hmms_load_successfully",
+          "expected": "Renumbering(allowed_species=[\"cow\"]) loads cow HMMs without error.",
+          "observed": "Pytest reported PASS for test_cow_hmms_load_successfully, which verifies at least one HMM loaded and that a loaded HMM name contained 'cow'."
+        },
+        {
+          "action": "Run pytest nodeid TestCowSpeciesContract::test_cow_vh_produces_numbered_result",
+          "expected": "A cow VH sequence produces a non-empty numbered result with Kabat positions.",
+          "observed": "Pytest reported PASS for test_cow_vh_produces_numbered_result, confirming run_single() returned a non-empty result with more than 5 columns (Kabat-position output present)."
+        }
+      ],
+      "evidence": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory /Users/tmsincomb/sadie run pytest -p no:cacheprovider -o addopts= -vv /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_in_allowed_species /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_hmms_load_successfully /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_vh_produces_numbered_result /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_germline_assignment_returns_cow_vgene",
+        "exitCode": 0,
+        "pytestLog": "species-expansion/cow-support/pytest-cow-support.log",
+        "metadata": "species-expansion/cow-support/pytest-cow-support-meta.json",
+        "matchingTests": [
+          "tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_hmms_load_successfully",
+          "tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_vh_produces_numbered_result"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-EXP-003",
+      "title": "cow germline assignment works",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest nodeid TestCowSpeciesContract::test_cow_germline_assignment_returns_cow_vgene",
+          "expected": "Cow VH germline assignment returns a cow-species V-gene rather than falling back to another species.",
+          "observed": "Pytest reported PASS for test_cow_germline_assignment_returns_cow_vgene, confirming the result was non-empty, v_gene was populated, and identity_species resolved to 'cow'."
+        }
+      ],
+      "evidence": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 poetry --directory /Users/tmsincomb/sadie run pytest -p no:cacheprovider -o addopts= -vv /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_in_allowed_species /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_hmms_load_successfully /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_vh_produces_numbered_result /Users/tmsincomb/sadie/tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_germline_assignment_returns_cow_vgene",
+        "exitCode": 0,
+        "pytestLog": "species-expansion/cow-support/pytest-cow-support.log",
+        "metadata": "species-expansion/cow-support/pytest-cow-support-meta.json",
+        "matchingTests": [
+          "tests/unit/renumbering/test_species_contract.py::TestCowSpeciesContract::test_cow_germline_assignment_returns_cow_vgene"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assigned assertions via targeted pytest nodeids. All 3 passed; the shared command exited 0 and all 4 mapped cow-support tests passed."
+}
