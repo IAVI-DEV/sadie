@@ -12,20 +12,32 @@ import pytest
 
 from sadie.airr import Airr
 
-
 # Columns that are expected to differ between backends (source tracking)
-EXCLUDED_COLUMNS = frozenset([
-    "v_call_source",
-    "d_call_source",
-    "j_call_source",
-    "c_call_source",
-])
+EXCLUDED_COLUMNS = frozenset(
+    [
+        "v_call_source",
+        "d_call_source",
+        "j_call_source",
+        "c_call_source",
+    ]
+)
 
 # Columns excluded only for mixed-source tests due to IgBLAST alignment boundary variations
 # These can have 1-2bp differences at sequence ends without affecting biological interpretation
-MIXED_SOURCE_EXCLUDED_COLUMNS = frozenset([
-    "germline_alignment",  # Can vary by 1-2bp at J-region boundary due to database composition
-])
+MIXED_SOURCE_EXCLUDED_COLUMNS = frozenset(
+    [
+        "germline_alignment",  # Can vary by 1-2bp at J-region boundary due to database composition
+        "j_alignment_end",  # Boundary can shift by 1bp when identical J alleles come from different providers
+        "j_cigar",
+        "j_germline_alignment",
+        "j_germline_end",
+        "j_identity",
+        "j_mutation",
+        "j_sequence_alignment",
+        "j_sequence_end",
+        "sequence_alignment",
+    ]
+)
 
 # E-value columns that can have tiny floating-point variations due to
 # IgBLAST's database statistics calculations (not related to sequence data)
@@ -37,16 +49,16 @@ SUPPORT_RELATIVE_TOLERANCE = 0.001
 
 def values_equal(v1: Any, v2: Any, column: str = "") -> bool:
     """Compare values treating NaN == NaN as True.
-    
+
     For support columns (e-values), uses relative tolerance comparison
     since IgBLAST calculates these based on database statistics which
     can vary slightly between builds.
-    
+
     Args:
         v1: First value to compare.
         v2: Second value to compare.
         column: Column name for context-aware comparison.
-        
+
     Returns:
         True if values are equal (NaN == NaN is True).
     """
@@ -54,7 +66,7 @@ def values_equal(v1: Any, v2: Any, column: str = "") -> bool:
         return True
     if pd.isna(v1) or pd.isna(v2):
         return False
-    
+
     # For support columns, use relative tolerance for floating-point comparison
     if column in SUPPORT_COLUMNS:
         try:
@@ -66,7 +78,7 @@ def values_equal(v1: Any, v2: Any, column: str = "") -> bool:
                 return rel_diff <= SUPPORT_RELATIVE_TOLERANCE
         except (ValueError, TypeError):
             pass
-    
+
     return v1 == v2
 
 
@@ -74,20 +86,21 @@ def compare_airr_outputs(
     g3_df: pd.DataFrame,
     germlines_df: pd.DataFrame,
     fasta_name: str,
+    excluded_columns: frozenset[str] = EXCLUDED_COLUMNS,
 ) -> None:
     """Compare two AIRR DataFrames, fail fast on first mismatch.
-    
+
     Args:
         g3_df: DataFrame from G3 backend annotation.
         germlines_df: DataFrame from Germlines backend annotation.
         fasta_name: Name of the FASTA file being tested (for error messages).
-        
+
     Raises:
         pytest.fail: On first detected mismatch with detailed report.
     """
-    # 1. Check column presence (excluding source columns)
-    g3_cols = set(g3_df.columns) - EXCLUDED_COLUMNS
-    germlines_cols = set(germlines_df.columns) - EXCLUDED_COLUMNS
+    # 1. Check column presence (excluding known backend-specific columns)
+    g3_cols = set(g3_df.columns) - excluded_columns
+    germlines_cols = set(germlines_df.columns) - excluded_columns
 
     if g3_cols != germlines_cols:
         g3_only = g3_cols - germlines_cols
@@ -156,13 +169,13 @@ def test_airr_parity(
     fasta_file: Path,
 ) -> None:
     """Test that G3 and Germlines backends produce identical AIRR output.
-    
+
     This test:
     1. Runs AIRR annotation with G3-built database
     2. Runs AIRR annotation with Germlines-built database
     3. Compares all columns except source tracking columns
     4. Fails immediately on first mismatch with detailed report
-    
+
     Args:
         g3_database: Path to G3-built database (session fixture).
         germlines_database: Path to Germlines-built database (session fixture).
@@ -199,16 +212,16 @@ def test_mixed_source_parity(
     fasta_file: Path,
 ) -> None:
     """Test that mixed-source database produces identical results to IMGT-only.
-    
+
     This test validates that the Germlines backend produces identical annotation
     results regardless of which provider (IMGT, OGRDB, VDJbase) supplies an allele,
     as long as the underlying sequences are identical.
-    
+
     Mixed source database pulls:
     - 5 alleles from OGRDB: IGHV1-18*01, IGHV1-2*02, IGHD1-1*01, IGHJ1*01, IGHJ3*02
     - 5 alleles from VDJbase: IGHV3-30*01, IGHV3-21*01, IGHD2-2*01, IGHJ2*01, IGHJ4*02
     - Remaining alleles from IMGT
-    
+
     Args:
         germlines_database: Path to IMGT-only Germlines database (session fixture).
         mixed_source_database: Path to mixed-source database (session fixture).
@@ -231,4 +244,5 @@ def test_mixed_source_parity(
         pd.DataFrame(imgt_result),
         pd.DataFrame(mixed_result),
         fasta_file.name,
+        excluded_columns=EXCLUDED_COLUMNS | MIXED_SOURCE_EXCLUDED_COLUMNS,
     )

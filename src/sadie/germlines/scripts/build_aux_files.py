@@ -104,6 +104,11 @@ def build_aux_file(species: str, force: bool = False) -> Path:
     return output_file
 
 
+def build_aux_file_for_species(species: str, force: bool = False) -> Path:
+    """Backward-compatible wrapper for building a single species aux file."""
+    return build_aux_file(species, force=force)
+
+
 def build_all(force: bool = False) -> Dict[str, Path]:
     """
     Build aux files for all species with normalized data.

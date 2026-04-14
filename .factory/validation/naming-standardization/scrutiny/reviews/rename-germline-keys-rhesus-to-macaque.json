@@ -1,0 +1,21 @@
+{
+  "featureId": "rename-germline-keys-rhesus-to-macaque",
+  "reviewedAt": "2026-04-14T05:11:19.503440+00:00",
+  "commitId": "50e6199317cad06bc6cc33df4e56eca021d1297a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Feature scope is fully covered: the commit renames all six `all_germlines` rhesus keys to `macaque`, inverts `Numbering._SPECIES_ALIASES` to `{'rhesus': 'macaque'}`, updates the germline-resolution docstring, and adds focused tests for VAL-NAME-001 and VAL-NAME-002. No feature-scoped correctness issues were found in the diff.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `python-library-worker` skill still recommends piping pytest through `tail`, which can hide a failing exit status and conflicts with the repo guidance the worker cited in handoff feedback.",
+      "evidence": ".factory/skills/python-library-worker/SKILL.md:52-60 uses `poetry run pytest ... | tail ...`; handoff 2026-04-14T03-13-28-091Z__rename-germline-keys-rhesus-to-macaque__85cde1f0-d2d7-4e10-b82d-e016bcbf82b2.json:67-70 records the same mismatch with AGENTS.md guidance."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The implementation matches the feature's scoped contract and test expectations; broader rhesus HMM routing is intentionally handled by the separate follow-up feature `update-hmm-routing-and-backward-compat`."
+}

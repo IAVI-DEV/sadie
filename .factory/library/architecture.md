@@ -1,75 +1,77 @@
 # Architecture
 
-Architectural decisions, patterns discovered, and key design choices.
+## Species Flow Through the Pipeline
 
-**What belongs here:** Design patterns, module relationships, key abstractions, data flow diagrams.
-
----
-
-## Current Data Flow (Pre-Refactoring)
-
-Two parallel paths to IgBLAST databases exist:
-
-### Path 1: Germlines Pipeline (direct)
 ```
-sadie germlines populate → sources/{provider}/{species}/*.fasta
-    ↓
-GermlinePipeline._rebuild_normalized() → normalized/{species}/*.fasta
-    ↓ (uses GermlineManager priority dedup)
-GermlinePipeline._rebuild_igblast() → igblast/{database,aux_db,internal_data}/
-```
-
-### Path 2: Reference Module (config-driven)
-```
-reference.yml (YAML config: name → provider → species → [allele_list])
-    ↓
-References.from_yaml(yaml_path, use_germlines=True)
-    ↓ (fetches alleles via GermlineToG3Adapter → GermlineManager)
-References.make_airr_database(output_dir)
-    ↓ (builds IgBLAST DB in output_dir)
-```
-
-### Airr Constructor (3 branches)
-1. `database=<path>` → uses prebuilt database directly
-2. `references=<References>` → builds via Reference module
-3. Default → uses germlines/igblast/ path
-
-## Target Data Flow (Post-Refactoring)
-
-Single unified path:
-```
-Airr(reference_name, providers=[...])
-    ↓
-Check cache (keyed by reference_name + providers + reference.yml hash)
-    ↓ (cache miss)
-Load/auto-generate reference.yml
-    ↓
-References.from_yaml() with provider filtering
-    ↓
-References.make_airr_database() → ~/.sadie/cache/<hash>/
-    ↓
-Use cached database for IgBLAST annotation
+User input: species name (e.g., "macaque", "rhesus", "cow")
+    │
+    ▼
+LAYER 1: Species Typing (src/sadie/typing/species.py)
+    SPECIES dict normalizes input → canonical name
+    e.g., "rhesus" → "macaque", "bos_taurus" → "cow"
+    │
+    ▼
+LAYER 2: Airr Class (src/sadie/airr/airr.py)
+    Airr(reference_name=<canonical>) → builds IgBLAST DB
+    reference_name stored in AirrTable output
+    │
+    ▼
+LAYER 3: Reference Module (src/sadie/reference/)
+    References.from_yaml() → GermlineManager → GermlineToG3Adapter
+    Builds IgBLAST database files (blastdb, aux_db, internal_data)
+    │
+    ▼
+LAYER 4: Renumbering (src/sadie/renumbering/renumbering.py)
+    Renumbering(allowed_species=[...])
+    get_allowed_species() = allowlist of supported species
+    │
+    ▼
+LAYER 5: HMMER Aligner (src/sadie/renumbering/aligners/hmmer.py)
+    get_hmm_models() priority chain:
+      1. Custom HMM dir
+      2. LocalHMMBuilder (germlines module, modern)
+      3. G3 API HMMs when the species/chain is supported there
+      4. Legacy ANARCI HMMs only when G3 lacks support or numbering HMMs are forced
+    Backward-compat alias: "rhesus" is resolved to "macaque" before custom/local HMM lookup
+    HMM name format: {species}_{chain}.hmm
+    │
+    ▼
+LAYER 6: Numbering (src/sadie/numbering/numbering.py)
+    _SPECIES_ALIASES resolves species for all_germlines lookup
+    run_germline_assignment() → all_germlines[segment][chain][species]
+    │
+    ▼
+LAYER 7: Germline Data (src/sadie/numbering/germlines.py)
+    all_germlines dict: {segment: {chain: {species: {gene: sequence}}}}
+    Hand-maintained dict from ANARCI, ~2089 lines
 ```
 
-## Key Classes
+## HMM File Locations (3 directories)
 
-- **Airr**: Main annotation API, constructor routes to database
-- **References**: Collection of gene references from YAML, builds IgBLAST databases
-- **GermlineManager**: Priority-based gene lookup across providers
-- **GermlineToG3Adapter**: Converts GermlineGene → legacy G3 format for Reference module
-- **GermlinePipeline**: Current normalize+build pipeline (to be replaced by Reference path)
+| Directory | Source | Naming |
+|-----------|--------|--------|
+| `src/sadie/germlines/hmms/` | LocalHMMBuilder output | macaque_H.hmm |
+| `src/sadie/renumbering/data/hmms/` | Newer renumbering HMMs | macaque_H.hmm |
+| `src/sadie/renumbering/data/anarci/HMMs/` | Legacy ANARCI | rhesus_H.hmm |
 
-## Provider Trust Levels
+## Key Modules
 
-- **OGRDB**: Fully trusted - include ALL alleles
-- **VDJbase**: Fully trusted - include ALL alleles
-- **IMGT**: Partially trusted - use reference.g3.yml allowlist for curated species, all alleles for uncurated
-- **Custom**: Partially trusted - user-defined, included as-is
+| Module | Purpose |
+|--------|---------|
+| `airr/` | AIRR-standard annotation, main entry point |
+| `airr/methods.py` | run_mutational_analysis(), species detection from reference_name |
+| `germlines/` | Multi-source germline manager with provider priority |
+| `germlines/renumbering_integration.py` | LocalHMMBuilder — builds HMMs from germline data |
+| `reference/` | YAML config → IgBLAST database builder |
+| `renumbering/` | Antibody numbering (IMGT, Kabat schemes) |
+| `renumbering/aligners/hmmer.py` | HMM model loading with priority fallback chain |
+| `numbering/numbering.py` | Numbering logic, germline assignment, species aliases |
+| `numbering/germlines.py` | all_germlines dict (hand-maintained) |
+| `typing/species.py` | SPECIES dict for name normalization |
 
-## Key Files
+## Critical Invariants
 
-- `reference.g3.yml`: Curated IMGT allele allowlist (clk, dog, human, mouse) - KEEP
-- `reference.yml` (repo root): Old manual attempt - DELETE
-- `src/sadie/reference/data/reference.yml`: Module-internal reference config
-- `src/sadie/germlines/pipeline.py`: Current pipeline orchestrator
-- `src/sadie/germlines/g3_adapter.py`: Bridge between germlines and reference modules
+1. Species names must be consistent across all layers — canonical name is used everywhere
+2. HMM selection must match the species of the input sequence (never silently use human HMMs for non-human)
+3. Germline assignment must use germlines from the same species as the HMM alignment
+4. Backward compat: old species names (e.g., "rhesus") must be accepted as aliases

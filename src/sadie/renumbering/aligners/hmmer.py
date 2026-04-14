@@ -105,23 +105,27 @@ class HMMER:
         hmms = []
         # Normalize species to list
         if species is None:
-            species = list(Species.species.values())
+            species_list: List[str] = list(Species.species.values())
         elif isinstance(species, str):
-            species = [species]
+            species_list = [str(species)]
+        else:
+            species_list = [str(single_species) for single_species in species]
         # Normalize chains to list
         if chains is None:
-            chains = list(Chain.chains)
+            chain_list: List[str] = list(Chain.chains)
         elif isinstance(chains, str):
-            chains = [chains]
+            chain_list = [str(chains)]
+        else:
+            chain_list = [str(single_chain) for single_chain in chains]
 
         # Check if we should use local HMM builder from germlines
         use_local = _use_local_hmm_builder() and not use_numbering_hmms
 
-        for single_species in species:
+        for single_species in species_list:
             # Resolve species aliases (e.g., "rhesus" → "macaque") so that
             # LocalHMMBuilder and custom-dir lookups find the correct HMM files.
             canonical_species = _HMM_SPECIES_ALIASES.get(single_species, single_species)
-            for chain in chains:
+            for chain in chain_list:
                 # Priority 0: Custom HMM directory (highest priority)
                 if self._hmm_dir:
                     custom_hmm_path = self._hmm_dir / f"{canonical_species}_{chain}.hmm"

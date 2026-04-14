@@ -1,0 +1,39 @@
+{
+  "featureId": "update-hmm-routing-and-backward-compat",
+  "reviewedAt": "2026-04-14T05:11:55Z",
+  "commitId": "8a3716ade9060b65c38f4abd1a3becf8b3a58834",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The alias-routing change in `hmmer.py` is scoped correctly: `rhesus` now resolves to `macaque` for custom/local HMM lookup while the legacy ANARCI fallback remains available. I found no blocking runtime defects in the diff, but two new assertions are weaker than the feature contract they are meant to prove.",
+    "issues": [
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 266,
+        "severity": "non_blocking",
+        "description": "`test_rhesus_and_macaque_produce_identical_output()` only compares `scheme`, `chain_type`, `v_gene`, and `j_gene`, so numbering columns can still drift without failing the test. The feature contract called for proving rhesus and macaque produce identical renumbering output."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 286,
+        "severity": "non_blocking",
+        "description": "`test_macaque_renumbering_unchanged_regression()` guards its core check with `if \"30\" in result.columns`, so it silently passes if Kabat position `30` disappears from the output. Assert that the column exists before checking the residue to make the regression meaningful."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `python-library-worker` skill still treats a full `poetry run pytest` as mandatory, but this repo's mission guidance and the worker transcript show that command is too slow to be practical here and workers fall back to scoped suites instead.",
+      "evidence": ".factory/skills/python-library-worker/SKILL.md:58-62 requires the full suite; /Users/tmsincomb/.factory/missions/06db25d3-b3a2-4db5-88b1-c00ba189fd9e/AGENTS.md:73-79 allows scoped alternatives; worker session `cf8e4978-c638-425e-9ab4-ba9983c19ba2` timed out on the full-suite commands before falling back to targeted tests, and handoff.skillFeedback.suggestedChanges reports the same."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The shared architecture doc does not match the live HMM fallback logic: it says the order is LocalHMMBuilder -> Legacy ANARCI -> G3, but `hmmer.py` goes to G3 whenever the species/chain is usable there and only uses Numbering when G3 lacks support or is forced.",
+      "evidence": ".factory/library/architecture.md:30-34 documents Legacy before G3, while src/sadie/renumbering/aligners/hmmer.py:159-166 branches to Numbering only when `single_species`/`chain` are unavailable in G3, and src/sadie/renumbering/clients/g3.py:23-29,45-48 defines which species are excluded from G3."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The core `rhesus` -> `macaque` routing fix in `hmmer.py` looks correct and backward-compatible, with only non-blocking test-strength gaps noted in the new species-contract assertions."
+}

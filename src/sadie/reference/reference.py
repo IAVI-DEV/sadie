@@ -441,9 +441,10 @@ class Reference:
                 "chimera",
             ]
         )
-        _diffs = matched_indexes.symmetric_difference(input_df.columns)
-        if not _diffs.empty:
-            raise ValueError(f"{_diffs} not in the dataframe")
+        allowed_indexes = matched_indexes.union(pd.Index(["species"]))
+        unexpected_columns = input_df.columns.difference(allowed_indexes)
+        if not unexpected_columns.empty:
+            raise ValueError(f"{unexpected_columns} not recognized in the dataframe")
 
         # fresh instance
         reference = Reference()
@@ -1103,13 +1104,19 @@ class References:
             if pd.Dataframe is not suppplied
         """
         references = References()
+        dtype_overrides = {
+            "imgt.ignored": object,
+            "imgt.not_implemented": object,
+            "imgt.expression_match": object,
+        }
         for name, name_df in dataframe.groupby("name"):
+            name_df = name_df.copy()
             name_df["gene"] = name_df["gene"].str.split("|").str[-1]
-            ref = Reference().from_dataframe(
-                name_df.drop(columns=["name"]).astype(
-                    {"imgt.ignored": object, "imgt.not_implemented": object, "imgt.expression_match": object}
-                )
-            )
+            ref_df = name_df.drop(columns=["name"])
+            available_dtypes = {column: dtype for column, dtype in dtype_overrides.items() if column in ref_df.columns}
+            if available_dtypes:
+                ref_df = ref_df.astype(available_dtypes)
+            ref = Reference().from_dataframe(ref_df)
             references.add_reference(name, ref)
         references.reference_dataframe = dataframe
         return references

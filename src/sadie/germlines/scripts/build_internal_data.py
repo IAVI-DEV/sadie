@@ -320,6 +320,11 @@ def build_internal_data(species: str, germlines_root: Path) -> bool:
     return True
 
 
+def build_internal_data_for_species(species: str, germlines_root: Optional[Path] = None) -> bool:
+    """Backward-compatible wrapper for building one species internal_data tree."""
+    return build_internal_data(species, germlines_root or get_germlines_root())
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build IgBLAST internal_data for species")
     parser.add_argument("species", nargs="+", help="Species names to build")

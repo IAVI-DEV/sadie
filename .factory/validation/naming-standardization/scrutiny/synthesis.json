@@ -1,0 +1,64 @@
+{
+  "milestone": "naming-standardization",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "poetry run pytest -o addopts='' --ignore=tests/unit/renumbering/test_renumbering.py --ignore=tests/migration/ --no-header",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "poetry run pyright src/",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "poetry run pre-commit run --files src/sadie/germlines/scripts/build_aux_files.py src/sadie/germlines/scripts/build_internal_data.py src/sadie/reference/reference.py src/sadie/renumbering/aligners/hmmer.py",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "update-hmm-routing-and-backward-compat",
+      "severity": "non_blocking",
+      "description": "`test_rhesus_and_macaque_produce_identical_output()` compares only a few metadata columns, so numbering drift could slip through without failing the test."
+    },
+    {
+      "featureId": "update-hmm-routing-and-backward-compat",
+      "severity": "non_blocking",
+      "description": "`test_macaque_renumbering_unchanged_regression()` only checks Kabat position 30 if the column already exists, so the regression guard is weaker than intended."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Corrected `.factory/library/architecture.md` to reflect the live HMM fallback order (custom -> LocalHMMBuilder -> G3 -> Legacy ANARCI) and documented the `rhesus` -> `macaque` alias before local/custom HMM lookup.",
+      "sourceFeature": "update-hmm-routing-and-backward-compat"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "python-library-worker skill",
+      "suggestion": "Remove pytest examples that pipe output through `tail` or similar filters; they can mask failures and conflict with validator guidance.",
+      "evidence": "The review for `rename-germline-keys-rhesus-to-macaque` cited `.factory/skills/python-library-worker/SKILL.md` examples using `| tail`, and the feature handoff reported the same mismatch with mission guidance.",
+      "isSystemic": true
+    },
+    {
+      "target": "python-library-worker skill",
+      "suggestion": "Allow repo-specific `AGENTS.md` validation guidance to replace unconditional full-suite pytest requirements when the mission documents known exclusions or impractical runtime constraints.",
+      "evidence": "The review for `update-hmm-routing-and-backward-compat` found the skill still requires `poetry run pytest` even though this mission's `AGENTS.md` explicitly allows scoped alternatives; the feature worker timed out on the full suite before falling back to targeted tests.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}
