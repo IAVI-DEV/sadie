@@ -33,6 +33,8 @@ LAYER 5: HMMER Aligner (src/sadie/renumbering/aligners/hmmer.py)
       3. G3 API HMMs when the species/chain is supported there
       4. Legacy ANARCI HMMs only when G3 lacks support or numbering HMMs are forced
     Backward-compat alias: "rhesus" is resolved to "macaque" before custom/local HMM lookup
+    `HMMER` is also a directly exported/tested API surface, not just an internal `Renumbering` helper,
+    so feature contracts that name `HMMER.get_hmm_models()` must be enforced at this layer too.
     HMM name format: {species}_{chain}.hmm
     │
     ▼

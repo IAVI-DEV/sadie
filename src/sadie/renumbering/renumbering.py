@@ -138,8 +138,7 @@ class Renumbering:
                     if (canonical, ch) not in self.hmmer._loaded_pairs:
                         supported = self.hmmer._get_supported_chains(canonical, "imgt", True, use_numbering_hmms)
                         errors.append(
-                            f"No HMM available for {canonical} {ch}. "
-                            f"Supported chains for {canonical}: {supported}"
+                            f"No HMM available for {canonical} {ch}. " f"Supported chains for {canonical}: {supported}"
                         )
             if errors:
                 raise ValueError("; ".join(errors))

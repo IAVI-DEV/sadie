@@ -1,0 +1,34 @@
+{
+  "featureId": "fix-mixed-request-guard-rails",
+  "reviewedAt": "2026-04-14T09:35:59Z",
+  "commitId": "a6b928de1a671092ba1fc86ce28dcecfd6a7c3c8",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix does resolve the exact mixed-request `Renumbering(...)` reproductions from the prior review, and the three new regression tests cover those scenarios. However, the implementation stops short of the feature contract: `HMMER.get_hmm_models()` still uses the old all-or-nothing `if not hmms` guard, while the new pairwise validation lives only in `Renumbering.__init__` and is skipped for the full default `['H', 'K', 'L']` chain set. The original failure is only partially resolved.",
+    "issues": [
+      {
+        "file": "src/sadie/renumbering/aligners/hmmer.py",
+        "line": 193,
+        "severity": "blocking",
+        "description": "`get_hmm_models()` still only raises when zero HMMs load overall, so the cartesian-product validation requested for the HMMER layer is still missing here. The new check was moved up into `Renumbering.__init__`, and that check is additionally gated behind `set(self.allowed_chains) != {'H', 'K', 'L'}`. Because `HMMER` is an exported API, direct calls such as `HMMER(species=['alpaca'], chains=['H', 'K'])` still silently drop `alpaca K`, and even `Renumbering(..., allowed_chain=['H', 'K', 'L'])` would still skip unsupported pairs instead of raising."
+      },
+      {
+        "file": "tests/unit/renumbering/test_species_contract.py",
+        "line": 568,
+        "severity": "non_blocking",
+        "description": "The new regression tests only exercise `Renumbering` with narrowed chain lists (`['H', 'K']`, `['K']`, and `['H']`). They do not cover a direct `HMMER.get_hmm_models()` mixed request or a `Renumbering(..., allowed_chain=['H', 'K', 'L'])` call, so the remaining escape hatches above are left untested."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The shared mission docs describe HMMER mainly as an internal pipeline layer, but they do not call out that `HMMER` is also a directly exported/tested API whose behavior needs to stay aligned with `Renumbering`. That gap likely contributed to this fix landing only in `Renumbering.__init__` while `HMMER.get_hmm_models()` kept the old all-or-nothing semantics.",
+      "evidence": ".factory/library/architecture.md describes HMMER as 'LAYER 5' in the pipeline only; `src/sadie/renumbering/aligners/__init__.py:1-4` exports `HMMER`; `src/sadie/germlines/renumbering_integration.py:30-36` documents direct `HMMER(...)` use; `tests/unit/aligners/test_hmmer.py:10-15` instantiates `HMMER` directly; handoff `2026-04-14T09-21-13-425Z__fix-mixed-request-guard-rails__96ed9227-25ad-4460-abe6-081b115d774f.json:10-11` says the final validation lives in `Renumbering.__init__`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/tmsincomb/sadie/.factory/validation/species-expansion/scrutiny/reviews/add-unsupported-chain-guard-rails.json",
+  "summary": "Fail. The prior blocking `Renumbering` reproductions are now covered, but the feature contract is still incomplete because pairwise validation was not actually implemented in `HMMER.get_hmm_models()`, leaving direct HMMER usage and full-default chain requests able to silently skip unsupported pairs."
+}

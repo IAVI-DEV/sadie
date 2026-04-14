@@ -1,11 +1,11 @@
 {
   "milestone": "species-expansion",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "validatorsRun": {
     "test": {
       "passed": true,
-      "command": "poetry run pytest tests/unit/renumbering --ignore=tests/unit/renumbering/test_renumbering.py --no-header -q",
+      "command": "poetry run pytest tests/unit/renumbering/ --ignore=tests/unit/renumbering/test_renumbering.py -q --no-header",
       "exitCode": 0
     },
     "typecheck": {
@@ -15,76 +15,40 @@
     },
     "lint": {
       "passed": true,
-      "command": "poetry run pre-commit run --files src/sadie/renumbering/aligners/hmmer.py src/sadie/numbering/germlines.py src/sadie/renumbering/renumbering.py tests/unit/renumbering/test_species_contract.py",
+      "command": "poetry run pre-commit run --files src/sadie/renumbering/aligners/hmmer.py src/sadie/renumbering/renumbering.py tests/unit/renumbering/test_species_contract.py",
       "exitCode": 0
     }
   },
   "reviewsSummary": {
-    "total": 3,
-    "passed": 2,
+    "total": 1,
+    "passed": 0,
     "failed": 1,
     "failedFeatures": [
-      "add-unsupported-chain-guard-rails"
+      "fix-mixed-request-guard-rails"
     ]
   },
   "blockingIssues": [
     {
-      "featureId": "add-unsupported-chain-guard-rails",
+      "featureId": "fix-mixed-request-guard-rails",
       "severity": "blocking",
-      "description": "The new guard rail only raises when zero HMMs load overall. Explicit mixed requests still silently skip unsupported pairs instead of raising the promised descriptive error, e.g. `allowed_species=['alpaca']` with `allowed_chain=['H','K']` returns only `alpaca_H`, and `allowed_species=['human','alpaca']` with `allowed_chain=['K']` returns only `human_K`."
+      "description": "The follow-up fix moved pairwise validation into `Renumbering.__init__`, but `src/sadie/renumbering/aligners/hmmer.py:get_hmm_models()` still silently skips explicitly requested unsupported pairs whenever at least one HMM loads. Direct `HMMER(species=['alpaca'], chains=['H', 'K'])` reproduces the gap by returning only `('alpaca', 'H')` without raising, so the original HMMER-layer contract is still unmet."
     }
   ],
   "nonBlockingIssues": [
     {
-      "featureId": "add-cow-species-support",
+      "featureId": "fix-mixed-request-guard-rails",
       "severity": "non_blocking",
-      "description": "`test_cow_hmms_load_successfully()` only proves at least one cow HMM loaded, not that all promised `H/K/L` cow models load."
-    },
-    {
-      "featureId": "add-cow-species-support",
-      "severity": "non_blocking",
-      "description": "`test_cow_vh_produces_numbered_result()` checks only `result.shape[1] > 5`, so it does not prove Kabat positions were populated."
-    },
-    {
-      "featureId": "add-chicken-species-support",
-      "severity": "non_blocking",
-      "description": "`test_chicken_hmms_load_successfully()` only proves at least one chicken HMM loaded and does not directly verify both heavy and lambda support."
-    },
-    {
-      "featureId": "add-chicken-species-support",
-      "severity": "non_blocking",
-      "description": "`test_chicken_vh_produces_numbered_result()` checks only `result.shape[1] > 5`, so it does not prove numbered residue positions were populated."
-    },
-    {
-      "featureId": "add-unsupported-chain-guard-rails",
-      "severity": "non_blocking",
-      "description": "The new guard-rail tests do not cover mixed explicit requests like `['alpaca'] x ['H','K']` or `['human','alpaca'] x ['K']`, so the narrowed implementation gap remained untested."
+      "description": "The new regression tests cover only `Renumbering` with narrowed chain lists; they do not exercise the direct `HMMER(...)` mixed-request path, so the remaining escape hatch is left untested."
     }
   ],
   "appliedUpdates": [
     {
-      "target": "services.yaml",
-      "description": "Added `.factory/services.yaml` command `test_unit_renumbering_fast` so workers have a repo-sanctioned scoped renumbering regression command that skips the known pre-existing `test_renumbering.py` failures.",
-      "sourceFeature": "add-chicken-species-support"
+      "target": "library",
+      "description": "Updated `.factory/library/architecture.md` to note that `renumbering/aligners/hmmer.py` is both an internal pipeline layer and a directly exported/tested API surface, so contracts that target `HMMER.get_hmm_models()` must be enforced there as well as in `Renumbering`.",
+      "sourceFeature": "fix-mixed-request-guard-rails"
     }
   ],
-  "suggestedGuidanceUpdates": [
-    {
-      "target": "python-library-worker skill",
-      "suggestion": "Update the validation procedure to prefer repo-provided scoped validator commands over unconditional full-suite `pytest` runs when mission guidance documents practical timeouts or known exclusions.",
-      "evidence": "All three species-expansion reviews, this scrutiny run, and the workers' transcripts show broader `pytest` runs timing out before falling back to scoped renumbering validation, while `AGENTS.md` explicitly allows targeted alternatives for this repo.",
-      "isSystemic": true
-    }
-  ],
-  "rejectedObservations": [
-    {
-      "observation": "Document the exact chicken FASTA-to-`all_germlines` conversion rules in `.factory/library/`.",
-      "reason": "ambiguous; the review identified useful context, but the conversion heuristics were not independently re-derived and validated during this scrutiny run."
-    },
-    {
-      "observation": "Add another services.yaml entry based on the second duplicate 'fast pytest' observation.",
-      "reason": "duplicate; the scoped renumbering command was already added once in `appliedUpdates`."
-    }
-  ],
-  "previousRound": null
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/species-expansion/scrutiny/synthesis.round1.json"
 }
