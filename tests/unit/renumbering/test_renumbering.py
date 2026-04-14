@@ -329,6 +329,45 @@ def test_bad_chain(fixture_setup):
         Renumbering(allowed_chain=["X"])
 
 
+# =====================================================
+# Guard Rail Bypass Regression Tests (fix-guard-rail-bypass)
+# =====================================================
+
+
+def test_guard_rail_full_chain_set_explicit_raises():
+    """Full default chain set explicitly passed with species missing HMMs raises ValueError."""
+    with pytest.raises(ValueError, match="alpaca") as exc_info:
+        Renumbering(allowed_species=["alpaca"], allowed_chain=["H", "K", "L", "A", "B", "G", "D"])
+    # All 6 unsupported chains should be listed
+    msg = str(exc_info.value)
+    for chain in ["K", "L", "A", "B", "G", "D"]:
+        assert f"alpaca {chain}" in msg, f"Error message should mention alpaca {chain}"
+
+
+def test_guard_rail_default_constructor_works():
+    """Default constructor with human succeeds (no explicit allowed_chain)."""
+    r = Renumbering(allowed_species=["human"])
+    assert r is not None
+
+
+def test_guard_rail_narrowed_chain_list_raises():
+    """Narrowed chain list still fires guard rail for unsupported pairs."""
+    with pytest.raises(ValueError, match="alpaca K"):
+        Renumbering(allowed_species=["alpaca"], allowed_chain=["H", "K"])
+
+
+def test_guard_rail_explicit_supported_chains_succeed():
+    """Explicitly passed supported chains succeed."""
+    r = Renumbering(allowed_species=["human"], allowed_chain=["H", "K", "L"])
+    assert r is not None
+
+
+def test_guard_rail_default_alpaca_broad_search():
+    """Default constructor with alpaca uses broad search (None sentinel), no ValueError."""
+    r = Renumbering(allowed_species=["alpaca"])
+    assert r is not None
+
+
 def test_good_chain(fixture_setup):
     allowed_chain = ["H", "K", "L", "A", "B", "G", "D"]
     for chain in allowed_chain:

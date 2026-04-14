@@ -40,7 +40,7 @@ class Renumbering:
         self,
         scheme: str = "imgt",
         region_assign: str = "imgt",
-        allowed_chain: List[str] = ["H", "K", "L"],
+        allowed_chain: Union[List[str], None] = None,
         assign_germline: bool = True,
         allowed_species: List[str] = ["human"],
         threshold: int = 80,
@@ -62,10 +62,12 @@ class Renumbering:
         region_assign : str, optional
             assigning frw1-cdr1-fwr2-cdr2-fwr3-cdr3-fwr4, by default "imgt"
             options: imgt, kabat, chothia
-        allowed_chain : list, optional
-            antibody chains, by default ["H", "K", "L"]
+        allowed_chain : list or None, optional
+            antibody chains, by default None (broad search using ["H", "K", "L"])
             all options: ["L", "H", "K", "A", "B", "G", "D"]
             options with numbering scheme + region: ["H", "K", "L"]
+            When None, uses broad search without validating species+chain pairs.
+            When explicitly passed, validates every species+chain pair has a loaded HMM.
         assign_germline : bool, optional
             assign germline; falls back on hardcoded dict in germlines.py, by default True
         allowed_species : list, optional
@@ -95,6 +97,10 @@ class Renumbering:
         FileNotFoundError
             If database is provided but hmms/ directory doesn't exist
         """
+        _chains_explicitly_passed = allowed_chain is not None
+        if allowed_chain is None:
+            allowed_chain = ["H", "K", "L"]
+
         self.scheme = scheme
         self.region_definition = region_assign
         self.allowed_chains = allowed_chain
@@ -126,12 +132,11 @@ class Renumbering:
         # Guard rail: validate that every explicitly requested species/chain pair
         # has a loaded HMM. This catches mixed requests where some pairs load
         # successfully but others are silently dropped (e.g., alpaca H+K where
-        # only H exists). Only enforced when the chain list differs from the
-        # full default set, indicating the user explicitly narrowed chains.
+        # only H exists). Only enforced when allowed_chain was explicitly passed
+        # (not None sentinel), so default constructors use broad search.
         from sadie.renumbering.aligners.hmmer import _HMM_SPECIES_ALIASES
 
-        default_chains = set(self.get_allowed_chains())
-        if set(self.allowed_chains) != default_chains:
+        if _chains_explicitly_passed:
             errors = []
             for sp in self.allowed_species:
                 canonical = _HMM_SPECIES_ALIASES.get(sp, sp)
