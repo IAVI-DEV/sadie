@@ -1,0 +1,102 @@
+{
+  "groupId": "cross-pytest-regressions",
+  "milestone": "macaque-fix",
+  "testedAt": "2026-04-15T01:07:38.108594Z",
+  "validationSurface": "pytest",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+    "validationContract": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/validation-contract.md",
+    "reportPath": "/Users/tmsincomb/sadie/.factory/validation/macaque-fix/user-testing/flows/cross-pytest-regressions.json",
+    "evidenceDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/cross-pytest-regressions",
+    "sharedCheckout": "read-only except for the assigned flow report and evidence outputs",
+    "servicesRequired": false,
+    "assignedAssertions": [
+      "VAL-CROSS-001",
+      "VAL-CROSS-005"
+    ],
+    "commandEnvironment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTEST_ADDOPTS": "-p no:cacheprovider"
+    }
+  },
+  "toolsUsed": [
+    "poetry",
+    "pytest"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-001",
+      "title": "Full test suite green after all fixes",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory \"/Users/tmsincomb/sadie\" run pytest tests/ --tb=short"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-pytest-regressions/VAL-CROSS-001-tests-full-direct.log"
+      ],
+      "observedBehavior": "The full pytest suite collected 817 items and completed successfully with 817 passed and 786 warnings in 2485.43s (0:41:25).",
+      "matchedOutput": [
+        "collecting ... collected 817 items",
+        "================ 817 passed, 786 warnings in 2485.43s (0:41:25) ================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-005",
+      "title": "Airr and Renumbering modules co-operate",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory \"/Users/tmsincomb/sadie\" run pytest tests/unit/airr/ tests/unit/renumbering/ -v"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-pytest-regressions/VAL-CROSS-005-unit-suites.log"
+      ],
+      "observedBehavior": "The combined airr and renumbering unit-suite command collected 446 items and completed successfully with 446 passed and 517 warnings in 1373.72s (0:22:53).",
+      "matchedOutput": [
+        "collecting ... collected 446 items",
+        "================ 446 passed, 517 warnings in 1373.72s (0:22:53) ================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    }
+  ],
+  "commandsRun": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory \"/Users/tmsincomb/sadie\" run pytest tests/ --tb=short",
+      "exitCode": 0,
+      "observed": "Collected 817 items and finished with 817 passed, 786 warnings in 2485.43s (0:41:25).",
+      "evidence": "macaque-fix/cross-pytest-regressions/VAL-CROSS-001-tests-full-direct.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' poetry --directory \"/Users/tmsincomb/sadie\" run pytest tests/unit/airr/ tests/unit/renumbering/ -v",
+      "exitCode": 0,
+      "observed": "Collected 446 items and finished with 446 passed, 517 warnings in 1373.72s (0:22:53).",
+      "evidence": "macaque-fix/cross-pytest-regressions/VAL-CROSS-005-unit-suites.log"
+    }
+  ],
+  "evidenceFiles": [
+    "macaque-fix/cross-pytest-regressions/VAL-CROSS-001-tests-full-direct.log",
+    "macaque-fix/cross-pytest-regressions/VAL-CROSS-005-unit-suites.log"
+  ],
+  "frictions": [
+    {
+      "description": "Initial user-testing-flow-validator Task attempts for these broad pytest suites hit the Task tool's 900s inactivity timeout before the suites completed.",
+      "resolved": true,
+      "resolution": "Re-ran the exact suites directly from the coordinator with output redirected to evidence logs; both commands completed with exit code 0.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-005"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assigned cross-pytest assertions: 2 passed, 0 failed, 0 blocked. The full suite finished 817/817 passed and the combined airr+renumbering unit suites finished 446/446 passed."
+}

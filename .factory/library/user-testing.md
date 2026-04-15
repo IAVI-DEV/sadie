@@ -27,6 +27,7 @@ Each validation instance runs a Python script or pytest command — lightweight 
 - Macaque tests take ~10-15 seconds due to IgBLAST database construction
 - Renumbering tests are fast (~2-3 seconds)
 - The full `commands.test` suite (`poetry run pytest tests/ -x --tb=short`) can take well over 10 minutes and may spend time in later-milestone AIRR/macaque paths before reaching quick-fixes-relevant checks, so user-testing validators should favor assertion-specific commands.
+- Broad pytest flows such as `tests/ --tb=short` and combined `tests/unit/airr/ tests/unit/renumbering/` can exceed the `user-testing-flow-validator` Task tool's 900s inactivity timeout. For those long suites, run them directly from the coordinator or use detached log polling with evidence-file redirection.
 
 ## Flow Validator Guidance: shell
 

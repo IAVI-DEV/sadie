@@ -1,0 +1,202 @@
+{
+  "groupId": "macaque-e2e-pytest",
+  "milestone": "macaque-fix",
+  "testedAt": "2026-04-14T23:26:41.426411Z",
+  "validationSurface": "pytest",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+    "validationContract": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/validation-contract.md",
+    "allowedTestFile": "tests/unit/airr/test_macaque_e2e.py",
+    "reportPath": "/Users/tmsincomb/sadie/.factory/validation/macaque-fix/user-testing/flows/macaque-e2e-pytest.json",
+    "evidenceDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest",
+    "sharedCheckout": "read-only except for the assigned flow report and evidence outputs",
+    "servicesRequired": false,
+    "assignedAssertions": [
+      "VAL-MAC-001",
+      "VAL-MAC-002",
+      "VAL-MAC-003",
+      "VAL-MAC-004",
+      "VAL-MAC-005",
+      "VAL-MAC-006"
+    ],
+    "commandEnvironment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTEST_ADDOPTS": "-p no:cacheprovider",
+      "XDG_CACHE_HOME": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache",
+      "POETRY_CACHE_DIR": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache",
+      "TMPDIR": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp",
+      "TERM": "dumb",
+      "NO_COLOR": "1"
+    }
+  },
+  "toolsUsed": [
+    "poetry",
+    "pytest"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-MAC-001",
+      "title": "j_call non-null for raw macaque run_single",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+      ],
+      "observedBehavior": "The targeted regression class passed, including test_j_call_non_null_for_raw_macaque. That test exercises raw Airr(\"macaque\").run_single(...) on MACAQUE_IGH_NT and proves j_call is populated and contains an IGHJ gene name.",
+      "matchedOutput": [
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_j_call_non_null_for_raw_macaque PASSED [ 25%]",
+        "============================== 4 passed in 7.82s ===============================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-MAC-002",
+      "title": "Alignment fields non-null for raw macaque run_single",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+      ],
+      "observedBehavior": "The same targeted class passed test_alignment_fields_non_null, demonstrating that raw macaque run_single output contains non-NaN sequence_alignment_aa and germline_alignment_aa values of meaningful length.",
+      "matchedOutput": [
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_alignment_fields_non_null PASSED [ 50%]",
+        "============================== 4 passed in 7.82s ===============================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-MAC-003",
+      "title": "Full pipeline chain works end-to-end for raw macaque",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+      ],
+      "observedBehavior": "test_full_pipeline_chain_from_raw_input passed. It starts from raw MACAQUE_IGH_NT, runs Airr(\"macaque\").run_single(...), filters productive rows, and successfully chains the result into run_mutational_analysis(..., scheme=\"kabat\") with a mutations column present.",
+      "matchedOutput": [
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_full_pipeline_chain_from_raw_input PASSED [ 75%]",
+        "============================== 4 passed in 7.82s ===============================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-MAC-004",
+      "title": "Reference build or fallback produces complete annotations",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueE2eMutationalAnalysis::test_airr_macaque_run_single_produces_valid_output -v --color=no",
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no"
+      ],
+      "exitCodes": [
+        0,
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-004-targeted.log",
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+      ],
+      "observedBehavior": "The raw-output smoke test and the dedicated J/alignment regression class both passed. Together they show that Airr(\"macaque\").run_single(...) returns non-empty annotated output with reference_name='macaque' and v_call present, while the regression checks confirm j_call, sequence_alignment_aa, and germline_alignment_aa are all populated on the same raw-input path.",
+      "matchedOutput": [
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueE2eMutationalAnalysis::test_airr_macaque_run_single_produces_valid_output PASSED [100%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_j_call_non_null_for_raw_macaque PASSED [ 25%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_alignment_fields_non_null PASSED [ 50%]",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-MAC-005",
+      "title": "Existing macaque tests still pass",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py -v --color=no"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-005-full-file.log"
+      ],
+      "observedBehavior": "The required full-file evidence command collected 23 tests from test_macaque_e2e.py and all 23 passed. The passing set spans HMM selection, reference_name species detection, no-human-fallback checks, rhesus alias behavior, productive pipeline chaining, and the raw J/alignment regression tests.",
+      "matchedOutput": [
+        "collecting ... collected 23 items",
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueE2eMutationalAnalysis::test_macaque_hmm_used_not_human PASSED [ 13%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestReferenceNameSpeciesDetection::test_reference_name_macaque_runs_mutational_analysis PASSED [ 30%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestRhesusAirrAlias::test_rhesus_and_macaque_airr_produce_identical_output PASSED [ 69%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueFullPipelineChain::test_full_pipeline_chain_with_fixture_data PASSED [ 78%]",
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_productive_implies_j_call_not_nan PASSED [100%]",
+        "============================= 23 passed in 18.56s ==============================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-MAC-006",
+      "title": "Productive flag trustworthy when j_call present",
+      "status": "pass",
+      "commands": [
+        "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+      ],
+      "observedBehavior": "test_productive_implies_j_call_not_nan passed, directly validating the productive\u2194j_call invariant: no productive rows produced by raw Airr(\"macaque\").run_single(...) had NaN j_call values.",
+      "matchedOutput": [
+        "tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields::test_productive_implies_j_call_not_nan PASSED [100%]",
+        "============================== 4 passed in 7.82s ===============================",
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    }
+  ],
+  "commandsRun": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py -v --color=no",
+      "exitCode": 0,
+      "observed": "Collected 23 items from the assigned file and all 23 passed in 18.56s.",
+      "evidence": "macaque-fix/macaque-e2e-pytest/VAL-MAC-005-full-file.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueJCallAndAlignmentFields -v --color=no",
+      "exitCode": 0,
+      "observed": "Collected the four raw-input J/alignment regression tests and all 4 passed in 7.82s.",
+      "evidence": "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' XDG_CACHE_HOME=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache POETRY_CACHE_DIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/cache TMPDIR=/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/macaque-e2e-pytest/tmp TERM=dumb NO_COLOR=1 poetry --directory /Users/tmsincomb/sadie run pytest tests/unit/airr/test_macaque_e2e.py::TestMacaqueE2eMutationalAnalysis::test_airr_macaque_run_single_produces_valid_output -v --color=no",
+      "exitCode": 0,
+      "observed": "Collected the targeted raw-output smoke test and it passed in 1.79s.",
+      "evidence": "macaque-fix/macaque-e2e-pytest/VAL-MAC-004-targeted.log"
+    }
+  ],
+  "evidenceFiles": [
+    "macaque-fix/macaque-e2e-pytest/VAL-MAC-001-002-003-006-targeted.log",
+    "macaque-fix/macaque-e2e-pytest/VAL-MAC-004-targeted.log",
+    "macaque-fix/macaque-e2e-pytest/VAL-MAC-005-full-file.log"
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 6 assigned macaque pytest assertions. All 6 passed; the required full-file command collected 23 tests from tests/unit/airr/test_macaque_e2e.py and all 23 passed, while targeted raw-input commands confirmed the j_call/alignment regressions, productive\u2194j_call invariant, and end-to-end raw-input pipeline chain."
+}

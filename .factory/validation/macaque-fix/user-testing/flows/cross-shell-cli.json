@@ -1,0 +1,189 @@
+{
+  "groupId": "cross-shell-cli",
+  "milestone": "macaque-fix",
+  "testedAt": "2026-04-14T23:21:40.748470Z",
+  "validationSurface": "shell",
+  "isolation": {
+    "repoRoot": "/Users/tmsincomb/sadie",
+    "missionDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d",
+    "validationContract": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/validation-contract.md",
+    "reportPath": "/Users/tmsincomb/sadie/.factory/validation/macaque-fix/user-testing/flows/cross-shell-cli.json",
+    "evidenceDir": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/cross-shell-cli",
+    "sharedCheckout": "read-only except for the assigned flow report and evidence outputs",
+    "servicesRequired": false,
+    "assignedAssertions": [
+      "VAL-CROSS-002",
+      "VAL-CROSS-003",
+      "VAL-CROSS-004",
+      "VAL-CROSS-006"
+    ],
+    "commandEnvironment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "XDG_CACHE_HOME": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/cross-shell-cli/cache",
+      "PRE_COMMIT_HOME": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/cross-shell-cli/pre-commit",
+      "TMPDIR": "/Users/tmsincomb/.factory/missions/e225098b-c2d0-4c77-be49-0f94fd9c796d/evidence/macaque-fix/cross-shell-cli/tmp",
+      "TERM": "dumb",
+      "NO_COLOR": "1"
+    }
+  },
+  "toolsUsed": [
+    "poetry run pyright",
+    "poetry run pre-commit",
+    "poetry run sadie --help",
+    "poetry run sadie airr --help",
+    "poetry run python -c"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-002",
+      "title": "No new pyright type-checking errors",
+      "status": "pass",
+      "commands": [
+        "poetry --directory \"/Users/tmsincomb/sadie\" run pyright src/"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-shell-cli/VAL-CROSS-002-pyright-src.log"
+      ],
+      "observedBehavior": "pyright exited 0 with '0 errors, 0 warnings, 0 informations'; output included only a version-update notice and no unrecognized-config warning.",
+      "matchedOutput": [
+        "COMMAND: poetry --directory /Users/tmsincomb/sadie run pyright src/",
+        "WARNING: there is a new pyright version available (v1.1.407 -> v1.1.408).",
+        "Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`",
+        "0 errors, 0 warnings, 0 informations"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "title": "Pre-commit hooks pass",
+      "status": "pass",
+      "commands": [
+        "poetry --directory \"/Users/tmsincomb/sadie\" run pre-commit run --all-files"
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-shell-cli/VAL-CROSS-003-pre-commit-all-files.log"
+      ],
+      "observedBehavior": "pre-commit exited 0 after initializing hook environments and reported Passed for check-yaml, end-of-file, trailing-whitespace, black, and isort.",
+      "matchedOutput": [
+        "Check Yaml...............................................................Passed",
+        "Fix End of Files.........................................................Passed",
+        "Trim Trailing Whitespace.................................................Passed",
+        "black....................................................................Passed",
+        "isort (python)...........................................................Passed"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-004",
+      "title": "CLI entry-points remain functional",
+      "status": "pass",
+      "commands": [
+        "poetry --directory \"/Users/tmsincomb/sadie\" run sadie --help",
+        "poetry --directory \"/Users/tmsincomb/sadie\" run sadie airr --help"
+      ],
+      "exitCodes": [
+        0,
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-help.log",
+        "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-airr-help.log"
+      ],
+      "observedBehavior": "Both CLI help commands exited 0. `sadie --help` printed the top-level usage/options/commands list, and `sadie airr --help` printed the AIRR command usage plus species/options text without import-time failures.",
+      "matchedOutput": [
+        "Usage: sadie [OPTIONS] COMMAND [ARGS]...",
+        "Options:",
+        "  --version      Show the version and exit.",
+        "Commands:",
+        "  airr              Run the AIRR annotation pipeline from the command...",
+        "  germlines         Germline database management commands.",
+        "  renumbering",
+        "Usage: sadie airr [OPTIONS] INPUT_PATH [OUTPUT_PATH]",
+        "  Run the AIRR annotation pipeline from the command line on a single file or a",
+        "  directory of abi files.",
+        "  if you do not provide an output, the default is airr .tsv file",
+        "Options:",
+        "  -n, --name [lemur|gorilla|atlantic_salmon|dog|orangutan_bornean|rainbow_trout|human|crab_eating_macaque|zebrafish|horse|rabbit|ferret|cow|cat|orangutan_sumatran|channel_catfish|se09|rhesus_macaque|alpaca|camel|pig|_template|owl_monkey|clk|goat|raw|rat|mouse_c57bl6j|dolphin|macaque|chimpanzee|cynomolgus|mink|naked_mole_rat|mouse|platypus|chicken|sheep|atlantic_cod]",
+        "  --skip-igl                      Skip the igl assignment",
+        "  --skip-mutation                 Skip the somewhat time instansive mutational"
+      ],
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-006",
+      "title": "No circular imports introduced",
+      "status": "pass",
+      "commands": [
+        "poetry --directory \"/Users/tmsincomb/sadie\" run python -c \"from sadie.airr import Airr; from sadie.renumbering import Renumbering\""
+      ],
+      "exitCodes": [
+        0
+      ],
+      "evidence": [
+        "macaque-fix/cross-shell-cli/VAL-CROSS-006-import-smoke.log"
+      ],
+      "observedBehavior": "The import smoke test exited 0 with no ImportError, RecursionError, or other traceback while importing both Airr and Renumbering in one Python process.",
+      "matchedOutput": [
+        "EXIT_CODE=0"
+      ],
+      "issues": null
+    }
+  ],
+  "commandsRun": [
+    {
+      "command": "poetry --directory \"/Users/tmsincomb/sadie\" run pyright src/",
+      "exitCode": 0,
+      "observed": "Exited 0 and reported 0 errors, 0 warnings, 0 informations; no unrecognized-config warning present.",
+      "evidence": "macaque-fix/cross-shell-cli/VAL-CROSS-002-pyright-src.log"
+    },
+    {
+      "command": "poetry --directory \"/Users/tmsincomb/sadie\" run pre-commit run --all-files",
+      "exitCode": 0,
+      "observed": "Exited 0 after all configured hooks reported Passed.",
+      "evidence": "macaque-fix/cross-shell-cli/VAL-CROSS-003-pre-commit-all-files.log"
+    },
+    {
+      "command": "poetry --directory \"/Users/tmsincomb/sadie\" run sadie --help",
+      "exitCode": 0,
+      "observed": "Exited 0 and printed top-level SADIE CLI usage plus available commands.",
+      "evidence": "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-help.log"
+    },
+    {
+      "command": "poetry --directory \"/Users/tmsincomb/sadie\" run sadie airr --help",
+      "exitCode": 0,
+      "observed": "Exited 0 and printed AIRR subcommand usage and options.",
+      "evidence": "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-airr-help.log"
+    },
+    {
+      "command": "poetry --directory \"/Users/tmsincomb/sadie\" run python -c \"from sadie.airr import Airr; from sadie.renumbering import Renumbering\"",
+      "exitCode": 0,
+      "observed": "Exited 0 with no output or import traceback.",
+      "evidence": "macaque-fix/cross-shell-cli/VAL-CROSS-006-import-smoke.log"
+    }
+  ],
+  "evidenceFiles": [
+    "macaque-fix/cross-shell-cli/VAL-CROSS-002-pyright-src.log",
+    "macaque-fix/cross-shell-cli/VAL-CROSS-003-pre-commit-all-files.log",
+    "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-help.log",
+    "macaque-fix/cross-shell-cli/VAL-CROSS-004-sadie-airr-help.log",
+    "macaque-fix/cross-shell-cli/VAL-CROSS-006-import-smoke.log"
+  ],
+  "frictions": [
+    {
+      "description": "The first pre-commit run initialized and installed hook environments because PRE_COMMIT_HOME was redirected into the assigned evidence directory.",
+      "resolved": true,
+      "resolution": "Allowed the one-time hook environment bootstrap to complete; the hooks then ran and all passed.",
+      "affectedAssertions": [
+        "VAL-CROSS-003"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 assigned shell assertions: 4 passed, 0 failed, 0 blocked, 0 skipped. VAL-CROSS-002 confirmed pyright exits 0 without an unrecognized-config warning, VAL-CROSS-003 confirmed pre-commit hooks pass, VAL-CROSS-004 confirmed both CLI help entry points work, and VAL-CROSS-006 confirmed Airr and Renumbering import together without circular-import errors."
+}

@@ -1,0 +1,35 @@
+{
+  "milestone": "macaque-fix",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CROSS-001",
+    "VAL-CROSS-002",
+    "VAL-CROSS-003",
+    "VAL-CROSS-004",
+    "VAL-CROSS-005",
+    "VAL-CROSS-006",
+    "VAL-MAC-001",
+    "VAL-MAC-002",
+    "VAL-MAC-003",
+    "VAL-MAC-004",
+    "VAL-MAC-005",
+    "VAL-MAC-006"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Documented that long-running broad pytest flows can exceed the Task tool inactivity timeout and should be run directly or via detached log polling with evidence redirection.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}
