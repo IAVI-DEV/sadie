@@ -1318,7 +1318,7 @@ alloy_K:
     - IGHD*01
     - IGHE*01
     - IGHG3*01
-    rat: 
+    rat:
     - IGHG1*01
     - IGHG2A*01
     - IGHG2B*01

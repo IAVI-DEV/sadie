@@ -20,7 +20,6 @@ from sadie.airr.exceptions import BadDataSet
 from sadie.reference.cache import DatabaseCache, compute_cache_key
 from sadie.reference.reference import References
 
-
 # --- Test data ---
 
 # VRC01-like heavy chain (human IGHV1-2*02)

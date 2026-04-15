@@ -192,9 +192,7 @@ class OGRDBApiClient:
         data = self._get_json(f"/germline/sets/{species_id}")
         return data.get("germline_species", [])
 
-    def get_germline_set_fasta(
-        self, germline_set_id: str, version: str = "latest", gapped: bool = False
-    ) -> str:
+    def get_germline_set_fasta(self, germline_set_id: str, version: str = "latest", gapped: bool = False) -> str:
         """
         Get germline set sequences in FASTA format.
 

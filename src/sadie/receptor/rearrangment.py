@@ -10,8 +10,9 @@ from typing import Any, List, Optional, Set, Union
 from uuid import UUID, uuid4
 
 from Bio.Seq import Seq
-from sadie._compat import NAType
 from pydantic import BaseModel, ConfigDict, field_validator
+
+from sadie._compat import NAType
 
 
 @lru_cache(maxsize=1)

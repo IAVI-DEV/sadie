@@ -7,8 +7,9 @@ These tests verify that:
 4. GermlineData paths point to the correct locations
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from sadie.germlines import get_germlines_base_dir
 
@@ -38,9 +39,7 @@ class TestInternalDataStructure:
                     if item.is_symlink():
                         symlinks_found.append(str(item))
 
-        assert (
-            len(symlinks_found) == 0
-        ), f"Symlinks found in internal_data: {symlinks_found}"
+        assert len(symlinks_found) == 0, f"Symlinks found in internal_data: {symlinks_found}"
 
     def test_combined_fasta_exists_for_human(self, internal_data_dir: Path) -> None:
         """Test that combined FASTA file exists for human."""
@@ -52,19 +51,11 @@ class TestInternalDataStructure:
         assert combined_fasta.exists(), "Combined FASTA should exist"
 
         # Should NOT have separate D, J, C files in internal_data
-        assert not (human_internal / "human_D.fasta").exists(), (
-            "Separate D file should not exist in internal_data"
-        )
-        assert not (human_internal / "human_J.fasta").exists(), (
-            "Separate J file should not exist in internal_data"
-        )
-        assert not (human_internal / "human_C.fasta").exists(), (
-            "Separate C file should not exist in internal_data"
-        )
+        assert not (human_internal / "human_D.fasta").exists(), "Separate D file should not exist in internal_data"
+        assert not (human_internal / "human_J.fasta").exists(), "Separate J file should not exist in internal_data"
+        assert not (human_internal / "human_C.fasta").exists(), "Separate C file should not exist in internal_data"
 
-    def test_combined_fasta_contains_multiple_segments(
-        self, internal_data_dir: Path
-    ) -> None:
+    def test_combined_fasta_contains_multiple_segments(self, internal_data_dir: Path) -> None:
         """Test that combined FASTA contains V, D, J, and C genes."""
         human_internal = internal_data_dir / "human"
         combined_fasta = human_internal / "human_V.fasta"
@@ -130,18 +121,10 @@ class TestGermlineDataPaths:
             pytest.skip(f"Human germline data not available: {e}")
 
         # V/D/J/C should point to database/
-        assert "database" in str(gd.v_gene_dir), (
-            f"v_gene_dir should point to database/, got {gd.v_gene_dir}"
-        )
-        assert "database" in str(gd.d_gene_dir), (
-            f"d_gene_dir should point to database/, got {gd.d_gene_dir}"
-        )
-        assert "database" in str(gd.j_gene_dir), (
-            f"j_gene_dir should point to database/, got {gd.j_gene_dir}"
-        )
-        assert "database" in str(gd.c_gene_dir), (
-            f"c_gene_dir should point to database/, got {gd.c_gene_dir}"
-        )
+        assert "database" in str(gd.v_gene_dir), f"v_gene_dir should point to database/, got {gd.v_gene_dir}"
+        assert "database" in str(gd.d_gene_dir), f"d_gene_dir should point to database/, got {gd.d_gene_dir}"
+        assert "database" in str(gd.j_gene_dir), f"j_gene_dir should point to database/, got {gd.j_gene_dir}"
+        assert "database" in str(gd.c_gene_dir), f"c_gene_dir should point to database/, got {gd.c_gene_dir}"
 
     def test_germline_data_igdata_points_to_ig(self) -> None:
         """Test that igdata points to Ig/ directory (contains internal_data)."""
@@ -154,9 +137,7 @@ class TestGermlineDataPaths:
 
         # igdata should point to Ig/ (not internal_data directly)
         assert gd.igdata.name == "Ig", f"igdata should point to Ig/, got {gd.igdata}"
-        assert (gd.igdata / "internal_data").exists(), (
-            "igdata/internal_data should exist"
-        )
+        assert (gd.igdata / "internal_data").exists(), "igdata/internal_data should exist"
 
 
 class TestBuildInternalDataScript:
@@ -211,13 +192,15 @@ class TestBuildInternalDataScript:
 
     def test_build_blast_db(self, tmp_path: Path) -> None:
         """Test build_blast_db creates BLAST database files."""
-        from sadie.germlines.scripts.build_internal_data import build_blast_db
         import shutil
+
+        from sadie.germlines.scripts.build_internal_data import build_blast_db
 
         # Skip if makeblastdb not available
         if not shutil.which("makeblastdb"):
             # Check for bundled binary
             import platform
+
             system = platform.system().lower()
             bundled = Path(__file__).parent.parent.parent.parent / "src/sadie/reference/bin" / system / "makeblastdb"
             if not bundled.exists():

@@ -427,7 +427,9 @@ class Numbering:
                 for sp in allowed_species:
                     resolved = self._resolve_germline_species(sp)
                     if resolved not in all_germlines["V"][chain_type]:
-                        logger.debug(f"removing {sp} (resolved: {resolved}) from all types since it does not exist for {chain_type}")
+                        logger.debug(
+                            f"removing {sp} (resolved: {resolved}) from all types since it does not exist for {chain_type}"
+                        )
                         continue
                     else:
                         _allowed.append(resolved)

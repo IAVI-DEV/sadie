@@ -22,7 +22,6 @@ from Bio.SeqRecord import SeqRecord
 
 from sadie.reference.reference import Reference, References
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

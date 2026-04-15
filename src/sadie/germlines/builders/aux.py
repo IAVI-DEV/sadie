@@ -87,7 +87,7 @@ class AuxFileBuilder:
     def _process_v_segment(self, species: str, chain: str, source_dir: Path) -> List[str]:
         """
         DEPRECATED: V gene entries do NOT belong in aux files.
-        
+
         V gene region boundaries should be in .ndm.imgt files (handled by InternalDataBuilder).
         This method is kept for reference but is no longer called.
 
@@ -243,9 +243,7 @@ class AuxFileBuilder:
         sequence = str(record.seq).replace(".", "").replace("-", "").upper()
 
         # Get reference data for this J gene (uses species-specific motif patterns)
-        reading_frame, chain_type, cdr3_end, extra_bps = get_j_gene_data(
-            gene_name, chain, sequence, species=species
-        )
+        reading_frame, chain_type, cdr3_end, extra_bps = get_j_gene_data(gene_name, chain, sequence, species=species)
 
         return f"{gene_name}\t{reading_frame}\t{chain_type}\t{cdr3_end}\t{extra_bps}"
 

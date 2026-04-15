@@ -159,6 +159,31 @@ class TestMouseE2eMutationalAnalysis:
         assert len(scheme_vals) > 0, "No scheme values found — mutational analysis may have failed"
         assert "kabat" in scheme_vals, f"Expected 'kabat' scheme but got: {scheme_vals}"
 
+    def test_mutations_count_matches_aa_alignment_diffs(self, mouse_mutational_result: AirrTable) -> None:
+        """`mutations` count must match actual AA diffs between sequence_alignment_aa and germline_alignment_aa.
+
+        Regression guard for the bug where mutations was inflated relative to visible AA differences
+        (e.g., gap positions from outer-joined renumbering tables counted as mutations). Counts
+        strict substitutions: positions where both sides are residues (not '-' or 'X') and differ.
+        """
+        for _, row in mouse_mutational_result.iterrows():
+            mat = row.get("sequence_alignment_aa")
+            germ = row.get("germline_alignment_aa")
+            muts = row.get("mutations")
+            assert isinstance(mat, str) and isinstance(germ, str), f"Non-string alignment for {row['sequence_id']}"
+            assert len(mat) == len(germ), (
+                f"{row['sequence_id']}: sequence_alignment_aa (len={len(mat)}) and "
+                f"germline_alignment_aa (len={len(germ)}) must be the same length"
+            )
+            manual = sum(
+                1 for a, b in zip(mat, germ) if a != b and a not in ("-", "X") and b not in ("-", "X")
+            )
+            muts_len = len(muts) if isinstance(muts, list) else 0
+            assert muts_len == manual, (
+                f"{row['sequence_id']}: mutations count ({muts_len}) != manual AA diff count ({manual}). "
+                f"mutations={muts}"
+            )
+
     def test_mouse_v_gene_assigned(self, mouse_airrtable: AirrTable) -> None:
         """Airr('mouse') should assign mouse V-genes (IGHV*), not human ones."""
         for _, row in mouse_airrtable.iterrows():

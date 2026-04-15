@@ -21,7 +21,6 @@ import pytest
 
 from sadie.reference.cache import DatabaseCache, compute_cache_key
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # 1. FileNotFoundError in reference.py
 # ──────────────────────────────────────────────────────────────────────────────

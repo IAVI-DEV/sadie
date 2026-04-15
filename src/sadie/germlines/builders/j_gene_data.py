@@ -195,28 +195,76 @@ def _translate_sequence(sequence: str, reading_frame: int = 0) -> str:
         Amino acid sequence
     """
     codon_table = {
-        "TTT": "F", "TTC": "F", "TTA": "L", "TTG": "L",
-        "TCT": "S", "TCC": "S", "TCA": "S", "TCG": "S",
-        "TAT": "Y", "TAC": "Y", "TAA": "*", "TAG": "*",
-        "TGT": "C", "TGC": "C", "TGA": "*", "TGG": "W",
-        "CTT": "L", "CTC": "L", "CTA": "L", "CTG": "L",
-        "CCT": "P", "CCC": "P", "CCA": "P", "CCG": "P",
-        "CAT": "H", "CAC": "H", "CAA": "Q", "CAG": "Q",
-        "CGT": "R", "CGC": "R", "CGA": "R", "CGG": "R",
-        "ATT": "I", "ATC": "I", "ATA": "I", "ATG": "M",
-        "ACT": "T", "ACC": "T", "ACA": "T", "ACG": "T",
-        "AAT": "N", "AAC": "N", "AAA": "K", "AAG": "K",
-        "AGT": "S", "AGC": "S", "AGA": "R", "AGG": "R",
-        "GTT": "V", "GTC": "V", "GTA": "V", "GTG": "V",
-        "GCT": "A", "GCC": "A", "GCA": "A", "GCG": "A",
-        "GAT": "D", "GAC": "D", "GAA": "E", "GAG": "E",
-        "GGT": "G", "GGC": "G", "GGA": "G", "GGG": "G",
+        "TTT": "F",
+        "TTC": "F",
+        "TTA": "L",
+        "TTG": "L",
+        "TCT": "S",
+        "TCC": "S",
+        "TCA": "S",
+        "TCG": "S",
+        "TAT": "Y",
+        "TAC": "Y",
+        "TAA": "*",
+        "TAG": "*",
+        "TGT": "C",
+        "TGC": "C",
+        "TGA": "*",
+        "TGG": "W",
+        "CTT": "L",
+        "CTC": "L",
+        "CTA": "L",
+        "CTG": "L",
+        "CCT": "P",
+        "CCC": "P",
+        "CCA": "P",
+        "CCG": "P",
+        "CAT": "H",
+        "CAC": "H",
+        "CAA": "Q",
+        "CAG": "Q",
+        "CGT": "R",
+        "CGC": "R",
+        "CGA": "R",
+        "CGG": "R",
+        "ATT": "I",
+        "ATC": "I",
+        "ATA": "I",
+        "ATG": "M",
+        "ACT": "T",
+        "ACC": "T",
+        "ACA": "T",
+        "ACG": "T",
+        "AAT": "N",
+        "AAC": "N",
+        "AAA": "K",
+        "AAG": "K",
+        "AGT": "S",
+        "AGC": "S",
+        "AGA": "R",
+        "AGG": "R",
+        "GTT": "V",
+        "GTC": "V",
+        "GTA": "V",
+        "GTG": "V",
+        "GCT": "A",
+        "GCC": "A",
+        "GCA": "A",
+        "GCG": "A",
+        "GAT": "D",
+        "GAC": "D",
+        "GAA": "E",
+        "GAG": "E",
+        "GGT": "G",
+        "GGC": "G",
+        "GGA": "G",
+        "GGG": "G",
     }
 
     seq = sequence.upper()[reading_frame:]
     aa_seq = []
     for i in range(0, len(seq) - 2, 3):
-        codon = seq[i:i + 3]
+        codon = seq[i : i + 3]
         aa = codon_table.get(codon, "X")
         aa_seq.append(aa)
     return "".join(aa_seq)
@@ -295,10 +343,7 @@ def _infer_reading_frame(sequence: str, gene_name: str) -> int:
 
     if look_for:
         # Find frames ending with the expected amino acid
-        matching_frames = {
-            rf: aa_seq for rf, aa_seq in potential_frames.items()
-            if aa_seq and aa_seq[-1] == look_for
-        }
+        matching_frames = {rf: aa_seq for rf, aa_seq in potential_frames.items() if aa_seq and aa_seq[-1] == look_for}
         if len(matching_frames) == 1:
             return list(matching_frames.keys())[0]
 
@@ -306,12 +351,7 @@ def _infer_reading_frame(sequence: str, gene_name: str) -> int:
     return _get_longest_frame(potential_frames)
 
 
-def parse_j_gene(
-    species: str,
-    gene_name: str,
-    sequence: str,
-    reading_frame: Optional[int] = None
-) -> Dict:
+def parse_j_gene(species: str, gene_name: str, sequence: str, reading_frame: Optional[int] = None) -> Dict:
     """
     Parse J gene sequence to extract CDR3/FWR4 boundaries.
 
@@ -437,10 +477,7 @@ def parse_j_gene(
 
 
 def get_j_gene_data(
-    allele_name: str,
-    chain: str,
-    sequence: Optional[str] = None,
-    species: Optional[str] = None
+    allele_name: str, chain: str, sequence: Optional[str] = None, species: Optional[str] = None
 ) -> Tuple[int, str, int, int]:
     """
     Get J gene reference data for an allele.

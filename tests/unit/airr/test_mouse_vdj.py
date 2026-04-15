@@ -25,7 +25,9 @@ def _mouse_available() -> bool:
 
 skip_no_mouse = pytest.mark.skipif(not _mouse_available(), reason="mouse germlines not available")
 
-MOUSE_VDJ_FASTA = Path(__file__).parent.parent.parent / "data" / "fixtures" / "fasta_inputs" / "mouse_vdj_validation.fasta"
+MOUSE_VDJ_FASTA = (
+    Path(__file__).parent.parent.parent / "data" / "fixtures" / "fasta_inputs" / "mouse_vdj_validation.fasta"
+)
 
 # Expected annotations for each sequence
 # Keys: v_call, j_call, locus, vj_in_frame, productive, stop_codon
@@ -163,9 +165,9 @@ class TestMouseVdjAnnotation:
         row = mouse_result[mouse_result["sequence_id"] == seq_id]
         assert len(row) == 1, f"Expected exactly 1 result for {seq_id}, got {len(row)}"
         v_call = str(row.iloc[0]["v_call"])
-        assert expected["v_call"] in v_call, (
-            f"{seq_id}: expected v_call containing '{expected['v_call']}', got '{v_call}'"
-        )
+        assert (
+            expected["v_call"] in v_call
+        ), f"{seq_id}: expected v_call containing '{expected['v_call']}', got '{v_call}'"
 
     @pytest.mark.parametrize("seq_id", list(EXPECTED.keys()))
     def test_j_call(self, mouse_result: AirrTable, seq_id: str) -> None:
@@ -174,9 +176,9 @@ class TestMouseVdjAnnotation:
         row = mouse_result[mouse_result["sequence_id"] == seq_id]
         assert len(row) == 1, f"Expected exactly 1 result for {seq_id}, got {len(row)}"
         j_call = str(row.iloc[0]["j_call"])
-        assert expected["j_call"] in j_call, (
-            f"{seq_id}: expected j_call containing '{expected['j_call']}', got '{j_call}'"
-        )
+        assert (
+            expected["j_call"] in j_call
+        ), f"{seq_id}: expected j_call containing '{expected['j_call']}', got '{j_call}'"
 
     @pytest.mark.parametrize("seq_id", list(EXPECTED.keys()))
     def test_locus(self, mouse_result: AirrTable, seq_id: str) -> None:
@@ -194,9 +196,9 @@ class TestMouseVdjAnnotation:
         row = mouse_result[mouse_result["sequence_id"] == seq_id]
         assert len(row) == 1, f"Expected exactly 1 result for {seq_id}, got {len(row)}"
         vj_in_frame = row.iloc[0]["vj_in_frame"]
-        assert vj_in_frame == expected["vj_in_frame"], (
-            f"{seq_id}: expected vj_in_frame={expected['vj_in_frame']}, got {vj_in_frame}"
-        )
+        assert (
+            vj_in_frame == expected["vj_in_frame"]
+        ), f"{seq_id}: expected vj_in_frame={expected['vj_in_frame']}, got {vj_in_frame}"
 
     @pytest.mark.parametrize("seq_id", list(EXPECTED.keys()))
     def test_productive(self, mouse_result: AirrTable, seq_id: str) -> None:
@@ -205,9 +207,9 @@ class TestMouseVdjAnnotation:
         row = mouse_result[mouse_result["sequence_id"] == seq_id]
         assert len(row) == 1, f"Expected exactly 1 result for {seq_id}, got {len(row)}"
         productive = row.iloc[0]["productive"]
-        assert productive == expected["productive"], (
-            f"{seq_id}: expected productive={expected['productive']}, got {productive}"
-        )
+        assert (
+            productive == expected["productive"]
+        ), f"{seq_id}: expected productive={expected['productive']}, got {productive}"
 
     @pytest.mark.parametrize("seq_id", list(EXPECTED.keys()))
     def test_stop_codon(self, mouse_result: AirrTable, seq_id: str) -> None:
@@ -216,9 +218,9 @@ class TestMouseVdjAnnotation:
         row = mouse_result[mouse_result["sequence_id"] == seq_id]
         assert len(row) == 1, f"Expected exactly 1 result for {seq_id}, got {len(row)}"
         stop_codon = row.iloc[0]["stop_codon"]
-        assert stop_codon == expected["stop_codon"], (
-            f"{seq_id}: expected stop_codon={expected['stop_codon']}, got {stop_codon}"
-        )
+        assert (
+            stop_codon == expected["stop_codon"]
+        ), f"{seq_id}: expected stop_codon={expected['stop_codon']}, got {stop_codon}"
 
     @pytest.mark.parametrize(
         "seq_id",
@@ -274,9 +276,7 @@ class TestMouseKabatNumbering:
         - CDR-H2: positions 50-65
         - CDR-H3: positions 95-102
         """
-        productive_heavy_ids = [
-            sid for sid, exp in EXPECTED.items() if exp["productive"] and exp["locus"] == "IGH"
-        ]
+        productive_heavy_ids = [sid for sid, exp in EXPECTED.items() if exp["productive"] and exp["locus"] == "IGH"]
         heavy_rows = mouse_result_with_kabat[mouse_result_with_kabat["sequence_id"].isin(productive_heavy_ids)]
 
         if len(heavy_rows) == 0:

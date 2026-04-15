@@ -25,7 +25,6 @@ import yaml
 from sadie.germlines.manager import GermlineManager
 from sadie.reference.generate import generate_reference_yaml, get_g3_curated_species
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 

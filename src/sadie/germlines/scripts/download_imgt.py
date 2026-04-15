@@ -534,7 +534,7 @@ class IMGTDownloader:
             else:
                 # No underscore - use as-is (e.g., "Homo sapiens")
                 species_prefixes.add(variant)
-        
+
         logger.debug(f"Using {len(species_prefixes)} species prefixes for C gene matching: {species_prefixes}")
 
         # C gene name patterns (including isotype genes)

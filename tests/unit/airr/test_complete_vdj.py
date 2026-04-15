@@ -33,25 +33,25 @@ class TestCompleteVdjWorkaroundRemoved:
 
     def test_recalculate_complete_vdj_method_removed(self) -> None:
         """Verify _recalculate_complete_vdj method no longer exists in Airr class."""
-        assert not hasattr(Airr, "_recalculate_complete_vdj"), (
-            "_recalculate_complete_vdj method should be removed from Airr class"
-        )
+        assert not hasattr(
+            Airr, "_recalculate_complete_vdj"
+        ), "_recalculate_complete_vdj method should be removed from Airr class"
 
     def test_get_j_gene_length_function_removed(self) -> None:
         """Verify get_j_gene_length function has been removed from j_gene_data module."""
         from sadie.germlines.builders import j_gene_data
 
-        assert not hasattr(j_gene_data, "get_j_gene_length"), (
-            "get_j_gene_length function should be removed from j_gene_data"
-        )
+        assert not hasattr(
+            j_gene_data, "get_j_gene_length"
+        ), "get_j_gene_length function should be removed from j_gene_data"
 
     def test_j_gene_lengths_dict_removed(self) -> None:
         """Verify J_GENE_LENGTHS dictionary has been removed from j_gene_data module."""
         from sadie.germlines.builders import j_gene_data
 
-        assert not hasattr(j_gene_data, "J_GENE_LENGTHS"), (
-            "J_GENE_LENGTHS dictionary should be removed from j_gene_data"
-        )
+        assert not hasattr(
+            j_gene_data, "J_GENE_LENGTHS"
+        ), "J_GENE_LENGTHS dictionary should be removed from j_gene_data"
 
     def test_aux_file_data_preserved(self) -> None:
         """Verify HUMAN_J_GENE_DATA and get_j_gene_data are preserved for aux file generation."""

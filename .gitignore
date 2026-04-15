@@ -79,6 +79,8 @@ my_database/
 # helpers tailored for user specific needs
 .claude/
 .cursor/
+.vscode/
+.factory/
 
 # test env
 nb/
