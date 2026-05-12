@@ -53,7 +53,7 @@ def validate_motif_pattern(pattern: str) -> bool:
 
 def validate_species_name(species: str) -> bool:
     """
-    Validate species name format (lowercase with underscores).
+    Validate species name format (lowercase with underscores and numbers).
 
     Args:
         species: Species name to validate
@@ -64,7 +64,7 @@ def validate_species_name(species: str) -> bool:
     Raises:
         MotifValidationError: If species name format is invalid
     """
-    pattern = r'^[a-z_]+$'
+    pattern = r'^[a-z0-9_]+$'
     if not re.match(pattern, species):
         raise MotifValidationError(
             f"Invalid species name '{species}'. Must match pattern: {pattern}"

@@ -139,14 +139,38 @@ def _load_motif_registry() -> Dict[str, Any]:
         with open(json_path, 'r', encoding='utf-8') as f:
             registry = json.load(f)
 
+        # Validate loaded data structure
+        if not isinstance(registry, dict):
+            raise ValueError(f"Motif registry must be a dictionary, got {type(registry)}")
+
+        if len(registry) == 0:
+            raise ValueError("Motif registry is empty")
+
+        # Basic structure validation
+        for species, species_data in registry.items():
+            if not isinstance(species_data, dict):
+                raise ValueError(f"Species data for '{species}' must be a dictionary, got {type(species_data)}")
+
+            if '_provenance' not in species_data:
+                raise ValueError(f"Species '{species}' missing required _provenance metadata")
+
+            # Check for at least one pattern
+            pattern_count = sum(1 for k, v in species_data.items()
+                              if k not in ('_provenance', 'ignore') and isinstance(v, str))
+            if pattern_count == 0:
+                logger.warning(f"Species '{species}' has no motif patterns")
+
         _MOTIF_REGISTRY_CACHE = registry
         logger.info(f"Loaded motif registry with {len(registry)} species from {json_path}")
 
         # Log validation counts
-        imgt_validated = sum(1 for species_data in registry.values()
-                            if species_data.get('_provenance', {}).get('imgt_validated', False))
-        legacy_count = len(registry) - imgt_validated
-        logger.info(f"Motif registry: {imgt_validated} IMGT-validated, {legacy_count} legacy species")
+        try:
+            imgt_validated = sum(1 for species_data in registry.values()
+                                if species_data.get('_provenance', {}).get('imgt_validated', False))
+            legacy_count = len(registry) - imgt_validated
+            logger.info(f"Motif registry: {imgt_validated} IMGT-validated, {legacy_count} legacy species")
+        except Exception as e:
+            logger.warning(f"Could not compute validation counts: {e}")
 
         return registry
 
@@ -161,6 +185,24 @@ def _load_motif_registry() -> Dict[str, Any]:
         raise json.JSONDecodeError(
             f"Malformed JSON in motif registry {json_path}: {e}",
             e.doc, e.pos
+        )
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid data structure in motif registry: {e}")
+        raise ValueError(
+            f"Motif registry data is malformed at {json_path}: {e}. "
+            f"Check that the file contains valid motif registry data."
+        )
+    except PermissionError as e:
+        logger.error(f"Permission denied reading motif registry: {json_path}")
+        raise PermissionError(
+            f"Cannot read motif registry file {json_path}: {e}. "
+            f"Check file permissions."
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error loading motif registry: {e}")
+        raise RuntimeError(
+            f"Failed to load motif registry from {json_path}: {e}. "
+            f"This may indicate a corrupted file or installation issue."
         )
 
 
@@ -252,28 +294,74 @@ class _MotifLookupProxy(Mapping):
     """Proxy object that loads MOTIF_LOOKUP on first access."""
 
     def __getitem__(self, key):
-        return get_motif_lookup()[key]
+        try:
+            return get_motif_lookup()[key]
+        except KeyError:
+            available_species = list(get_motif_lookup().keys())[:10]  # Show first 10
+            raise KeyError(
+                f"Species '{key}' not found in MOTIF_LOOKUP. "
+                f"Available species: {available_species}... "
+                f"(total: {len(get_motif_lookup())}). "
+                f"Check species name spelling (lowercase with underscores)."
+            )
+        except Exception as e:
+            logger.error(f"Error accessing MOTIF_LOOKUP['{key}']: {e}")
+            raise RuntimeError(
+                f"Failed to access motif data for species '{key}': {e}. "
+                f"This may indicate a data loading issue."
+            )
 
     def __iter__(self):
-        return iter(get_motif_lookup())
+        try:
+            return iter(get_motif_lookup())
+        except Exception as e:
+            logger.error(f"Error iterating MOTIF_LOOKUP: {e}")
+            raise RuntimeError(f"Failed to iterate motif data: {e}")
 
     def __len__(self):
-        return len(get_motif_lookup())
+        try:
+            return len(get_motif_lookup())
+        except Exception as e:
+            logger.error(f"Error getting MOTIF_LOOKUP length: {e}")
+            raise RuntimeError(f"Failed to get motif data length: {e}")
 
     def keys(self):
-        return get_motif_lookup().keys()
+        try:
+            return get_motif_lookup().keys()
+        except Exception as e:
+            logger.error(f"Error getting MOTIF_LOOKUP keys: {e}")
+            raise RuntimeError(f"Failed to get motif data keys: {e}")
 
     def values(self):
-        return get_motif_lookup().values()
+        try:
+            return get_motif_lookup().values()
+        except Exception as e:
+            logger.error(f"Error getting MOTIF_LOOKUP values: {e}")
+            raise RuntimeError(f"Failed to get motif data values: {e}")
 
     def items(self):
-        return get_motif_lookup().items()
+        try:
+            return get_motif_lookup().items()
+        except Exception as e:
+            logger.error(f"Error getting MOTIF_LOOKUP items: {e}")
+            raise RuntimeError(f"Failed to get motif data items: {e}")
 
     def get(self, key, default=None):
-        return get_motif_lookup().get(key, default)
+        try:
+            return get_motif_lookup().get(key, default)
+        except Exception as e:
+            logger.error(f"Error getting MOTIF_LOOKUP key '{key}': {e}")
+            # Return default rather than raise, to maintain get() semantics
+            logger.warning(f"Returning default value due to error: {e}")
+            return default
 
     def __contains__(self, key):
-        return key in get_motif_lookup()
+        try:
+            return key in get_motif_lookup()
+        except Exception as e:
+            logger.error(f"Error checking MOTIF_LOOKUP contains '{key}': {e}")
+            # Return False rather than raise, to maintain contains semantics
+            return False
 
 
 # Backward-compatible MOTIF_LOOKUP that loads from JSON

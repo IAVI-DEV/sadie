@@ -188,6 +188,28 @@ else:
     print(f"Legacy pattern (validate empirically): {pattern}")
 ```
 
+### Migration Validation
+
+Validate the complete migration using the provided script:
+
+```bash
+# Basic validation
+python scripts/validate_motif_migration.py
+
+# Comprehensive validation with performance benchmarks
+python scripts/validate_motif_migration.py --verify-all --performance --verbose
+
+# Save validation report
+python scripts/validate_motif_migration.py --verify-all --report-file migration_report.json
+```
+
+This validates:
+- ✅ File structure and JSON integrity
+- ✅ Data loading and backward compatibility
+- ✅ Schema compliance for all 37 species
+- ✅ Performance requirements (<50ms loading)
+- ✅ Integration with existing j_gene_data module
+
 ## Troubleshooting
 
 **No data found**: Run download scripts first
