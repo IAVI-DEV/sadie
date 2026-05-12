@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sadie.org/schemas/coverage-test-result.schema.json",
+  "title": "Motif Coverage Test Result Schema",
+  "description": "JSON Schema for empirical coverage validation test results",
+  "type": "object",
+  "properties": {
+    "test_metadata": {
+      "type": "object",
+      "properties": {
+        "test_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$",
+          "description": "ISO 8601 timestamp of test execution"
+        },
+        "test_version": {
+          "type": "string",
+          "description": "Version of test suite"
+        },
+        "motif_registry_version": {
+          "type": "string",
+          "description": "Version/hash of motif registry used"
+        }
+      },
+      "required": ["test_date", "test_version"],
+      "additionalProperties": false
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/species-locus-result"
+      },
+      "minItems": 1
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_species": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_loci": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_sequences": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "overall_match_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passed_tests": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed_tests": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["total_species", "total_loci", "total_sequences", "overall_match_rate", "passed_tests", "failed_tests"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["test_metadata", "results", "summary"],
+  "additionalProperties": false,
+  "$defs": {
+    "species-locus-result": {
+      "type": "object",
+      "properties": {
+        "species": {
+          "type": "string",
+          "pattern": "^[a-z_]+$",
+          "description": "Species identifier"
+        },
+        "locus": {
+          "type": "string",
+          "pattern": "^(IGH|IGK|IGL|TRA|TRB|TRD|TRG)[JV]$",
+          "description": "Immunoglobulin or T-cell receptor locus"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern tested"
+        },
+        "sequence_source": {
+          "type": "string",
+          "description": "Path to FASTA file containing test sequences"
+        },
+        "total_sequences": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of J sequences in source file"
+        },
+        "matched_sequences": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of sequences matching the pattern"
+        },
+        "match_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Percentage of sequences matching (0.0-1.0)"
+        },
+        "test_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Required match rate threshold for this species"
+        },
+        "test_passed": {
+          "type": "boolean",
+          "description": "Whether match_rate >= test_threshold"
+        },
+        "failed_sequences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of sequence IDs that failed to match pattern"
+        },
+        "imgt_validated": {
+          "type": "boolean",
+          "description": "Whether this species uses IMGT-validated patterns"
+        }
+      },
+      "required": [
+        "species",
+        "locus",
+        "pattern",
+        "sequence_source",
+        "total_sequences",
+        "matched_sequences",
+        "match_rate",
+        "test_threshold",
+        "test_passed",
+        "imgt_validated"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

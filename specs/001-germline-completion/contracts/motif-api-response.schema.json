@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sadie.org/schemas/motif-api-response.schema.json",
+  "title": "MOTIF_LOOKUP Public API Response Schema",
+  "description": "JSON Schema for the public API response from MOTIF_LOOKUP and MOTIF_PROVENANCE",
+  "type": "object",
+  "properties": {
+    "motif_lookup": {
+      "type": "object",
+      "description": "Backward-compatible MOTIF_LOOKUP dict without _provenance fields",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "patternProperties": {
+            "^(IGH|IGK|IGL|TRA|TRB|TRD|TRG)[JV]$": {
+              "type": "string",
+              "pattern": "^[A-Z\\[\\]\\{\\}\\.\\*\\+\\?\\|\\(\\)\\-\\\\]+$"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "motif_provenance": {
+      "type": "object",
+      "description": "Provenance metadata for each species",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "imgt_validated": {
+              "type": "boolean"
+            },
+            "last_reviewed": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "notes": {
+              "type": "string"
+            },
+            "validation_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "validation_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": ["source", "imgt_validated", "last_reviewed"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "total_species": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "imgt_validated_species": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "legacy_species": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_updated": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+        },
+        "registry_version": {
+          "type": "string"
+        }
+      },
+      "required": ["total_species", "imgt_validated_species", "legacy_species"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["motif_lookup", "motif_provenance"],
+  "additionalProperties": false
+}

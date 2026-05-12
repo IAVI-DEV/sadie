@@ -87,3 +87,12 @@ nb/
 
 # Data files
 PC68-L31 bnAb Lineage Details_Revised.xlsx
+
+# Additional Python patterns for comprehensive coverage
+.venv/
+venv/
+env/
+.env*
+*.log
+*.tmp
+*.swp

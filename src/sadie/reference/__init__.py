@@ -7,6 +7,7 @@ from sadie.reference.settings import (
     IMGT_LOOKUP,
     J_SEGMENTS,
     MOTIF_LOOKUP,
+    get_motif_provenance,
     RECEPTORS,
     RENAME_DICT,
     RENAME_DICT_TRANSLATE,
@@ -15,6 +16,9 @@ from sadie.reference.settings import (
     SEGMENTS_INTERNAL_DATA,
     IMGT_DEF_nt,
 )
+
+# Create MOTIF_PROVENANCE alias for the public API
+MOTIF_PROVENANCE = get_motif_provenance()
 from sadie.reference.yaml import YamlRef
 
 __all__ = [
@@ -30,6 +34,7 @@ __all__ = [
     "BLAST_CONVENTION",
     "J_SEGMENTS",
     "MOTIF_LOOKUP",
+    "MOTIF_PROVENANCE",
     "RENAME_DICT",
     "RENAME_DICT_TRANSLATE",
     "REVERSE_IMGT_LOOKUP",

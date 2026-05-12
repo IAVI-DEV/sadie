@@ -98,6 +98,103 @@ Normalized: `{species}_{segment}.fasta`
 BLAST: `{species}_{segment}`
 - human_V.nhr, human_V.nin, human_V.nsq
 
+## MOTIF_LOOKUP Data Model (Added 2026-05-07)
+
+### MotifRegistry
+
+JSON structure for J-gene FWR4 motif patterns with provenance metadata.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| species_name | str | Y | Species key (human, mouse, etc.) |
+| _provenance | MotifProvenance | Y | Metadata about motif origin |
+| locus_patterns | dict | Y | Locus → regex pattern mapping |
+
+### MotifProvenance
+
+Metadata documenting motif pattern origins and validation status.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| source | str | Y | Literature/database source |
+| imgt_validated | bool | Y | IMGT canonical status |
+| last_reviewed | str | Y | ISO date of last review |
+| notes | str | N | Historical context, limitations |
+| validation_count | int | N | Number of sequences validated against |
+| validation_rate | float | N | Match percentage in validation |
+
+### JSON Schema Structure
+
+```json
+{
+  "species_name": {
+    "_provenance": {
+      "source": "string",
+      "imgt_validated": "boolean",
+      "last_reviewed": "YYYY-MM-DD",
+      "notes": "string (optional)",
+      "validation_count": "integer (optional)",
+      "validation_rate": "float (optional)"
+    },
+    "IGHJ": "regex_pattern",
+    "IGKJ": "regex_pattern",
+    "IGLJ": "regex_pattern",
+    "TRAJ": "regex_pattern (optional)",
+    "TRBJ": "regex_pattern (optional)"
+  }
+}
+```
+
+### Coverage Test Data
+
+Supporting data structure for empirical coverage validation.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| species | str | Y | Species identifier |
+| locus | str | Y | Locus (IGHJ, IGKJ, IGLJ) |
+| sequence_source | str | Y | FASTA file path |
+| total_sequences | int | Y | Number of J sequences |
+| matched_sequences | int | Y | Sequences matching pattern |
+| match_rate | float | Y | matched/total percentage |
+| failed_sequences | List[str] | N | Non-matching sequence IDs |
+
+### File Locations
+
+```
+src/sadie/reference/
+├── data/
+│   └── j_gene_motif.json     # Canonical motif registry
+└── settings.py               # Loader with provenance filtering
+
+tests/unit/reference/
+└── test_motif_coverage.py    # Empirical validation tests
+```
+
+### Backward Compatibility
+
+Legacy `MOTIF_LOOKUP` dict maintains exact structure:
+```python
+MOTIF_LOOKUP = {
+    "human": {
+        "IGHJ": "WG.G",
+        "IGKJ": "FG",
+        "IGLJ": "FG.G"
+    }
+}
+```
+
+New `MOTIF_PROVENANCE` dict provides metadata:
+```python
+MOTIF_PROVENANCE = {
+    "human": {
+        "source": "Lefranc IMGT-ONTOLOGY",
+        "imgt_validated": True,
+        "last_reviewed": "2026-05-01"
+    }
+}
+```
+
 ## Validation Rules
 
 1. Segment: Must be V, D, or J
@@ -105,3 +202,5 @@ BLAST: `{species}_{segment}`
 3. Sequence: Valid nucleotides (ACGTN) and IUPAC ambiguous
 4. Functionality: F (functional), ORF, or P (pseudogene)
 5. Gapped sequences: Use dots (.) for gaps per IMGT
+6. **Motif patterns: Valid regex syntax, tested against J sequences**
+7. **Provenance metadata: Required for all species in registry**

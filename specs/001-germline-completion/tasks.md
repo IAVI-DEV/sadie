@@ -1,40 +1,42 @@
-# Tasks: Germlines Module Completion
+# Tasks: MOTIF_LOOKUP Provenance & Coverage Testing
 
-**Feature Branch**: `001-germline-completion`
-**Generated**: 2026-01-08
-**Spec**: [spec.md](./spec.md) | **Plan**: [plan.md](./plan.md)
+**Feature Branch**: `001-motif-lookup-provenance`
+**Generated**: 2026-05-07
+**Input**: Design documents from `/specs/001-germline-completion/`
+**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
 ## Overview
 
-This document breaks down the implementation into actionable tasks organized by user story. Each user story phase is independently testable and delivers incremental value.
+This document breaks down the MOTIF_LOOKUP implementation into actionable tasks organized by user story. Each user story phase is independently testable and delivers incremental value.
 
-**Total Tasks**: 60 (plus 2 backlog)
-**Parallelizable Tasks**: 29
-**User Stories**: 6 (4 × P1, 2 × P2)
-**Estimated Duration**: 24-28 hours
+**Total Tasks**: 41
+**Parallelizable Tasks**: 24
+**User Stories**: 4 (3 × P1, 1 × P2)
+**Estimated Duration**: 12-16 hours
 
-## Task Format
+## Format: `[ID] [P?] [Story] Description`
 
-```
-- [ ] T### [P] [US#] Description with file path
-```
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- Include exact file paths in descriptions
 
-- `T###`: Sequential task ID
-- `[P]`: Parallelizable (optional marker)
-- `[US#]`: User story label (US1-US6)
-- Description: Clear action with exact file path
+## Path Conventions
+
+- **Single Python package**: `src/sadie/`, `tests/` at repository root
+- Paths shown below follow existing Sadie project structure
 
 ## Implementation Strategy
 
-**MVP Scope**: User Story 1 (Add Custom Germline Sequences) + User Story 6 (Populate Reference Data)
-- Delivers core value: custom germline injection
-- Establishes data population workflow
-- Estimated: 8-10 hours
+**MVP Scope**: User Story 1 (Document Motif Provenance)
+- Delivers core value: answers user questions about motif origins
+- Establishes provenance metadata framework
+- Estimated: 3-4 hours
 
 **Incremental Delivery**:
-1. MVP (US1 + US6): Custom sequences + data population
-2. Phase 2 (US2 + US4): Offline operation + backward compatibility
-3. Phase 3 (US3 + US5): Priority system + VDJbase provider
+1. MVP (US1): Provenance documentation
+2. Phase 2 (US2): Empirical coverage testing
+3. Phase 3 (US3): Backward compatibility validation
+4. Phase 4 (US4): Complete JSON migration
 
 ## Dependencies Graph
 
@@ -43,134 +45,230 @@ Phase 1 (Setup)
     ↓
 Phase 2 (Foundational)
     ↓
-├── US1 (P1) ← Independent
-├── US2 (P1) ← Requires US1 (needs populated data)
-├── US3 (P2) ← Independent
-├── US4 (P1) ← Requires US1 (needs working module)
-├── US5 (P2) ← Independent
-└── US6 (P1) ← Independent
+├── US1 (P1) ← Independent (MVP)
+├── US2 (P1) ← Uses US1 provenance data for thresholds
+├── US3 (P1) ← Tests US1 changes for compatibility
+└── US4 (P2) ← Validates all previous work
     ↓
-Phase 8 (Polish)
+Phase 7 (Polish)
 ```
 
 **Parallel Execution Opportunities**:
-- US1, US3, US5, US6 can be developed in parallel
-- US2, US4 require US1 completion
-- Within each story: Data model + contracts + services can be parallel if tests not blocking
+- All user stories can start in parallel after foundational phase
+- Within stories: provenance metadata, tests, and documentation can be parallel
+- JSON validation and performance testing can be parallel
 
 ---
 
-## Phase 1: Project Setup
+## Phase 1: Setup (Shared Infrastructure)
 
-**Goal**: Initialize project infrastructure and tooling
+**Purpose**: Project initialization and JSON migration infrastructure
 
-**Duration**: 1-2 hours
-
-### Setup Tasks
-
-- [X] T001 Create VDJbase provider directory structure in src/sadie/germlines/sources/vdjbase/
-- [X] T002 Create VDJbase provider human subdirectory in src/sadie/germlines/sources/vdjbase/human/
-- [X] T003 [P] Create test data directory structure in src/sadie/germlines/tests/data/{provider}/{species}/ (custom/, imgt/, ogrdb/, vdjbase/ with human/)
-- [X] T004 [P] Create curated test dataset with 5-10 genes per segment in src/sadie/germlines/tests/data/{provider}/human/
-- [X] T004a [P] Create FR-025b regression test sequences (IGHV1-69*01, IGHV3-23*01, IGHD3-3*01, IGHJ4*01) in src/sadie/germlines/tests/data/regression/
-- [X] T004b [P] Create G3 regression test comparing germlines module output vs expected G3 format for FR-025b sequences in src/sadie/germlines/tests/test_g3_regression.py
-- [X] T005 Create validation script template in src/sadie/germlines/scripts/validate.py
-- [X] T006 Update pyproject.toml to ensure all dependencies listed (BioPython, pytest)
-- [X] T007 Create feature flag utility module in src/sadie/germlines/utils/feature_flags.py
-- [X] T096 Create research.md (Phase 0 deliverable) in specs/001-germline-completion/research.md per plan
-- [X] T097 Create data-model.md (Phase 1 deliverable) in specs/001-germline-completion/data-model.md per plan
-- [X] T098 Create quickstart.md (Phase 1 deliverable) in specs/001-germline-completion/quickstart.md per plan
+- [X] T001 Create src/sadie/reference/data/ directory for canonical JSON location
+- [X] T002 [P] Validate existing JSON schema structure in src/sadie/germlines/builders/data/j_gene_motif.json
+- [X] T003 [P] Install jsonschema package for validation (already available via pytest ecosystem)
 
 ---
 
-## Phase 2: Foundational Components
+## Phase 2: Foundational (Blocking Prerequisites)
 
-**Goal**: Implement shared infrastructure required by all user stories
+**Purpose**: Core JSON migration infrastructure that MUST be complete before ANY user story can be implemented
 
-**Duration**: 3-4 hours
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-**Prerequisites**: Phase 1 complete
+- [X] T004 Move j_gene_motif.json from src/sadie/germlines/builders/data/ to src/sadie/reference/data/
+- [X] T005 [P] Create JSON validation utilities in src/sadie/reference/validation.py
+- [X] T006 [P] Add provenance metadata structure to JSON for all 37 species
+- [X] T007 Implement JSON loader with provenance filtering in src/sadie/reference/settings.py
 
-### Foundational Tasks
-
-- [X] T008 Implement feature flag function `use_germlines_module()` in src/sadie/germlines/utils/feature_flags.py
-- [X] T009 [P] Implement auto-gapping service using BioPython alignment against IMGT-gapped templates (per-gene fallback to per-segment consensus) in src/sadie/germlines/builders/gapper.py
-- [X] T010 [P] Add logging configuration for germlines module in src/sadie/germlines/__init__.py
-- [X] T011 [P] Update GermlineManager to support vdjbase provider in src/sadie/germlines/manager.py
-- [X] T012 Create VDJbase provider stub with base interface in src/sadie/germlines/providers/vdjbase.py
-- [X] T013 Implement VDJbase FASTA parsing logic in src/sadie/germlines/providers/vdjbase.py
-- [X] T014 Implement VDJbase provider metadata methods in src/sadie/germlines/providers/vdjbase.py
-- [X] T015 Add timing metrics logging to pipeline.py in src/sadie/germlines/pipeline.py
-- [X] T091 [P] Ensure normalized outputs follow FR-022/022a/023 (normalized/{species}/gapped|ungapped; D segments ungapped-only) and add tests validating paths/content
-- [X] T094 [P] Gap amino-acid then back-map to nucleotide per FR-021b in src/sadie/germlines/builders/gapper.py; add acceptance test for codon-aware gaps
-- [X] T095 [P] Reuse existing pipeline utilities (no duplicated gapping/build logic) and add tests validating normalized layout per FR-024
+**Checkpoint**: JSON foundation ready - user story implementation can now begin in parallel
 
 ---
 
-## Phase 3: User Story 1 - Add Custom Germline Sequences (P1)
+## Phase 3: User Story 1 - Document Motif Provenance (Priority: P1) 🎯 MVP
 
-**Goal**: Enable researchers to add novel IGHV alleles to local database for immediate use
+**Goal**: Answer user questions about motif pattern origins and reliability through comprehensive provenance metadata
 
-**Independent Test**: User adds FASTA to `src/sadie/germlines/sources/custom/human/IGHV.fasta`, runs Sadie, sees custom allele in results
+**Independent Test**: User can import MOTIF_PROVENANCE, access source information for any species, and distinguish between IMGT-validated and legacy patterns
 
-**Duration**: 2-3 hours
+### Implementation for User Story 1
 
-**Prerequisites**: Phase 2 complete
+- [X] T008 [P] [US1] Add provenance metadata for human (IMGT-validated) in src/sadie/reference/data/j_gene_motif.json
+- [X] T009 [P] [US1] Add provenance metadata for rat (IMGT-validated) in src/sadie/reference/data/j_gene_motif.json
+- [X] T010 [P] [US1] Add provenance metadata for remaining 35 species (legacy) in src/sadie/reference/data/j_gene_motif.json
+- [X] T011 [US1] Update src/sadie/reference/settings.py to load and filter provenance metadata
+- [X] T012 [US1] Export MOTIF_PROVENANCE dict in src/sadie/reference/__init__.py
+- [X] T013 [US1] Validate JSON structure against contracts/motif-registry.schema.json
+- [X] T014 [US1] Add logging for motif registry loading operations
 
-### US1 Tasks
-
-- [X] T016 [US1] Verify custom provider handles new sequences in src/sadie/germlines/providers/custom.py (integrated GapperService for auto-gapping)
-- [X] T017 [US1] Implement change detection for custom sequences in src/sadie/germlines/pipeline.py
-- [X] T018 [US1] Add validation for custom FASTA files (nucleotides, format) in src/sadie/germlines/providers/custom.py
-- [X] T019 [US1] Implement auto-rebuild trigger on custom file change in src/sadie/germlines/pipeline.py
-- [X] T020 [P] [US1] Write unit test for custom sequence priority in src/sadie/germlines/tests/test_custom_provider.py
-- [X] T021 [P] [US1] Write integration test for custom sequence end-to-end in src/sadie/germlines/tests/test_integration.py
-- [X] T022 [US1] Add logging for custom sequence load events in src/sadie/germlines/providers/custom.py
-- [X] T023 [US1] Document custom sequence addition process in src/sadie/germlines/sources/custom/README.md
-
-**Acceptance Criteria**:
-- [X] User can add novel IGHV to src/sadie/germlines/sources/custom/human/IGHV.fasta
-- [X] Pipeline auto-detects change and rebuilds (<5 minutes)
-- [X] Custom version takes priority over IMGT per Constitution Principle II
-- [X] Invalid sequences log warning but continue with valid ones
+**Checkpoint**: At this point, User Story 1 should be fully functional - users can access provenance metadata independently
 
 ---
 
-## Phase 4: User Story 6 - Populate Reference Data Sources (P1)
+## Phase 4: User Story 2 - Add Empirical Coverage Testing (Priority: P1)
 
-**Goal**: Enable new users to set up germlines module with standard IMGT and OGRDB data
+**Goal**: Implement regression tests that validate motif patterns against actual J gene sequences to ensure pattern accuracy
 
-**Independent Test**: Fresh install, user follows README, downloads IMGT/OGRDB, runs validation, receives confirmation
+**Independent Test**: Coverage tests run successfully, showing match rates for each species/locus with clear pass/fail status based on validation thresholds
 
-**Duration**: 3-4 hours
+### Implementation for User Story 2
 
-**Prerequisites**: Phase 2 complete
+- [ ] T015 [P] [US2] Create test_motif_coverage.py framework in tests/unit/reference/
+- [ ] T016 [P] [US2] Implement J gene sequence loader from FASTA sources in tests/unit/reference/test_motif_coverage.py
+- [ ] T017 [P] [US2] Implement Biopython sequence translation utilities in tests/unit/reference/test_motif_coverage.py
+- [ ] T018 [US2] Create parameterized test structure for species/locus combinations in tests/unit/reference/test_motif_coverage.py
+- [ ] T019 [US2] Implement threshold-based validation (95% for IMGT-validated, 80% for legacy) in tests/unit/reference/test_motif_coverage.py
+- [ ] T020 [US2] Add graceful handling for missing FASTA data (xfail/skip) in tests/unit/reference/test_motif_coverage.py
+- [ ] T021 [US2] Generate coverage test reports matching contracts/coverage-test-result.schema.json format
+- [ ] T022 [US2] Validate test results against JSON schema in tests/unit/reference/test_motif_coverage.py
 
-### US6 Tasks
-
-- [X] T024 [US6] Complete IMGT download script implementation in src/sadie/germlines/scripts/download_imgt.py
-- [X] T025 [US6] Add species parameter support to IMGT download script in src/sadie/germlines/scripts/download_imgt.py
-- [X] T026 [US6] Implement resume capability for IMGT downloads in src/sadie/germlines/scripts/download_imgt.py
-- [X] T027 [US6] Implement OGRDB download script in src/sadie/germlines/scripts/download_ogrdb.py
-- [X] T028 [US6] Add species parameter support to OGRDB download script in src/sadie/germlines/scripts/download_ogrdb.py
-- [X] T029 [US6] Implement validation for downloaded FASTA files in src/sadie/germlines/scripts/validate.py
-- [X] T030 [P] [US6] Create VDJbase manual download instructions in src/sadie/germlines/sources/vdjbase/README.md
-- [X] T031 [P] [US6] Update IMGT data documentation in src/sadie/germlines/sources/imgt/IMGT_DATA.md
-- [X] T032 [P] [US6] Update OGRDB data documentation in src/sadie/germlines/sources/ogrdb/OGRDB_DATA.md
-- [X] T033 [US6] Add progress indicators to download scripts (INFO logging) in src/sadie/germlines/scripts/download_imgt.py
-- [X] T034 [US6] Add timing metrics to download scripts in src/sadie/germlines/scripts/download_ogrdb.py
-- [X] T090 [US6] Implement resume capability for OGRDB downloads in src/sadie/germlines/scripts/download_ogrdb.py (checkpoint file; idempotent retries)
-- [X] T093 [P] [US6] Standardize progress logging cadence to INFO every 10 files in IMGT/OGRDB download scripts ("Downloaded {completed}/{total} files ({percentage}%)")
-
-**Acceptance Criteria**:
-- [X] User runs `python src/sadie/germlines/scripts/download_imgt.py human` and gets validated FASTA files
-- [X] Pipeline builds BLAST databases automatically (~1-2 min) with timing logs
-- [X] Download script resumes from checkpoint if interrupted
-- [X] Validation script confirms data ready with clear success message
+**Checkpoint**: Coverage testing framework complete and validates current motif patterns against available data
 
 ---
 
-## Phase 5: User Story 2 - Use Local Germline Databases Offline (P1)
+## Phase 5: User Story 3 - Maintain Backward Compatibility (Priority: P1)
+
+**Goal**: Ensure existing code continues to work unchanged while providing enhanced metadata access
+
+**Independent Test**: Run existing Sadie test suite - all MOTIF_LOOKUP consumers should work without modification
+
+### Implementation for User Story 3
+
+- [ ] T023 [P] [US3] Update src/sadie/germlines/builders/j_gene_data.py path reference to new JSON location
+- [ ] T024 [US3] Add backward compatibility validation in tests/unit/reference/test_motif_lookup.py
+- [ ] T025 [US3] Test MOTIF_LOOKUP dict structure preservation in tests/unit/reference/test_motif_lookup.py
+- [ ] T026 [US3] Test j_gene_data.py functionality with new JSON source in tests/unit/germlines/test_j_gene_data.py
+- [ ] T027 [US3] Add integration test for full pipeline with new MOTIF_LOOKUP in tests/integration/test_motif_integration.py
+- [ ] T028 [US3] Verify performance requirements (<50ms JSON loading) in tests/unit/reference/test_motif_performance.py
+
+**Checkpoint**: All existing integrations confirmed working, no breaking changes introduced
+
+---
+
+## Phase 6: User Story 4 - JSON Migration & Data Quality (Priority: P2)
+
+**Goal**: Complete migration to JSON-based system with comprehensive validation and quality assurance
+
+**Independent Test**: JSON file validates against all schemas, data integrity checks pass, and migration is fully documented
+
+### Implementation for User Story 4
+
+- [ ] T029 [P] [US4] Add comprehensive JSON validation in src/sadie/reference/validation.py
+- [ ] T030 [P] [US4] Create data integrity validation utilities in src/sadie/reference/validation.py
+- [ ] T031 [US4] Implement regex pattern validation for all motifs in src/sadie/reference/validation.py
+- [ ] T032 [US4] Add validation for all 37 species against contracts/motif-registry.schema.json
+- [ ] T033 [US4] Create migration validation script in scripts/validate_motif_migration.py
+- [ ] T034 [US4] Update quickstart.md with migration examples and new API usage
+- [ ] T035 [US4] Add error handling for malformed JSON in src/sadie/reference/settings.py
+
+**Checkpoint**: JSON migration complete with full validation and documentation
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
+
+**Purpose**: Improvements that affect multiple user stories and final validation
+
+- [ ] T036 [P] Add comprehensive docstrings to all new functions in src/sadie/reference/
+- [ ] T037 [P] Update CHANGELOG.md with new MOTIF_PROVENANCE API and migration notes
+- [ ] T038 Run full test suite validation (pytest tests/unit/reference/ tests/integration/)
+- [ ] T039 Validate all JSON schemas against example data (contracts validation)
+- [ ] T040 [P] Performance testing with large-scale coverage validation
+- [ ] T041 Run quickstart.md examples validation for new API usage
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies - can start immediately
+- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
+- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
+  - User stories can then proceed in parallel (if staffed)
+  - Or sequentially in priority order (US1 → US2 → US3 → US4)
+- **Polish (Phase 7)**: Depends on all user stories being complete
+
+### User Story Dependencies
+
+- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
+- **User Story 2 (P1)**: Can start after Foundational (Phase 2) - Uses provenance data from US1 for test thresholds
+- **User Story 3 (P1)**: Can start after Foundational (Phase 2) - Tests compatibility with US1 changes
+- **User Story 4 (P2)**: Can start after Foundational (Phase 2) - Validates all previous work
+
+### Within Each User Story
+
+- Provenance metadata before API updates
+- JSON structure before validation utilities
+- Core implementation before integration tests
+- Schema validation before performance testing
+- Story complete before moving to next priority
+
+### Parallel Opportunities
+
+- All Setup tasks marked [P] can run in parallel
+- All Foundational tasks marked [P] can run in parallel (within Phase 2)
+- Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)
+- Provenance metadata for different species marked [P] can run in parallel
+- Test implementations marked [P] can run in parallel
+- Documentation updates marked [P] can run in parallel
+
+---
+
+## Parallel Example: User Story 1
+
+```bash
+# Launch provenance metadata tasks together:
+Task: "Add provenance metadata for human (IMGT-validated) in src/sadie/reference/data/j_gene_motif.json"
+Task: "Add provenance metadata for rat (IMGT-validated) in src/sadie/reference/data/j_gene_motif.json"
+Task: "Add provenance metadata for remaining 35 species (legacy) in src/sadie/reference/data/j_gene_motif.json"
+```
+
+---
+
+## Implementation Strategy
+
+### MVP First (User Story 1 Only)
+
+1. Complete Phase 1: Setup
+2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
+3. Complete Phase 3: User Story 1
+4. **STOP and VALIDATE**: Test provenance metadata access independently
+5. Deliver answerable user questions about motif origins
+
+### Incremental Delivery
+
+1. Complete Setup + Foundational → JSON foundation ready
+2. Add User Story 1 → Test independently → Deliverable: Provenance documentation
+3. Add User Story 2 → Test independently → Deliverable: Empirical validation framework
+4. Add User Story 3 → Test independently → Deliverable: Backward compatibility confirmed
+5. Add User Story 4 → Test independently → Deliverable: Complete JSON migration
+6. Each story adds value without breaking previous functionality
+
+### Parallel Team Strategy
+
+With multiple developers:
+
+1. Team completes Setup + Foundational together
+2. Once Foundational is done:
+   - Developer A: User Story 1 (Provenance)
+   - Developer B: User Story 2 (Coverage Testing)
+   - Developer C: User Story 3 (Backward Compatibility)
+3. Stories complete and integrate independently
+
+---
+
+## Notes
+
+- [P] tasks = different files, no dependencies
+- [Story] label maps task to specific user story for traceability
+- Each user story should be independently completable and testable
+- JSON schema validation ensures data integrity throughout
+- Commit after each task or logical group
+- Stop at any checkpoint to validate story independently
+- 37 species scope provides comprehensive coverage
+- Performance requirements: <50ms JSON loading, <30s test suite
+- Backward compatibility is non-negotiable for existing API consumers
 
 **Goal**: Enable bioinformaticians in air-gapped environments to annotate sequences without internet
 

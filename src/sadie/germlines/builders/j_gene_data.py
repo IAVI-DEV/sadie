@@ -16,22 +16,17 @@ The FWR4 region in J genes starts with a conserved motif:
 These patterns vary by species and are defined in j_gene_motif.json.
 """
 
-import json
 import logging
 import re
 import warnings
-from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
+
+from sadie.reference.settings import get_motif_lookup
 
 logger = logging.getLogger(__name__)
 
-# Load motif lookup from JSON file
-_MOTIF_FILE = Path(__file__).parent / "data" / "j_gene_motif.json"
-try:
-    MOTIF_LOOKUP: Dict = json.loads(_MOTIF_FILE.read_text())
-except FileNotFoundError:
-    logger.warning(f"Motif file not found: {_MOTIF_FILE}")
-    MOTIF_LOOKUP = {}
+# Use centralized motif lookup from reference module
+MOTIF_LOOKUP = get_motif_lookup()
 
 # Human J gene reference data (validated fallback)
 # Format: {allele: (reading_frame, cdr3_end, extra_bps)}

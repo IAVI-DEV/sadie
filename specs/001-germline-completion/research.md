@@ -487,6 +487,105 @@ Created a validation test (`src/sadie/germlines/tests/test_gapping_accuracy.py`)
 
 ---
 
+---
+
+## 7. MOTIF_LOOKUP Provenance & Coverage Testing (2026-05-07)
+
+**Status**: RESOLVED
+
+### Question
+How to implement provenance documentation and empirical coverage testing for the J-gene FWR4 motif registry (`MOTIF_LOOKUP`)?
+
+### Background Context
+
+The `MOTIF_LOOKUP` dictionary at `src/sadie/reference/settings.py:100-271` contains regex patterns for identifying J-gene FWR4 motifs across 24 species. Users have questioned:
+1. Can these motifs identify FWR4 start positions on germline J alleles?
+2. Where do non-canonical motifs (platypus `WGQG`, sharks, macaque `F[GC].GT`) come from?
+3. How reliable are they for de-novo J alleles not in IMGT/OGRDB?
+
+**Current State Analysis**:
+- Origin: Entire dict landed in commit `4d846853` (2020-11-17) with no documentation
+- Usage: Only exported via public API; single internal consumer in `j_gene_data.py`
+- Coverage: No empirical validation exists
+- Duplication: Similar data exists in `src/sadie/germlines/builders/data/j_gene_motif.json` (37 species)
+
+### Decision: JSON Migration with Provenance Metadata
+
+**Approach**: Move from Python dict to JSON with embedded `_provenance` metadata
+
+```json
+{
+  "human": {
+    "_provenance": {
+      "source": "Lefranc IMGT-ONTOLOGY (canonical W-G-X-G / F-G-X-G)",
+      "imgt_validated": true,
+      "last_reviewed": "2026-05-01",
+      "notes": "IGKJ uses 'FG' (2-char). Canonical = 'FG.G'. Truncation origin from legacy commit 4d846853."
+    },
+    "IGHJ": "WG.G",
+    "IGKJ": "FG",
+    "IGLJ": "FG.G"
+  }
+}
+```
+
+**Validation Tiers**:
+- `imgt_validated: true` → Human, rat (canonical IMGT motifs)
+- `imgt_validated: false` → Remaining 35 species (undocumented legacy)
+
+### Coverage Testing Strategy
+
+**Implementation**: Parameterized pytest with empirical validation
+- Test threshold: ≥95% for validated species, ≥80% for unvalidated
+- Data source: Existing FASTA files in `src/sadie/germlines/sources/{provider}/{species}/{locus}J.fasta`
+- Sequence processing: Biopython translation, regex matching
+- Error handling: Graceful skip for missing species data
+
+```python
+@pytest.mark.parametrize("species,locus", get_available_species_loci())
+def test_motif_coverage(species, locus):
+    pattern = MOTIF_LOOKUP[species][locus]
+    sequences = load_j_sequences(species, locus)
+    translated = [translate_j_gene(seq) for seq in sequences]
+    matches = sum(1 for seq in translated if re.search(pattern, seq))
+
+    threshold = 0.95 if MOTIF_PROVENANCE[species]["imgt_validated"] else 0.80
+    match_rate = matches / len(translated)
+    assert match_rate >= threshold, f"Motif coverage {match_rate:.2%} below {threshold:.0%}"
+```
+
+### File Migration Strategy
+
+**Decision**: Single atomic migration to centralize in reference module
+1. **Source**: `src/sadie/germlines/builders/data/j_gene_motif.json` (37 species)
+2. **Target**: `src/sadie/reference/data/j_gene_motif.json` (canonical location)
+3. **Updates**:
+   - `settings.py`: JSON loader with provenance filtering
+   - `j_gene_data.py`: Update path reference
+   - `__init__.py`: Export `MOTIF_PROVENANCE` in public API
+
+**Rationale**: Single source of truth, clear module boundaries, no intermediate broken states
+
+### Implementation Dependencies
+
+- **json** (stdlib): Parsing and validation
+- **re** (stdlib): Pattern compilation and matching
+- **pathlib** (stdlib): File path management
+- **Bio.Seq** (existing): J gene sequence translation
+- **pytest** (existing): Parameterized testing framework
+
+### Performance Impact
+
+- JSON loading: ~37 species × 6 loci = <1KB data → <5ms load time
+- Coverage testing: ~10K J sequences across species → ~30 seconds full suite
+- Regex compilation: Cache compiled patterns for test reuse
+
+### Backward Compatibility
+
+**Preserved**: Public API `MOTIF_LOOKUP` dict structure identical
+**Enhanced**: New `MOTIF_PROVENANCE` export for metadata access
+**Consumer Impact**: `j_gene_data.py` enhanced with provenance awareness (optional)
+
 ## Summary
 
 | Research Question | Status | Priority |
@@ -498,6 +597,7 @@ Created a validation test (`src/sadie/germlines/tests/test_gapping_accuracy.py`)
 | OGRDB Download URLs | RESOLVED | - |
 | IMGT Download URLs | RESOLVED | - |
 | In-Silico Gapping Validation | RESOLVED | - |
+| **MOTIF_LOOKUP Provenance & Testing** | **RESOLVED** | **HIGH** |
 
 ## Next Steps
 
@@ -505,4 +605,4 @@ Created a validation test (`src/sadie/germlines/tests/test_gapping_accuracy.py`)
 2. ~~Implement OGRDB download script~~ **DONE** (Zenodo archive approach)
 3. ~~Implement IMGT download script~~ **DONE** (V-QUEST reference directory)
 4. Complete `AuxFileBuilder` stub with region parsing
-5. Proceed with implementation per tasks.md
+5. **Proceed with MOTIF_LOOKUP implementation per tasks.md** ← **CURRENT PRIORITY**
