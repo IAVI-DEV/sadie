@@ -661,7 +661,7 @@ class Airr:
         remaining_seq = (
             result_a[["sequence", "sequence_alignment"]]
             .fillna("")
-            .apply(lambda x: x[0].replace(x[1].replace("-", ""), ""), axis=1)
+            .apply(lambda x: x.iloc[0].replace(x.iloc[1].replace("-", ""), ""), axis=1)
         )
         # and get those ids
         remaining_id = result_a["sequence_id"]
