@@ -633,12 +633,19 @@ class IMGTDownloader:
         if len(parts) < 4:
             return None
 
-        # GENE-DB format: ACCESSION|GENE*ALLELE|SPECIES|FUNCTIONALITY|...
+        # GENE-DB format: ACCESSION|GENE*ALLELE|SPECIES|FUNCTIONALITY|REGION|...
         gene_name = parts[1]
         species = parts[2]
         functionality = parts[3] if len(parts) > 3 else "F"
+        region = parts[4] if len(parts) > 4 else ""
         # Strip parentheses and brackets from functionality (e.g., "(F)" -> "F", "[ORF]" -> "ORF")
         functionality = functionality.strip("()[]")
+
+        # Reject D-segment genes — GENE-DB includes them in C queries because IGHD
+        # names (IGHD1-1*01 etc.) match the ^IGH[ADEGM] pattern. The region field
+        # unambiguously identifies them.
+        if region.strip() == "D-REGION":
+            return None
 
         # Filter by species using prefix matching
         # This captures all strains like "Macaca mulatta_RUp15" when prefix is "Macaca mulatta"

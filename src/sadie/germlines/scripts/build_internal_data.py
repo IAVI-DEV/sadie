@@ -113,17 +113,13 @@ def build_blast_db(fasta_path: Path, db_prefix: Path) -> bool:
     bool
         True if successful
     """
-    # Find makeblastdb binary
+    # Prefer system PATH (native ARM binary on Apple Silicon), fall back to bundled x86_64
     system = platform.system().lower()
-    reference_bin_dir = Path(__file__).parent.parent.parent / "reference" / "bin" / system
-    make_blast_db_bin = reference_bin_dir / "makeblastdb"
-
-    if not shutil.which(str(make_blast_db_bin)):
-        # Try system makeblastdb
-        make_blast_db_bin = shutil.which("makeblastdb")  # type: ignore
-        if not make_blast_db_bin:
-            logger.error("makeblastdb not found - ensure BLAST+ is installed")
-            return False
+    bundled = Path(__file__).parent.parent.parent / "reference" / "bin" / system / "makeblastdb"
+    make_blast_db_bin = shutil.which("makeblastdb") or (str(bundled) if bundled.exists() else None)
+    if not make_blast_db_bin:
+        logger.error("makeblastdb not found - ensure BLAST+ is installed")
+        return False
 
     cmd = [
         str(make_blast_db_bin),

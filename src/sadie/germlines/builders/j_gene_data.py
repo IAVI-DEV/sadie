@@ -425,9 +425,18 @@ def parse_j_gene(species: str, gene_name: str, sequence: str, reading_frame: Opt
                 ignored = True
 
             if not ignored:
-                # Search for motif in amino acid sequence
-                matches = re.findall(motif_pattern, j_gene_aa)
-                expression = matches
+                # Search for motif in the inferred frame first; if not found, try all
+                # 3 frames. Some species (e.g. rainbow_trout IGHJ1T1) have the motif
+                # in a frame that differs from the longest-ORF inference.
+                frames_to_try = [reading_frame] + [f for f in range(3) if f != reading_frame]
+                for frame in frames_to_try:
+                    aa = _translate_sequence(sequence, frame)
+                    matches = re.findall(motif_pattern, aa)
+                    if matches:
+                        reading_frame = frame
+                        j_gene_aa = aa
+                        expression = matches
+                        break
 
                 if matches:
                     end_motif = matches[0]

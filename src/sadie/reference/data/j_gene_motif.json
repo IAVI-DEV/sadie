@@ -231,6 +231,7 @@
       "last_reviewed": "2026-05-08",
       "notes": "Legacy pattern - requires empirical validation"
     },
+    "IGHJ": "WG.G",
     "TRBJ": "[F][GA].G",
     "TRAJ": "[F][GA].G",
     "ignore": []
