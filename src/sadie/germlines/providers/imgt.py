@@ -217,10 +217,11 @@ class IMGTProvider(GermlineProvider):
         header_parts = record.id.split("|")
         gene_name = header_parts[1] if len(header_parts) > 1 else header_parts[0]
 
-        # IMGT's IGHC.fasta includes D-segment genes (e.g. IGHD1-1*01) alongside
-        # the legitimate IgD constant genes (e.g. IGHD*01). Filter them out when
-        # loading C genes so they don't contaminate the constant-region database.
-        if segment == "C" and re.match(r"IGHD\d+[-/]", gene_name):
+        # IMGT's IGHC.fasta includes D-segment genes alongside the legitimate IgD
+        # constant gene (IGHD*01). D-segment genes always have a digit immediately
+        # after IGHD (e.g. IGHD1*01, IGHD4*01, IGHD1-1*01); the constant gene does
+        # not. Filter them out when loading C genes.
+        if segment == "C" and re.match(r"IGHD\d", gene_name):
             logger.debug(f"Skipping D-segment gene {gene_name} from C source")
             return None
 
