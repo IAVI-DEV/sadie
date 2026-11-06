@@ -5977,6 +5977,10 @@ macaque:
   imgt:
     macaque:
     - IGHA*01
+    - IGHD*01
+    - IGHD*02
+    - IGHD*03
+    - IGHD*04
     - IGHM*03
     - IGHE*01
     - IGHG1*01
