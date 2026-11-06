@@ -18,6 +18,7 @@ triggered automatically by fetch_genes when files are missing.
 """
 
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -215,6 +216,13 @@ class IMGTProvider(GermlineProvider):
         # IMGT format: >ACCESSION|GENE_NAME|SPECIES|FUNCTIONALITY|REGION|...
         header_parts = record.id.split("|")
         gene_name = header_parts[1] if len(header_parts) > 1 else header_parts[0]
+
+        # IMGT's IGHC.fasta includes D-segment genes (e.g. IGHD1-1*01) alongside
+        # the legitimate IgD constant genes (e.g. IGHD*01). Filter them out when
+        # loading C genes so they don't contaminate the constant-region database.
+        if segment == "C" and re.match(r"IGHD\d+[-/]", gene_name):
+            logger.debug(f"Skipping D-segment gene {gene_name} from C source")
+            return None
 
         # Extract functionality if present (index 3 in IMGT format)
         functionality = "F"  # Default to functional
