@@ -1004,7 +1004,7 @@ class References:
         )
         return References.from_dataframe(_data)  # type: ignore
 
-    def make_airr_database(self, output_path: Path) -> Path:
+    def make_airr_database(self, output_path: Path, build_hmms: bool = False) -> Path:
         """
         Make the igblastn database, internal database and auxilary database needed by igblast. On success
         return a path to the output database.
@@ -1013,6 +1013,9 @@ class References:
         ----------
         output_path : Path
             A path directory to output the database structure
+        build_hmms : bool
+            If True, also build HMM models for renumbering (Kabat/IMGT/Chothia).
+            Only needed for custom species without pre-built HMMs. Default False.
 
         Returns
         -------
@@ -1064,12 +1067,12 @@ class References:
         self._make_auxillary_file(output_path)
         logger.info(f"Generated Aux Data {output_path}/aux_db")
 
-        # Build HMM files for renumbering
-        try:
-            self._make_hmm_files(output_path)
-            logger.info(f"Generated HMM files {output_path}/hmms/")
-        except Exception as e:
-            logger.warning(f"HMM generation skipped: {e}")
+        if build_hmms:
+            try:
+                self._make_hmm_files(output_path)
+                logger.info(f"Generated HMM files {output_path}/hmms/")
+            except Exception as e:
+                logger.warning(f"HMM generation skipped: {e}")
 
         self.default_output_path = Path(output_path)
         logger.debug(f"Regenerating frame to {self.reference_dataframe_path}")
