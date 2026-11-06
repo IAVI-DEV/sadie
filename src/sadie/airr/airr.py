@@ -86,6 +86,7 @@ class Airr:
         scheme: str = "imgt",
         references: Optional[References] = None,
         debug: bool = False,
+        database: Optional[str | Path] = None,
         # Additional IgBLAST parameters with SADIE defaults
         num_alignments_v: int = 3,
         num_alignments_d: int = 3,
@@ -243,7 +244,11 @@ class Airr:
         # Pass theese as private since germline class will handle setter logic
         self._name = reference_name
         self.scheme = scheme  # Store scheme as instance attribute
-        if isinstance(references, References):
+        self._database = database
+        if database is not None:
+            # Prebuilt database path: skip References lookup entirely
+            self.germline_data = GermlineData(reference_name, receptor, database)
+        elif isinstance(references, References):
             _custom_avail = list(references.get_dataframe()["name"].unique())
             if self.name not in _custom_avail:
                 raise BadDataSet(self.name, _custom_avail)
@@ -572,6 +577,7 @@ class Airr:
                                 adaptable=False,
                                 references=self.references,
                                 debug=self.debug,
+                                database=self._database,
                                 # Pass through IgBLAST parameters
                                 num_alignments_v=self.num_alignments_v,
                                 num_alignments_d=self.num_alignments_d,
@@ -614,6 +620,7 @@ class Airr:
                             adaptable=False,
                             references=self.references,
                             debug=self.debug,
+                            database=self._database,
                             # Pass through IgBLAST parameters
                             num_alignments_v=self.num_alignments_v,
                             num_alignments_d=self.num_alignments_d,
