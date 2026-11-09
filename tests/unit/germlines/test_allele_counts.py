@@ -85,6 +85,17 @@ def test_check_allele_counts_flags_reference_yml_name_without_source_record(two_
     assert [f["names"] for f in reference_findings] == [["IGHV9-9*01"]]
 
 
+def test_check_allele_counts_flags_constant_gene_filed_in_d_segment_file(two_stage_germlines):
+    write_fasta(two_stage_germlines / "sources/ogrdb/fake/IGHD.fasta", {"IGHD1-1*01": "GGTATAGC", "IGHD*02": "A" * 400})
+    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHD.fasta", {"IGHD1-1*01 source=ogrdb": "GGTATAGC"})
+
+    _, findings = run_check(two_stage_germlines)
+
+    misrouted = [f for f in findings if f["stage"] == "sources routing"]
+
+    assert [(f["file"], f["kind"], f["names"]) for f in misrouted] == [("IGHD", "UNEXPLAINED", ["IGHD*02"])]
+
+
 def test_format_count_report_marks_row_with_unexplained_loss_as_mismatch(two_stage_germlines):
     report = format_count_report(*run_check(two_stage_germlines))
 
