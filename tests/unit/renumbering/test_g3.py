@@ -1,17 +1,13 @@
 import re
 
-import pytest
-
 from sadie.renumbering.clients import G3
 
 
-@pytest.mark.live
 def test_sources():
     g3 = G3()
     assert g3.sources == ["custom", "imgt"]
 
 
-@pytest.mark.live
 def test_stockholm_pairs(fixture_setup):
     g3 = G3()
 
