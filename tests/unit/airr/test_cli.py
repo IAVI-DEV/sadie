@@ -45,3 +45,12 @@ def test_airr_cli(fixture_setup: SadieFixture):
     results = runner.invoke(airr, ["--skip-igl", "--skip-mutation", str(input_file), str(tmp_out)])
     assert Path(tmp_out).exists()
     assert results.exit_code == 0
+
+
+def test_airr_cli_name_option_accepts_rhesus_macaque_alias(tmp_path: Path) -> None:
+    missing_input_file = tmp_path / "missing.fasta"
+
+    results = CliRunner().invoke(airr, ["--name", "rhesus_macaque", str(missing_input_file)])
+
+    assert "Invalid value for '--name'" not in results.output
+    assert "does not exist" in results.output

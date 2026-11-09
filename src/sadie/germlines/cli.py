@@ -28,6 +28,8 @@ from rich.progress import (
 )
 from rich.table import Table
 
+from .providers.base import normalize_species
+
 logger = logging.getLogger(__name__)
 console = Console()
 
@@ -163,7 +165,7 @@ def get_all_provider_species(provider_name: str) -> List[str]:
         return ["human", "mouse"]
     elif provider_name == "vdjbase":
         provider = get_provider(provider_name)
-        return provider.get_available_species() or ["human", "rhesus_macaque"]
+        return provider.get_available_species() or ["human", "macaque"]
     return []
 
 
@@ -196,7 +198,8 @@ def populate_provider(
         Results with species counts and status
     """
     all_species = get_all_provider_species(provider_name)
-    target_species = species if species else all_species
+    # dict.fromkeys drops the duplicate left when two listed names resolve to one species
+    target_species = list(dict.fromkeys(normalize_species(sp) for sp in species or all_species))
 
     if dry_run:
         console.print(f"[cyan]{provider_name}[/cyan]: Would download {len(target_species)} species")
@@ -542,6 +545,7 @@ def rebuild_germlines(
     all_downloaded = get_all_downloaded_species()
 
     if species:
+        species = [normalize_species(sp) for sp in species]
         target = [sp for sp in species if sp in all_downloaded]
         missing = [sp for sp in species if sp not in all_downloaded]
         if missing:

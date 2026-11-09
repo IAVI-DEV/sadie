@@ -34,7 +34,7 @@ from Bio import SeqIO
 
 from ..builders.gapper import GapperService
 from ..models import GermlineGene, ProviderMetadata
-from .base import GermlineProvider
+from .base import GermlineProvider, normalize_species
 
 logger = logging.getLogger(__name__)
 
@@ -50,15 +50,7 @@ SPECIES_MAP = {
     "Mouse": "mouse",
 }
 
-# Aliases for consistent naming across providers
-# Both "macaque" and "rhesus_macaque" should work
-SPECIES_ALIASES = {
-    "rhesus_macaque": "macaque",  # Normalize to canonical name
-}
-
 SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
-# Add alias reverse mappings
-SPECIES_MAP_REVERSE["rhesus_macaque"] = "Rhesus Macaque"
 
 # Chain to dataset mapping
 CHAIN_TO_DATASET = {
@@ -85,7 +77,7 @@ class VDJbaseProvider(GermlineProvider):
         │   ├── IGKJ.fasta
         │   ├── IGLV.fasta
         │   └── IGLJ.fasta
-        ├── rhesus_macaque/
+        ├── macaque/
         │   └── ...
         └── mouse/
             └── ...
@@ -154,10 +146,6 @@ class VDJbaseProvider(GermlineProvider):
 
         return self._gappers[cache_key]
 
-    def _normalize_species(self, species: str) -> str:
-        """Normalize species name using aliases."""
-        return SPECIES_ALIASES.get(species, species)
-
     def fetch_genes(self, species: str, segment: str, chain: str) -> List[GermlineGene]:
         """
         Fetch VDJbase genes from local FASTA files.
@@ -176,8 +164,7 @@ class VDJbaseProvider(GermlineProvider):
         List[GermlineGene]
             VDJbase genes
         """
-        # Normalize species name (e.g., rhesus_macaque -> macaque)
-        species = self._normalize_species(species)
+        species = normalize_species(species)
         fasta_path = self.get_fasta_path(species, segment, chain)
 
         if not fasta_path.exists():
@@ -366,8 +353,7 @@ class VDJbaseProvider(GermlineProvider):
         bool
             True if data available
         """
-        # Normalize species name (e.g., rhesus_macaque -> macaque)
-        species = self._normalize_species(species)
+        species = normalize_species(species)
         species_dir = self.data_dir / species
 
         if not species_dir.exists():
@@ -416,7 +402,7 @@ class VDJbaseProvider(GermlineProvider):
 
         for sp in species:
             logger.info(f"Downloading VDJbase data for {sp}...")
-            self._download_species(sp)
+            self._download_species(normalize_species(sp))
 
         duration_ms = int((time.time() - start_time) * 1000)
         logger.info(
@@ -659,6 +645,7 @@ class VDJbaseProvider(GermlineProvider):
         List[str]
             Available dataset names (IGH, IGK, IGL)
         """
+        species = normalize_species(species)
         api_species = SPECIES_MAP_REVERSE.get(species, species)
 
         try:

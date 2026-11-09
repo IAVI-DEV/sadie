@@ -35,7 +35,7 @@ from Bio import SeqIO
 
 from ..builders.gapper import GapperService
 from ..models import GermlineGene, ProviderMetadata
-from .base import GermlineProvider
+from .base import GermlineProvider, normalize_species
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +205,7 @@ class CustomProvider(GermlineProvider):
         List[GermlineGene]
             Custom genes
         """
+        species = normalize_species(species)
         fasta_path = self.get_fasta_path(species, segment, chain)
         gapped_path = self._get_gapped_fasta_path(species, segment, chain)
 
@@ -441,6 +442,7 @@ class CustomProvider(GermlineProvider):
         bool
             True if custom data exists
         """
+        species = normalize_species(species)
         species_dir = self.data_dir / species
 
         if not species_dir.exists():

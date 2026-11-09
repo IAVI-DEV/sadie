@@ -21,6 +21,7 @@ from sadie.airr.methods import run_igl_assignment, run_mutational_analysis
 
 # germlines
 from sadie.germlines.cli import germlines
+from sadie.germlines.providers.base import normalize_species
 
 # reference
 from sadie.reference.reference import References
@@ -58,9 +59,16 @@ def sadie(verbose: int) -> None:
 sadie.add_command(germlines)
 
 
+class SpeciesChoice(click.Choice):
+    """Choice of canonical species names that also accepts an alias such as rhesus_macaque."""
+
+    def convert(self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]) -> Any:
+        return super().convert(normalize_species(value), param, ctx)
+
+
 @sadie.command("airr")
 @click.option(
-    "--name", "-n", type=click.Choice(Airr.get_available_species()), help="Species to annotate", default="human"
+    "--name", "-n", type=SpeciesChoice(Airr.get_available_species()), help="Species to annotate", default="human"
 )
 @click.option("--skip-igl", is_flag=True, help="Skip the igl assignment")
 @click.option("--skip-mutation", is_flag=True, help="Skip the somewhat time instansive mutational analysis")

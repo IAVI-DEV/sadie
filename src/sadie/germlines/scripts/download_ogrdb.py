@@ -50,6 +50,8 @@ from typing import Dict, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
+from sadie.germlines.providers.base import normalize_species
+
 logger = logging.getLogger(__name__)
 
 CHECKPOINT_FILE = ".download_progress.json"
@@ -78,22 +80,14 @@ ZENODO_API_URL = "https://zenodo.org/api/records"
 SPECIES_MAP = {
     "Homo sapiens": "human",
     "Mus musculus": "mouse",
-    "Macaca mulatta": "rhesus_macaque",
+    "Macaca mulatta": "macaque",
     "Rattus norvegicus": "rat",
     "Canis lupus familiaris": "dog",
     "Oryctolagus cuniculus": "rabbit",
     # Add more as needed
 }
 
-# Aliases for consistent naming across providers
-# Both "macaque" and "rhesus_macaque" should work
-SPECIES_ALIASES = {
-    "macaque": "rhesus_macaque",  # Normalize to canonical name for OGRDB
-}
-
 SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
-# Add alias reverse mappings
-SPECIES_MAP_REVERSE["macaque"] = "Macaca mulatta"
 
 # Segment type detection from gene names
 SEGMENT_PATTERNS = {
@@ -119,7 +113,7 @@ OGRDB_API_BASE_URL = "https://ogrdb.airr-community.org/api_v2"
 TAXONOMY_ID_MAP = {
     "9606": "human",
     "10090": "mouse",
-    "9544": "rhesus_macaque",
+    "9544": "macaque",
 }
 TAXONOMY_ID_MAP_REVERSE = {v: k for k, v in TAXONOMY_ID_MAP.items()}
 
@@ -294,6 +288,7 @@ class OGRDBDownloader(OGRDBApiClient):
             Force re-download even if cached
         """
         start_time = time.time()
+        species = [normalize_species(sp) for sp in species]
 
         # Download archive
         archive_path = self._download_archive(force=force)
@@ -348,9 +343,8 @@ class OGRDBDownloader(OGRDBApiClient):
         logger.info("Checking API for missing alleles...")
 
         for sp in species:
-            # Normalize alias (e.g. macaque -> rhesus_macaque) before taxonomy lookup
-            canonical_sp = SPECIES_ALIASES.get(sp, sp)
-            taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(canonical_sp) or TAXONOMY_ID_MAP_REVERSE.get(sp)
+            canonical_sp = normalize_species(sp)
+            taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(canonical_sp)
             if not taxonomy_id:
                 logger.debug(f"No taxonomy ID for {sp}, skipping API supplement")
                 continue

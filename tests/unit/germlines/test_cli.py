@@ -12,6 +12,7 @@ import pytest
 from click.testing import CliRunner
 
 from sadie.app import sadie
+from sadie.germlines.cli import populate_provider
 
 
 @pytest.fixture
@@ -217,3 +218,9 @@ class TestDataValidation:
 
             result = validate_provider_data("imgt")
             assert result is False
+
+
+def test_populate_provider_dry_run_with_rhesus_macaque_alias_targets_macaque_once() -> None:
+    results = populate_provider("ogrdb", ["rhesus_macaque", "macaque"], force=False, dry_run=True, progress=None)
+
+    assert results == {"status": "dry_run", "species_count": 1}

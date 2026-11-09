@@ -19,6 +19,14 @@ from ..models import GermlineGene, ProviderMetadata
 
 logger = logging.getLogger(__name__)
 
+# The one alias table: every provider, GermlineData and the pipeline resolve names through it
+SPECIES_ALIASES = {"rhesus_macaque": "macaque"}
+
+
+def normalize_species(species: str) -> str:
+    """Return the canonical species name, e.g. "rhesus_macaque" -> "macaque"."""
+    return SPECIES_ALIASES.get(species, species)
+
 
 ERROR_TEMPLATES = {
     "parse_failed": "provider={provider} action=parse_failed path={path} error={error}",

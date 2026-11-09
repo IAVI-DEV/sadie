@@ -21,6 +21,8 @@ from typing import List, Set
 import pytest
 import yaml
 
+from sadie.germlines import GermlineManager, GermlinePipeline
+
 # Get the germlines module root
 GERMLINES_ROOT = Path(__file__).parent.parent.parent.parent / "src" / "sadie" / "germlines"
 
@@ -237,7 +239,7 @@ class TestAirrAnnotationRhesus:
     @pytest.fixture(autouse=True)
     def check_infrastructure(self):
         """Check if rhesus IgBLAST internal_data exists."""
-        internal_data = GERMLINES_ROOT / "igblast" / "Ig" / "internal_data" / "rhesus_macaque"
+        internal_data = GERMLINES_ROOT / "igblast" / "Ig" / "internal_data" / "macaque"
         if not internal_data.exists():
             pytest.skip(
                 f"Rhesus AIRR annotation requires IgBLAST internal_data at {internal_data}. "
@@ -371,3 +373,46 @@ class TestMultiSpeciesBatch:
 
         species_count = len(config.get("organisms", {}))
         assert species_count >= 29, f"Should have at least 29 species, found {species_count}"
+
+
+PROVIDER_NAMES = ["vdjbase", "ogrdb", "imgt", "custom"]
+
+
+@pytest.mark.parametrize("provider_name", PROVIDER_NAMES)
+def test_provider_fetch_genes_with_rhesus_macaque_alias_returns_macaque_genes(provider_name: str) -> None:
+    provider = GermlineManager(providers=[provider_name]).providers[0]
+
+    macaque_genes = provider.fetch_genes("macaque", "V", "H")
+    alias_genes = provider.fetch_genes("rhesus_macaque", "V", "H")
+
+    assert macaque_genes
+    assert [gene.name for gene in alias_genes] == [gene.name for gene in macaque_genes]
+    assert {gene.species for gene in alias_genes} == {"macaque"}
+
+
+@pytest.mark.parametrize("provider_name", PROVIDER_NAMES)
+def test_provider_is_available_with_rhesus_macaque_alias(provider_name: str) -> None:
+    provider = GermlineManager(providers=[provider_name]).providers[0]
+
+    assert provider.is_available("rhesus_macaque")
+
+
+def test_germlines_data_ships_no_rhesus_macaque_path() -> None:
+    assert not list(GERMLINES_ROOT.rglob("*rhesus_macaque*"))
+
+
+def test_pipeline_update_with_rhesus_macaque_alias_looks_for_macaque_sources(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="No germline data found for 'macaque'"):
+        GermlinePipeline(tmp_path).update("rhesus_macaque")
+
+
+def test_pipeline_force_rebuild_with_rhesus_macaque_alias_rebuilds_macaque(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    rebuilt_species: List[str] = []
+    monkeypatch.setattr(GermlinePipeline, "_rebuild_normalized", lambda self, species: rebuilt_species.append(species))
+    monkeypatch.setattr(GermlinePipeline, "_rebuild_igblast", lambda self, species: rebuilt_species.append(species))
+
+    GermlinePipeline(tmp_path).force_rebuild("rhesus_macaque")
+
+    assert rebuilt_species == ["macaque", "macaque"]

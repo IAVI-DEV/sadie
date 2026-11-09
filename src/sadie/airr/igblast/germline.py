@@ -182,6 +182,9 @@ class GermlineData:
             self.igdata = self.base_dir / "Ig"
         elif _use_germlines_module():
             # Use germlines module paths (new default)
+            from sadie.germlines.providers.base import normalize_species
+
+            name = self.name = normalize_species(name)
             germlines_igblast = _get_germlines_igblast_dir()
             internal_data_species = germlines_igblast / "Ig" / "internal_data" / name
             database_species = germlines_igblast / "database" / name

@@ -259,6 +259,9 @@ class Airr:
             # set the germline database
             self.germline_data = GermlineData(reference_name, receptor, out_data_path)
         else:
+            from sadie.germlines.providers.base import normalize_species
+
+            reference_name = normalize_species(reference_name)
             self._name = reference_name
 
             # Check if this requested dataset is available

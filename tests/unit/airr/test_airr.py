@@ -595,3 +595,47 @@ def test_genbank():
         GenBank(sequence=1, id="test", name="test")
     with pytest.raises(TypeError):
         GenBank(sequence="ATCG", id="test").add_feature(feature="bad_feature")
+
+
+@pytest.fixture
+def igblast_version_check_skipped(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sadie.airr.igblast.igblast.IgBLASTN._get_version", lambda self: None)
+
+
+def test_germline_data_with_rhesus_macaque_alias_resolves_to_macaque_database_paths() -> None:
+    macaque_data = GermlineData("macaque")
+    alias_data = GermlineData("rhesus_macaque")
+
+    assert alias_data.name == "macaque"
+    assert alias_data.v_gene_dir == macaque_data.v_gene_dir
+    assert alias_data.d_gene_dir == macaque_data.d_gene_dir
+    assert alias_data.j_gene_dir == macaque_data.j_gene_dir
+    assert alias_data.c_gene_dir == macaque_data.c_gene_dir
+    assert alias_data.aux_path == macaque_data.aux_path
+    assert alias_data.igdata == macaque_data.igdata
+
+
+def test_airr_available_species_lists_macaque_without_rhesus_macaque_alias() -> None:
+    available_species = Airr.get_available_species()
+
+    assert "macaque" in available_species
+    assert "rhesus_macaque" not in available_species
+
+
+def test_airr_with_rhesus_macaque_alias_annotates_as_macaque(igblast_version_check_skipped: None) -> None:
+    airr_api = Airr("rhesus_macaque")
+
+    assert airr_api.name == "macaque"
+    assert airr_api.igblast.organism.value == "macaque"
+    assert airr_api.igblast.germline_db_v.value == GermlineData("macaque").v_gene_dir
+
+
+def test_default_references_sequence_lookup_finds_gene_for_rhesus_macaque_alias(
+    igblast_version_check_skipped: None,
+) -> None:
+    references_dataframe = References().get_dataframe()
+    sequence_by_name_and_gene = references_dataframe.set_index(["name", "gene"])["sequence"].to_dict()
+
+    reference_name = Airr("rhesus_macaque").name
+
+    assert (reference_name, "IGHA*01") in sequence_by_name_and_gene

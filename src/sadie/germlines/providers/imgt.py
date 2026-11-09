@@ -26,7 +26,7 @@ from typing import Dict, List, Optional
 from Bio import SeqIO
 
 from ..models import GermlineGene, ProviderMetadata
-from .base import GermlineProvider
+from .base import GermlineProvider, normalize_species
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +99,7 @@ class IMGTProvider(GermlineProvider):
         List[GermlineGene]
             IMGT genes
         """
+        species = normalize_species(species)
         fasta_path = self.get_fasta_path(species, segment, chain)
         gapped_path = self._get_gapped_fasta_path(species, segment, chain)
 
@@ -362,6 +363,7 @@ class IMGTProvider(GermlineProvider):
         bool
             True if data available
         """
+        species = normalize_species(species)
         species_dir = self.data_dir / species
 
         if not species_dir.exists():
@@ -412,8 +414,8 @@ class IMGTProvider(GermlineProvider):
 
         downloader = IMGTDownloader(output_dir=self.data_dir)
 
-        if not species:
-            species = list(SPECIES_MAP.keys())
+        # SPECIES_MAP lists both rhesus_macaque and macaque; dict.fromkeys drops the duplicate after resolving
+        species = list(dict.fromkeys(normalize_species(sp) for sp in species or SPECIES_MAP))
 
         logger.info(f"Downloading IMGT data for {len(species)} species...")
 
