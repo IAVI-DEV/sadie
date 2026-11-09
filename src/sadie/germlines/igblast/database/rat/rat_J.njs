@@ -3,7 +3,7 @@
   "dbname": "rat_J",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/rat/rat_J.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/rat/rat_J.fasta",
   "number-of-letters": 556,
   "number-of-sequences": 13,
   "last-updated": "2026-02-20T14:02:00",

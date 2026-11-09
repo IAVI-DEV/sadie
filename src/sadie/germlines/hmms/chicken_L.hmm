@@ -8,7 +8,7 @@ CONS  yes
 CS    no
 MAP   yes
 DATE  Mon Apr 13 17:42:40 2026
-COM   [1] /Users/tmsincomb/miniforge3/envs/sadie-dev/bin/pytest tests/unit/ --no-header -q --ignore=tests/unit/airr/ --ignore=tests/unit/reference/
+COM   [1] /opt/sadie-build/miniforge3/envs/sadie-dev/bin/pytest tests/unit/ --no-header -q --ignore=tests/unit/airr/ --ignore=tests/unit/reference/
 NSEQ  44
 EFFN  1.103760
 CKSUM 552536096

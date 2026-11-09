@@ -3,7 +3,7 @@
   "dbname": "mouse_c57bl6j_D",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/mouse_c57bl6j/mouse_c57bl6j_D.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/mouse_c57bl6j/mouse_c57bl6j_D.fasta",
   "number-of-letters": 331,
   "number-of-sequences": 18,
   "last-updated": "2026-02-20T14:01:00",

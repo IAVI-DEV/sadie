@@ -3,7 +3,7 @@
   "dbname": "mink_D",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/mink/mink_D.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/mink/mink_D.fasta",
   "number-of-letters": 210,
   "number-of-sequences": 10,
   "last-updated": "2026-02-20T14:01:00",

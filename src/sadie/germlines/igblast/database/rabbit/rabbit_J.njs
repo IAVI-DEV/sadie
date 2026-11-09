@@ -3,7 +3,7 @@
   "dbname": "rabbit_J",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/rabbit/rabbit_J.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/rabbit/rabbit_J.fasta",
   "number-of-letters": 1409,
   "number-of-sequences": 33,
   "last-updated": "2026-02-20T14:02:00",

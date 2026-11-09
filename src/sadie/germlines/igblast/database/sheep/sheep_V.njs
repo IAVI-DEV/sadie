@@ -3,7 +3,7 @@
   "dbname": "sheep_V",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/sheep/sheep_V.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/sheep/sheep_V.fasta",
   "number-of-letters": 31269,
   "number-of-sequences": 106,
   "last-updated": "2026-02-20T14:02:00",

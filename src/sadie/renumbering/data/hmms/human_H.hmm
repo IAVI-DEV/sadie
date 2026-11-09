@@ -8,7 +8,7 @@ CONS  yes
 CS    no
 MAP   yes
 DATE  Wed Oct  5 21:07:58 2022
-COM   [1] /Users/tmsincomb/miniforge3-rose/envs/sadie/bin/pytest -sv tests/unit/renumbering/test_renumbering.py
+COM   [1] /opt/sadie-build/miniforge3-rose/envs/sadie/bin/pytest -sv tests/unit/renumbering/test_renumbering.py
 NSEQ  3679
 EFFN  0.943805
 CKSUM 1643542238

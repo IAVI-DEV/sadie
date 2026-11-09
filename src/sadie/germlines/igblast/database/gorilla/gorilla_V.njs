@@ -3,7 +3,7 @@
   "dbname": "gorilla_V",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/gorilla/gorilla_V.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/gorilla/gorilla_V.fasta",
   "number-of-letters": 84660,
   "number-of-sequences": 286,
   "last-updated": "2026-02-20T14:01:00",

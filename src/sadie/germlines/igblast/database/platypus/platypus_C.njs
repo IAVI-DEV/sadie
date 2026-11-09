@@ -3,7 +3,7 @@
   "dbname": "platypus_C",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/platypus/platypus_C.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/platypus/platypus_C.fasta",
   "number-of-letters": 3105,
   "number-of-sequences": 13,
   "last-updated": "2026-02-20T14:02:00",

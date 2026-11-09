@@ -3,7 +3,7 @@
   "dbname": "zebrafish_D",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/zebrafish/zebrafish_D.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/zebrafish/zebrafish_D.fasta",
   "number-of-letters": 85,
   "number-of-sequences": 7,
   "last-updated": "2026-02-20T14:02:00",

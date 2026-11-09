@@ -3,7 +3,7 @@
   "dbname": "human_C",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/human/human_C.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/human/human_C.fasta",
   "number-of-letters": 807863,
   "number-of-sequences": 310,
   "last-updated": "2026-02-20T14:01:00",
