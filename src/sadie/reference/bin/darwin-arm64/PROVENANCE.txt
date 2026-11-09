@@ -1,0 +1,30 @@
+makeblastdb for macOS arm64 (Apple Silicon), built from the official NCBI IgBLAST source.
+NCBI publishes no ARM macOS build of IgBLAST; this binary is built by us, not by NCBI.
+
+IgBLAST version:  1.22.0
+Source:           https://ftp.ncbi.nih.gov/blast/executables/igblast/release/1.22.0/ncbi-igblast-1.22.0-src.tar.gz
+Source sha256:    a04eb195087447cf42e673401ae2d9f6ef8414b34f1534724a6953f41224df68
+Patch 1:          c++/include/util/bitset/bm.h, bulk_insert_iterator, two lines:
+                  bvect_->allocate_tempblock() becomes (value_type*) bvect_->blockman_.get_allocator().alloc_bit_block()
+                  bvect_->free_tempblock(buf_) becomes bvect_->blockman_.get_allocator().free_bit_block((bm::word_t*)buf_)
+                  The header never defines the two replaced functions and Apple clang 21 rejects them.
+                  Nothing in IgBLAST instantiates this template. No behaviour changes.
+Patch 2:          c++/src/app/igblast/Makefile.igblastn.app, igblastn.hpp, igblastn_app.cpp:
+                  igblastn is built without the NCBI VDB toolkit. -sra prints an error and exits.
+                  No other option changes.
+Compiler:         Apple clang version 21.0.0 (clang-2100.3.34.2); Xcode 27.0; SDK 27.0; host macOS 27.0.1
+Target:           arm64, MACOSX_DEPLOYMENT_TARGET=11.0, no -mcpu/-march
+Configure:        --with-projects=scripts/projects/igblast/project.lst --without-dll --with-static
+                  --with-bin-release --without-debug --with-mt --without-openmp --with-flat-makefile
+                  --with-ncbi-public --without-autodep --without-makefile-auto-update --without-caution
+                  --without-ccache --without-runpath --without-pcre --without-lzo --without-zstd
+                  --without-gnutls --without-gcrypt --without-krb5 --without-boost --without-python
+                  --without-libuv --without-nghttp2 --without-vdb --without-static-vdb
+Reproducible:     -ffile-prefix-map=<build dir>=/igblast-build; SOURCE_DATE_EPOCH=1794182400; ZERO_AR_DATE=1;
+                  NCBI_BUILD_SESSION_ID=00000000-0000-0000-0000-000000000000; build host name localhost;
+                  GIT_DIR=/dev/null (no VCS revision)
+pipe2:            ac_cv_func_pipe2=no (avoid pipe2, which exists only on macOS 27+)
+After link:       strip -x; codesign --force --sign - --identifier makeblastdb
+Binary sha256:    06f88fdc1295f32773c423bdcee47cdf455cde254d08e1d07867018aba34f384  (18545744 bytes)
+-version:         makeblastdb: 2.15.0+ Package: igblast 1.22.0, build Nov 9 2026 00:00:00
+Licenses:         licenses/igblast_license.md and licenses/igblast_*.txt in the sadie repository

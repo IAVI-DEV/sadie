@@ -200,19 +200,15 @@ class TestBuildInternalDataScript:
 
     def test_build_blast_db(self, tmp_path: Path) -> None:
         """Test build_blast_db creates BLAST database files."""
-        import shutil
-
+        from sadie.germlines.scripts import build_internal_data
         from sadie.germlines.scripts.build_internal_data import build_blast_db
+        from sadie.utility.binaries import find_binary
+        from sadie.utility.exception import BinaryNotFoundError
 
-        # Skip if makeblastdb not available
-        if not shutil.which("makeblastdb"):
-            # Check for bundled binary
-            import platform
-
-            system = platform.system().lower()
-            bundled = Path(__file__).parent.parent.parent.parent / "src/sadie/reference/bin" / system / "makeblastdb"
-            if not bundled.exists():
-                pytest.skip("makeblastdb not available")
+        try:
+            find_binary("makeblastdb", Path(build_internal_data.__file__).parent.parent.parent / "reference" / "bin")
+        except BinaryNotFoundError:
+            pytest.skip("makeblastdb not available")
 
         # Create test FASTA
         fasta_path = tmp_path / "test.fasta"
