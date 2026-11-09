@@ -303,8 +303,12 @@ class GermlineData:
     @d_gene_dir.setter
     def d_gene_dir(self, directory: str | Path) -> None:
         _path = Path(directory)
-        if not ensure_prefix_to(_path):
-            # Raise only when D genes exist for this species (camel/goat have none)
+        # ensure_prefix_to globs prefix* which includes the .fasta, so it returns
+        # True whenever the fasta exists — not a reliable check for BLAST indexes.
+        # Instead check for the .ndb index directly: present = BLAST database built,
+        # absent = either no D genes (camel/goat) or database not yet built.
+        if not Path(str(_path) + ".ndb").exists():
+            # Raise only when the species has D genes (D fasta exists)
             if Path(str(_path) + ".fasta").exists():
                 raise FileNotFoundError(f"D gene directory glob, {directory} not found")
         self._d_gene_dir = _path
