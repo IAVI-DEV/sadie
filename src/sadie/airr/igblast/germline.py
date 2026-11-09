@@ -304,7 +304,9 @@ class GermlineData:
     def d_gene_dir(self, directory: str | Path) -> None:
         _path = Path(directory)
         if not ensure_prefix_to(_path):
-            warnings.warn(f"D gene directory not found for {self.name}", UserWarning)
+            # Raise only when D genes exist for this species (camel/goat have none)
+            if Path(str(_path) + ".fasta").exists():
+                raise FileNotFoundError(f"D gene directory glob, {directory} not found")
         self._d_gene_dir = _path
 
     @property
