@@ -311,6 +311,7 @@ class GermlineData:
             # Raise only when the species has D genes (D fasta exists)
             if Path(str(_path) + ".fasta").exists():
                 raise FileNotFoundError(f"D gene directory glob, {directory} not found")
+            warnings.warn(f"D gene directory not found for {self.name}", UserWarning)
         self._d_gene_dir = _path
 
     @property

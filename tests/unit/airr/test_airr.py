@@ -1,6 +1,7 @@
 """Unit tests for analysis interface."""
 
 import shutil
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -94,6 +95,38 @@ def test_germline_init() -> None:
         gd.aux_path = "/non/existant/path"
     with pytest.warns(UserWarning):
         gd.d_gene_dir = "/non/existant/path"
+
+
+def test_d_gene_dir_with_built_blast_database_is_accepted_without_warning(tmp_path: Path) -> None:
+    germline_data = GermlineData("human")
+    d_gene_prefix = tmp_path / "human_D"
+    for extension in ("fasta", "ndb", "nhr", "nin", "nsq"):
+        Path(f"{d_gene_prefix}.{extension}").touch()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        germline_data.d_gene_dir = d_gene_prefix
+
+    assert germline_data.d_gene_dir == d_gene_prefix
+
+
+def test_d_gene_dir_with_fasta_but_no_blast_database_raises_file_not_found(tmp_path: Path) -> None:
+    germline_data = GermlineData("human")
+    d_gene_prefix = tmp_path / "human_D"
+    Path(f"{d_gene_prefix}.fasta").touch()
+
+    with pytest.raises(FileNotFoundError, match="D gene directory glob"):
+        germline_data.d_gene_dir = d_gene_prefix
+
+
+def test_d_gene_dir_with_nothing_at_prefix_warns_and_keeps_path(tmp_path: Path) -> None:
+    germline_data = GermlineData("camel")
+    d_gene_prefix = tmp_path / "camel_D"
+
+    with pytest.warns(UserWarning, match="D gene directory not found for camel"):
+        germline_data.d_gene_dir = d_gene_prefix
+
+    assert germline_data.d_gene_dir == d_gene_prefix
 
 
 def test_airr_init(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch, caplog) -> None:
