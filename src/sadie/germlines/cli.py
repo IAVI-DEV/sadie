@@ -106,8 +106,8 @@ def get_local_version(provider_name: str) -> Optional[dict]:
     return None
 
 
-def save_version(provider_name: str, version: str, species_count: int):
-    """Save version info after download."""
+def save_version(provider_name: str, version: str, species_count: int, allele_counts: Optional[dict] = None):
+    """Save version info after download; allele_counts holds the per-species, per-file counts the downloader saw."""
     version_path = get_provider_data_dir(provider_name) / VERSION_FILE
     version_path.parent.mkdir(parents=True, exist_ok=True)
     version_path.write_text(
@@ -117,6 +117,7 @@ def save_version(provider_name: str, version: str, species_count: int):
                 "downloaded_at": datetime.now().isoformat(),
                 "provider": provider_name,
                 "species_count": species_count,
+                "allele_counts": allele_counts or {},
             },
             indent=2,
         )
@@ -225,6 +226,7 @@ def populate_provider(
     results = {"status": "success", "downloaded": [], "failed": [], "skipped": list(completed)}
 
     provider = get_provider(provider_name)
+    allele_counts: dict = {}
 
     for sp in remaining:
         progress.update(task, description=f"[cyan]{provider_name}[/cyan]: {sp}")
@@ -235,6 +237,12 @@ def populate_provider(
 
                 downloader = IMGTDownloader(output_dir=provider.data_dir)
                 downloader.download([sp], force=force)
+            elif provider_name == "ogrdb":
+                from .scripts.download_ogrdb import OGRDBDownloader
+
+                downloader = OGRDBDownloader(output_dir=provider.data_dir)
+                downloader.download([sp])
+                allele_counts.update(downloader.allele_counts)
             else:
                 provider.download([sp])
 
@@ -265,7 +273,7 @@ def populate_provider(
     if results["downloaded"] and not results["failed"]:
         clear_checkpoint(provider_name)
         version = get_upstream_version_string(provider_name)
-        save_version(provider_name, version, len(results["downloaded"]))
+        save_version(provider_name, version, len(results["downloaded"]), allele_counts)
 
     results["species_count"] = len(results["downloaded"]) + len(results["skipped"])
     return results
@@ -704,6 +712,13 @@ def status_cmd() -> None:
         table.add_row(prov, version_str, species_count, status_str)
 
     console.print(table)
+
+    from .scripts.validate import check_allele_counts, format_count_report
+
+    rows, findings = check_allele_counts()
+    if rows:
+        console.print("\nOGRDB allele counts per pipeline stage (sadie.germlines.scripts.validate.check_allele_counts)")
+        console.print(format_count_report(rows, findings), markup=False, highlight=False, soft_wrap=True)
 
 
 @germlines.command("rebuild")
