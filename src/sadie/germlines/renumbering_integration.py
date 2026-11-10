@@ -131,6 +131,7 @@ class LocalHMMBuilder:
             hmm, _, _ = self.builder.build_msa(msa, self.background)
 
         # Save HMM to disk
+        hmm.command_line = None  # else written as a COM line holding the invoking script path
         with open(hmm_path, "wb") as f:
             hmm.write(f)
 

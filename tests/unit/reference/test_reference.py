@@ -150,6 +150,36 @@ def test_missing_makeblast_df(tmp_path_factory: pytest.TempPathFactory, fixture_
         write_blast_db(bogus_file, tmpdir.joinpath("missing.fasta"))
 
 
+def test_write_blast_db_titles_database_by_name(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The title is the database name, so the output does not depend on where it was built"""
+    import shutil
+    import subprocess
+
+    from sadie.reference.util import write_blast_db
+
+    commands = []
+    monkeypatch.setattr(shutil, "which", lambda _: "makeblastdb")
+    monkeypatch.setattr(
+        subprocess, "run", lambda cmd, **_: commands.append(cmd) or subprocess.CompletedProcess(cmd, 0, b"", b"")
+    )
+
+    write_blast_db(tmp_path / "input.fasta", tmp_path / "human_V")
+
+    assert commands[0][commands[0].index("-title") + 1] == "human_V"
+
+
+def test_make_hmm_files_writes_no_command_line(tmp_path) -> None:
+    """A built HMM has no COM line, so the output does not depend on where it was built"""
+    ref_class = Reference()
+    ref_class.add_genes("human", "imgt", ["IGHV1-69*01", "IGHJ6*01"])
+    references = References()
+    references.add_reference("human", ref_class)
+
+    references._make_hmm_files(tmp_path)
+
+    assert b"\nCOM " not in (tmp_path / "hmms" / "human_H.hmm").read_bytes()
+
+
 def test_cli(tmp_path_factory: pytest.TempPathFactory):
     """Confirm the CLI works as expected This runs the entire generation pipeline that ships with SADIE and checks that the file structure is exactly the same"""
     # Create runner

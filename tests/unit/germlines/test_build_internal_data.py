@@ -226,3 +226,22 @@ class TestBuildInternalDataScript:
 
         # Check database files exist
         assert (tmp_path / "test_db.nhr").exists() or (tmp_path / "test_db.nin").exists()
+
+    def test_blast_db_title_is_database_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test both germlines makeblastdb callers title the database by name, not by input path."""
+        import shutil
+        import subprocess
+
+        from sadie.germlines.builders.blast import BlastDBBuilder
+        from sadie.germlines.scripts.build_internal_data import build_blast_db
+
+        commands = []
+        monkeypatch.setattr(shutil, "which", lambda _: "makeblastdb")
+        monkeypatch.setattr(
+            subprocess, "run", lambda cmd, **_: commands.append(cmd) or subprocess.CompletedProcess(cmd, 0, "", "")
+        )
+
+        build_blast_db(tmp_path / "combined.fasta", tmp_path / "human_V")
+        BlastDBBuilder()._run_makeblastdb(tmp_path / "mouse_D.fasta", "D")
+
+        assert [cmd[cmd.index("-title") + 1] for cmd in commands] == ["human_V", "mouse_D"]

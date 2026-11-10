@@ -63,6 +63,8 @@ def write_blast_db(
             filename,
             "-out",
             output_db,
+            "-title",  # default title is the full -in path
+            Path(output_db).name,
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

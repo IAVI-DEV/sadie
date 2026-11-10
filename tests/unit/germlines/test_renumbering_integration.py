@@ -184,6 +184,16 @@ class TestLocalHMMBuilder:
         hmm = builder.get_hmm(species="human", chain="H", source="imgt")
         assert hmm is not None, "Should build HMM with explicit source"
 
+    def test_built_hmm_has_no_command_line(self, tmp_path):
+        """Test a built HMM has no COM line, so the output does not depend on where it was built."""
+        builder = LocalHMMBuilder()
+        builder.hmm_dir = tmp_path / "hmms"
+        builder.hmm_dir.mkdir()
+
+        builder._build_hmm("human", "H", "imgt")
+
+        assert b"\nCOM " not in (builder.hmm_dir / "human_H.hmm").read_bytes()
+
 
 class TestGappedAAFallbackTranslation:
     """T035a: Test gapped AA fallback translation when only gapped NT is available."""

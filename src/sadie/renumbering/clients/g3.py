@@ -209,6 +209,7 @@ class G3:
             msa = next(msa_file)
             hmm, _, _ = self.builder.build_msa(msa, self.background)
 
+        hmm.command_line = None  # else written as a COM line holding the invoking script path
         with open(hmm_path, "wb") as output_file:
             hmm.write(output_file)  # type: ignore
 
