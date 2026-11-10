@@ -5,8 +5,6 @@ from __future__ import annotations
 import itertools
 import logging
 import os
-import platform
-import shutil
 import tempfile
 import warnings
 from multiprocessing import cpu_count
@@ -26,6 +24,8 @@ from sadie.airr.airrtable import AirrTable, LinkedAirrTable
 from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.reference.reference import References
+from sadie.utility.binaries import find_binary
+from sadie.utility.exception import BinaryNotFoundError
 
 logger = logging.getLogger("AIRR")
 warnings.filterwarnings("ignore", "Partial codon")
@@ -170,21 +170,9 @@ class Airr:
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-        # check for package executable, then path igblastn in path
-        if not igblast_exe:
-            try:
-                self.executable = self._get_package_igblast_exe()
-            except BadIgBLASTExe:
-                logger.error(f"Could not find igblast executable {igblast_exe}, searching path")
-                try:
-                    # cast this to string for type checking
-                    self.executable = Path(str(shutil.which("igblastn")))
-                except BadIgBLASTExe as e:
-                    logger.error(f"package igblast and path igblast not working: {os.environ['PATH']}")
-                    raise e
-            logger.debug(f"Using igblastn from {self.executable}")
-        else:
-            self.executable = Path(igblast_exe)
+        # bundled igblastn for this OS and chipset, then igblastn on PATH
+        self.executable = Path(igblast_exe) if igblast_exe else self._get_package_igblast_exe()
+        logger.debug(f"Using igblastn from {self.executable}")
 
         # give executable to IgBLASTN
         self.igblast = IgBLASTN(self.executable)
@@ -739,15 +727,14 @@ class Airr:
         return LinkedAirrTable(linked_table)
 
     def _get_package_igblast_exe(self) -> Path:
-        """Get package igblastn"""
+        """Bundled igblastn for this OS and chipset, else igblastn on PATH"""
 
         # this patch allows us to mock a non-existant igblast that is not in package
-        if "IGBLASTN_MONEKY_PATCH" in os.environ:
-            executable = os.environ["IGBLASTN_MONEKY_PATCH"]
-        else:
-            executable = "igblastn"
-        system = platform.system().lower()
-        return Path(os.path.dirname(os.path.abspath(__file__))) / "bin" / system / executable
+        tool = os.environ.get("IGBLASTN_MONEKY_PATCH", "igblastn")
+        try:
+            return find_binary(tool, Path(__file__).parent / "bin")
+        except BinaryNotFoundError as e:
+            raise BadIgBLASTExe(tool, str(e)) from e
 
     @staticmethod
     def get_available_datasets() -> Set[str]:

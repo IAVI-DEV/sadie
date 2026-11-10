@@ -42,6 +42,8 @@ airr_html_source/**
 .gitignore
 notebooks/**
 bin/
+!src/sadie/airr/bin/
+!src/sadie/reference/bin/
 
 # local coverage files
 cov.xml

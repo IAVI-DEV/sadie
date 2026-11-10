@@ -22,7 +22,11 @@ from typing import Optional
 
 from Bio import SeqIO
 
+from sadie.utility.binaries import find_binary
+
 logger = logging.getLogger(__name__)
+
+REFERENCE_BIN_DIR = Path(__file__).parent.parent.parent / "reference" / "bin"
 
 
 # Constants
@@ -186,17 +190,11 @@ class BlastDBBuilder:
         """
         db_name = fasta_path.stem
 
-        # Prefer system PATH (native ARM binary on Apple Silicon), fall back to bundled x86_64
-        import platform
-        import shutil
-
-        system = platform.system().lower()
-        bundled = Path(__file__).parent.parent.parent / "reference" / "bin" / system / "makeblastdb"
-        makeblastdb_bin = shutil.which("makeblastdb") or (str(bundled) if bundled.exists() else "makeblastdb")
+        makeblastdb_bin = find_binary("makeblastdb", REFERENCE_BIN_DIR, path_first=True)
 
         try:
             cmd = [
-                makeblastdb_bin,
+                str(makeblastdb_bin),
                 "-dbtype",
                 "nucl",
                 "-in",

@@ -18,8 +18,6 @@ Usage:
 import argparse
 import logging
 import os
-import platform
-import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Optional
@@ -27,6 +25,8 @@ from typing import List, Optional
 from Bio import SeqIO
 
 from sadie.germlines.builders.imgt_positions import calculate_imgt_v_positions
+from sadie.utility.binaries import find_binary
+from sadie.utility.exception import BinaryNotFoundError
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -113,12 +113,12 @@ def build_blast_db(fasta_path: Path, db_prefix: Path) -> bool:
     bool
         True if successful
     """
-    # Prefer system PATH (native ARM binary on Apple Silicon), fall back to bundled x86_64
-    system = platform.system().lower()
-    bundled = Path(__file__).parent.parent.parent / "reference" / "bin" / system / "makeblastdb"
-    make_blast_db_bin = shutil.which("makeblastdb") or (str(bundled) if bundled.exists() else None)
-    if not make_blast_db_bin:
-        logger.error("makeblastdb not found - ensure BLAST+ is installed")
+    try:
+        make_blast_db_bin = find_binary(
+            "makeblastdb", Path(__file__).parent.parent.parent / "reference" / "bin", path_first=True
+        )
+    except BinaryNotFoundError as e:
+        logger.error(str(e))
         return False
 
     cmd = [

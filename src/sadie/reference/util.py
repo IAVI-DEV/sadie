@@ -1,6 +1,4 @@
 import logging
-import os
-import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,6 +6,8 @@ from typing import List, Union
 
 import pandas as pd
 from Bio.SeqRecord import SeqRecord
+
+from sadie.utility.binaries import find_binary
 
 # reference logger
 logger = logging.getLogger("Reference")
@@ -45,12 +45,11 @@ def write_blast_db(
     Exception
     """
 
-    system = platform.system().lower()
     if isinstance(filename, str):
         filename = Path(filename)
     if not make_blast_db_bin:
-        make_blast_db_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"bin/{system}/makeblastdb")
-    if not shutil.which(make_blast_db_bin):
+        make_blast_db_bin = find_binary("makeblastdb", Path(__file__).parent / "bin")
+    if not shutil.which(str(make_blast_db_bin)):
         raise ValueError(f"Make Blast DB {make_blast_db_bin} cant be found or is not executable")
     make_blast_db = subprocess.run(
         [
