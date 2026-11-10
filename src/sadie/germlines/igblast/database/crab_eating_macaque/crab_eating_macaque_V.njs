@@ -3,7 +3,7 @@
   "dbname": "crab_eating_macaque_V",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/crab_eating_macaque/crab_eating_macaque_V.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/crab_eating_macaque/crab_eating_macaque_V.fasta",
   "number-of-letters": 182966,
   "number-of-sequences": 615,
   "last-updated": "2026-02-20T14:01:00",

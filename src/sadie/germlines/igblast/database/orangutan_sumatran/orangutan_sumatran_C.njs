@@ -3,7 +3,7 @@
   "dbname": "orangutan_sumatran_C",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/orangutan_sumatran/orangutan_sumatran_C.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/orangutan_sumatran/orangutan_sumatran_C.fasta",
   "number-of-letters": 9597,
   "number-of-sequences": 63,
   "last-updated": "2026-02-20T14:02:00",

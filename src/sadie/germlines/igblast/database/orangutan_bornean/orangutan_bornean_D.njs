@@ -3,7 +3,7 @@
   "dbname": "orangutan_bornean_D",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/orangutan_bornean/orangutan_bornean_D.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/orangutan_bornean/orangutan_bornean_D.fasta",
   "number-of-letters": 675,
   "number-of-sequences": 30,
   "last-updated": "2026-02-20T14:01:00",

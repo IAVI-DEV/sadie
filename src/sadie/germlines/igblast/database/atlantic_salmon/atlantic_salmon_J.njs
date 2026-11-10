@@ -3,7 +3,7 @@
   "dbname": "atlantic_salmon_J",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/atlantic_salmon/atlantic_salmon_J.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/atlantic_salmon/atlantic_salmon_J.fasta",
   "number-of-letters": 818,
   "number-of-sequences": 16,
   "last-updated": "2026-02-20T14:01:00",

@@ -3,7 +3,7 @@
   "dbname": "macaque_V",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/macaque/macaque_V.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/macaque/macaque_V.fasta",
   "number-of-letters": 1043313,
   "number-of-sequences": 3540,
   "last-updated": "2026-02-20T14:01:00",

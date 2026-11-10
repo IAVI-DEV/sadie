@@ -3,7 +3,7 @@
   "dbname": "alpaca_D",
   "dbtype": "Nucleotide",
   "db-version": 5,
-  "description": "/Users/tmsincomb/sadie/src/sadie/germlines/igblast/database/alpaca/alpaca_D.fasta",
+  "description": "/opt/sadie-build/sadie/src/sadie/germlines/igblast/database/alpaca/alpaca_D.fasta",
   "number-of-letters": 177,
   "number-of-sequences": 8,
   "last-updated": "2026-02-20T14:01:00",
