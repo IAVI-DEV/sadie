@@ -305,12 +305,15 @@ class GermlineData:
         _path = Path(directory)
         # ensure_prefix_to globs prefix* which includes the .fasta, so it returns
         # True whenever the fasta exists — not a reliable check for BLAST indexes.
-        # Instead check for the .ndb index directly: present = BLAST database built,
-        # absent = either no D genes (camel/goat) or database not yet built.
+        # Check .ndb (BLAST index) directly instead:
+        #   .ndb present              → database ready, no warning
+        #   .fasta present, no .ndb  → database broken, raise
+        #   nothing present           → species has no D genes (camel/goat), warn
         if not Path(str(_path) + ".ndb").exists():
-            # Raise only when the species has D genes (D fasta exists)
             if Path(str(_path) + ".fasta").exists():
                 raise FileNotFoundError(f"D gene directory glob, {directory} not found")
+            else:
+                warnings.warn(f"D gene directory not found for {self.name}", UserWarning)
         self._d_gene_dir = _path
 
     @property

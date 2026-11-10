@@ -128,7 +128,7 @@ def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
     tmpdir = tmp_path_factory.mktemp("test_creation_from_empty_reference")
     ref_class = References()
     output = ref_class.make_airr_database(tmpdir)
-    assert sorted([i.name for i in output.glob("*")]) == sorted([".references_dataframe.csv.gz", "aux_db", "Ig"])
+    assert sorted([i.name for i in output.glob("*")]) == sorted([".references_dataframe.csv.gz", ".allele_name_mapping.json", "aux_db", "Ig"])
 
 
 def test_G3_errors() -> None:
