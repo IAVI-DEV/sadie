@@ -230,6 +230,9 @@ class Airr:
 
         # Properties that will be passed to germline Data Class.
         # Pass theese as private since germline class will handle setter logic
+        from sadie.germlines.providers.base import normalize_species
+
+        reference_name = normalize_species(reference_name)
         self._name = reference_name
         self.scheme = scheme  # Store scheme as instance attribute
         self._database = database

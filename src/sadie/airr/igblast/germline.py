@@ -150,7 +150,9 @@ class GermlineData:
             Default: ["vdjbase", "ogrdb", "imgt", "custom"]
             Example: ["imgt"] for IMGT-only
         """
-        self.name = name
+        from sadie.germlines.providers.base import normalize_species
+
+        name = self.name = normalize_species(name)
         self.providers = providers
 
         # Handle prebuilt database path - skip all other lookups
