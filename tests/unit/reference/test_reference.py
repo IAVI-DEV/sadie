@@ -134,7 +134,7 @@ def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_G3_errors() -> None:
     """Test G3 errors"""
     with pytest.raises(G3Error):
-        Reference(endpoint="https://mock.codes/202")
+        Reference(endpoint="https://mock.codes/202", use_germlines=False)
 
 
 def test_missing_makeblast_df(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture) -> None:
