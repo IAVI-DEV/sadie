@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import logging
+from functools import lru_cache
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -30,6 +32,18 @@ logger = logging.getLogger("Reference")
 
 # column typing from pandas stubs
 Column = Union[Union[int, str], str]
+
+# bundled, normalized G3 collections that replace the retired live G3 API
+_DATA_DIR = Path(__file__).parent / "data"
+_COLLECTION_FILES = {"imgt": "imgt-g3.json.gz", "custom": "custom-g3.json.gz"}
+
+
+@lru_cache(maxsize=None)
+def _load_collection(source: str) -> List[Dict[str, Any]]:
+    """Load a bundled, normalized G3 collection (``imgt`` or ``custom``) from local gzip data."""
+    with gzip.open(_DATA_DIR / _COLLECTION_FILES[source], "rt") as handle:
+        return json.load(handle)
+
 
 # BLAST local ID limit (from makeblastdb -parse_seqids)
 _BLAST_MAX_ID_LEN = 50
