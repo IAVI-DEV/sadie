@@ -61,3 +61,14 @@ def test_stockholm_pairs(fixture_setup):
                 # TODO: fuzzy match?
                 assert numbering_align[-5:] == g3_align[-5:]
                 assert numbering_align[-35:].count("-") == g3_align[-35:].count("-")
+
+
+def test_build_hmm_writes_no_command_line(tmp_path, monkeypatch):
+    g3 = G3()
+    shipped_stockholm = g3.data_folder / "stockholms" / "human_H.sto"
+    monkeypatch.setattr(g3, "build_stockholm", lambda **_: shipped_stockholm)
+    monkeypatch.setattr(g3, "data_folder", tmp_path)
+
+    hmm_path = g3.build_hmm(species="human", chain="H")
+
+    assert b"\nCOM " not in hmm_path.read_bytes()

@@ -203,6 +203,8 @@ class BlastDBBuilder:
                 str(fasta_path.with_suffix("")),
                 "-parse_seqids",
                 "-hash_index",
+                "-title",  # default title is the full -in path
+                db_name,
             ]
 
             logger.debug(f"Running: {' '.join(cmd)}")

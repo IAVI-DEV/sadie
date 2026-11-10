@@ -131,6 +131,8 @@ def build_blast_db(fasta_path: Path, db_prefix: Path) -> bool:
         "-parse_seqids",
         "-out",
         str(db_prefix),
+        "-title",  # default title is the full -in path
+        db_prefix.name,
     ]
 
     try:

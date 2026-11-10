@@ -889,6 +889,7 @@ class References:
 
                     # Save HMM to file
                     hmm_path = hmms_dir / f"{name}_{chain}.hmm"
+                    hmm.command_line = None  # else written as a COM line holding the invoking script path
                     with open(hmm_path, "wb") as f:
                         hmm.write(f)
 
