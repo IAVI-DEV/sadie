@@ -281,6 +281,8 @@ class OGRDBDownloader(OGRDBApiClient):
         self.output_dir = Path(output_dir)
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # species dir -> file stem -> {"api": alleles in the published API sets, "written": records written}
+        self.allele_counts: Dict[str, Dict[str, Dict[str, int]]] = {}
 
     def download(self, species: List[str], force: bool = False) -> None:
         """
@@ -429,6 +431,9 @@ class OGRDBDownloader(OGRDBApiClient):
                     merged_ungapped = dict(archive_ungapped)  # Start with archive
                     merged_gapped = dict(archive_gapped)
                     api_added = 0
+                    counts = self.allele_counts.setdefault(canonical_sp, {}).setdefault(f"IG{chain}{segment}", {})
+                    counts["api"] = counts.get("api", 0) + len(api_ungapped)
+                    counts["written"] = len(set(merged_ungapped) | {n for n, _ in api_ungapped})
 
                     for name, seq in api_ungapped:
                         if name not in merged_ungapped:
@@ -1377,6 +1382,7 @@ class OGRDBDownloader(OGRDBApiClient):
 
                     if ungapped_count > 0:
                         logger.info(f"Wrote {ungapped_count} sequences to {ungapped_path}")
+                    self.allele_counts.setdefault(species, {})[f"IG{chain}{segment}"] = {"written": ungapped_count}
 
                     # Write gapped FASTA (if any gapped sequences)
                     gapped_seqs = [(n, g) for n, u, g in unique_seqs if g]
