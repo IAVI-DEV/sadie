@@ -720,10 +720,12 @@ class References:
                 common_df["gene"].str.split("|").str.get(-1).str.split("-").str.get(0).str[0:4].str[::-1].str[:2]
             )
 
-            # write out the aux file with derived columns
-            common_df[["gene", "reading_frame", "marker", "end", "left_over"]].to_csv(
-                aux_file_name, sep="\t", header=None, index=False
+            # write out the aux file with derived columns; drop duplicate gene names keeping
+            # the first occurrence (sources are added in priority order, so first = highest priority)
+            aux_out = common_df[["gene", "reading_frame", "marker", "end", "left_over"]].drop_duplicates(
+                subset=["gene"], keep="first"
             )
+            aux_out.to_csv(aux_file_name, sep="\t", header=None, index=False)
             logger.info(f"Wrote aux to {aux_file_name}")
 
     def _make_internal_annotation_file(self, outpath: Path) -> None:
