@@ -111,7 +111,7 @@ def get_igl_aa(row: pd.Series) -> Union[str, float]:  # type: ignore
     # if the mature and cdr3 are not the same size
     # this will happen on non-productive
     if len(cdr3_j_mature) != len(cdr3_j_germline):
-        logger.debug(f"{row.name} - strange iGL")
+        logger.debug(f"{row.sequence_id} - strange iGL")
         return np.nan
 
     iGL_cdr3 = ""
@@ -125,7 +125,7 @@ def get_igl_aa(row: pd.Series) -> Union[str, float]:  # type: ignore
             else:
                 if mature == "*" or mature == "-":
                     # germline is X but mature is * or - so this should be non functional?
-                    raise ValueError(f"{row.name} - sequence has a non functional CDR3")
+                    raise ValueError(f"{row.sequence_id} - sequence has a non functional CDR3")
                 iGL_cdr3 += mature
             continue
         iGL_cdr3 += germline
@@ -135,7 +135,7 @@ def get_igl_aa(row: pd.Series) -> Union[str, float]:  # type: ignore
     if "*" in full_igl:
         # Stop codons (*) can appear in sequences, especially in non-productive sequences
         # Log as debug instead of raising an error
-        logger.debug(f"{row.name} - iGL contains stop codon (*), likely non-productive sequence")
+        logger.debug(f"{row.sequence_id} - iGL contains stop codon (*), likely non-productive sequence")
         return np.nan
     return full_igl
 
@@ -189,8 +189,8 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
         # if germline == sequence, take the germline codon
         if germline_aa == sequence_aa:
             if sequence_index >= len(sequence_alignment_codons):
-                logger.debug(
-                    f"{row.name}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
+                logger.warning(
+                    f"{row.sequence_id}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
                     f"(len={len(sequence_alignment_codons)}), germline_aa=sequence_aa={germline_aa}"
                 )
                 return np.nan
@@ -204,8 +204,8 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
             if germline_index == len(germline_alignment_aa) - 1:
                 # we are at the end so pad it with sequence
                 if sequence_index >= len(sequence_alignment_codons):
-                    logger.debug(
-                        f"{row.name}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
+                    logger.warning(
+                        f"{row.sequence_id}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
                         f"(len={len(sequence_alignment_codons)}), germline_aa='-'"
                     )
                     return np.nan
@@ -219,8 +219,8 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
         # if sequence is - (a deletion), increment the germline codon and take it
         elif sequence_aa == "-":
             if germline_index >= len(germline_alignment_codons):
-                logger.debug(
-                    f"{row.name}: iGL_nt boundary mismatch at germline_index={germline_index} "
+                logger.warning(
+                    f"{row.sequence_id}: iGL_nt boundary mismatch at germline_index={germline_index} "
                     f"(len={len(germline_alignment_codons)}), sequence_aa='-'"
                 )
                 return np.nan
@@ -231,8 +231,8 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
             # if gerline is X or *, take mature codon
             if germline_aa == "X" or germline_aa == "*":
                 if sequence_index >= len(sequence_alignment_codons):
-                    logger.debug(
-                        f"{row.name}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
+                    logger.warning(
+                        f"{row.sequence_id}: iGL_nt boundary mismatch at sequence_index={sequence_index} "
                         f"(len={len(sequence_alignment_codons)}), germline_aa='{germline_aa}'"
                     )
                     return np.nan
@@ -241,8 +241,8 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
             # else take germline
             else:
                 if germline_index >= len(germline_alignment_codons):
-                    logger.debug(
-                        f"{row.name}: iGL_nt boundary mismatch at germline_index={germline_index} "
+                    logger.warning(
+                        f"{row.sequence_id}: iGL_nt boundary mismatch at germline_index={germline_index} "
                         f"(len={len(germline_alignment_codons)}), germline_aa='{germline_aa}' sequence_aa='{sequence_aa}'"
                     )
                     return np.nan
@@ -272,14 +272,14 @@ def get_igl_nt(row: pd.Series) -> str | float:  # type: ignore
             if row["productive"]:
                 if row["complete_vdj"]:
                     logger.warning(
-                        f"{row.name} - iGL_aa {row['iGL_aa']} != contrived {Seq(germline_igl).translate()}, will have nan for iGL_nt"
+                        f"{row.sequence_id} - iGL_aa {row['iGL_aa']} != contrived {Seq(germline_igl).translate()}, will have nan for iGL_nt"
                     )
                     warnings.warn(
-                        f"{row.name} - iGL_aa {row['iGL_aa']} != contrived {Seq(germline_igl).translate()}", UserWarning
+                        f"{row.sequence_id} - iGL_aa {row['iGL_aa']} != contrived {Seq(germline_igl).translate()}", UserWarning
                     )
                 else:
                     logger.warning(
-                        f"{row.name} - is productive, but has incomplete vdj with a v_germline_start at {row['v_germline_start']} and j_germline_end at {row['j_germline_end']}, consider running methods.run_termini_buffers"
+                        f"{row.sequence_id} - is productive, but has incomplete vdj with a v_germline_start at {row['v_germline_start']} and j_germline_end at {row['j_germline_end']}, consider running methods.run_termini_buffers"
                     )
                 return np.nan
     return germline_igl
