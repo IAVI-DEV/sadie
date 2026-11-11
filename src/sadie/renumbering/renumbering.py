@@ -98,7 +98,10 @@ class Renumbering:
         self.threshold_bit = threshold
 
         self.hmmer = HMMER(
-            species=self.allowed_species, chains=self.allowed_chains, use_numbering_hmms=use_numbering_hmms
+            species=self.allowed_species,
+            chains=self.allowed_chains,
+            use_numbering_hmms=use_numbering_hmms,
+            validate_pairs=False,
         )
         self.numbering = Numbering()
 

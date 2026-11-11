@@ -260,8 +260,9 @@ class HMMER:
                         continue
                 except Exception:
                     pass
-            # Check legacy Numbering paths
-            if (species, chain) in self.numbering.species_chain_to_paths:
+            # Check legacy Numbering paths — apply reverse alias so "macaque" finds "rhesus" entries
+            numbering_lookup = {v: k for k, v in _HMM_SPECIES_ALIASES.items()}.get(species, species)
+            if (numbering_lookup, chain) in self.numbering.species_chain_to_paths:
                 supported.append(chain)
         return supported
 
