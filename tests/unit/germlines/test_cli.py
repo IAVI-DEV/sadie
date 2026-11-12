@@ -5,6 +5,7 @@ Tests the `sadie germlines populate` and `sadie germlines status` CLI commands.
 """
 
 import json
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -217,3 +218,17 @@ class TestDataValidation:
 
             result = validate_provider_data("imgt")
             assert result is False
+
+
+class TestImgtGenedbHeader:
+    def test_parse_genedb_header_rejects_sheep_d_region_record_matching_heavy_constant_pattern(self):
+        from sadie.germlines.scripts.download_imgt import IMGTDownloader
+
+        sheep_ighd2_header = (
+            "NW_014639781|IGHD2*01|Ovis aries_Texel|F|D-REGION|16245..16284|40 nt|1| | | | |40+0=40| | |"
+        )
+        heavy_constant_pattern = {"H": re.compile(r"^IGH[ADEGM]", re.IGNORECASE)}
+
+        parsed = IMGTDownloader()._parse_genedb_header(sheep_ighd2_header, {"Ovis aries"}, heavy_constant_pattern)
+
+        assert parsed is None

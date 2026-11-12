@@ -54,6 +54,18 @@ GGTACAACTGGAACGAC
         genes = imgt_provider.fetch_genes("human", "V", "H")
         assert len(genes) >= 2
 
+    def test_imgt_provider_drops_d_segment_names_from_constant_source(self, integration_env):
+        from sadie.germlines.providers.imgt import IMGTProvider
+
+        imgt_dir = integration_env["sources"] / "imgt"
+        (imgt_dir / "human" / "IGHC.fasta").write_text(
+            ">IGHD1-1*01\nGGTACAACTGGAACGAC\n>IGHD*01\nGCACCCACCAAGGCTCCGGATGTGTTCCCC\n"
+        )
+
+        genes = IMGTProvider(data_dir=imgt_dir).fetch_genes("human", "C", "H")
+
+        assert [gene.name for gene in genes] == ["IGHD*01"]
+
     def test_custom_sequence_takes_priority(self, integration_env):
         from sadie.germlines.providers.custom import CustomProvider
         from sadie.germlines.providers.imgt import IMGTProvider
