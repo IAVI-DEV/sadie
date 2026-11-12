@@ -15,6 +15,7 @@ Phase 10 Test Coverage:
 """
 
 import os
+import re
 from pathlib import Path
 from typing import List, Set
 
@@ -43,6 +44,21 @@ class TestSpeciesDataAvailability:
 
         # We should have at least human + mouse + additional species
         assert len(species_with_data) >= 20, f"Should have data for at least 20 species, found {len(species_with_data)}"
+
+    def test_committed_constant_references_hold_no_d_segment_records(self, committed_germlines_dir):
+        constant_fastas = [
+            *committed_germlines_dir.glob("sources/imgt/*/IG[HKL]C.fasta"),
+            *committed_germlines_dir.glob("normalized/*/*/IG[HKL]C.fasta"),
+            *committed_germlines_dir.glob("igblast/database/*/*_C.fasta"),
+        ]
+        d_segment_headers = [
+            f"{fasta.relative_to(committed_germlines_dir)} {line}"
+            for fasta in sorted(constant_fastas)
+            for line in fasta.read_text().splitlines()
+            if re.match(r">IGHD\d", line)
+        ]
+
+        assert d_segment_headers == []
 
     def test_normalized_data_exists(self):
         """Verify normalized data exists for processed species."""
