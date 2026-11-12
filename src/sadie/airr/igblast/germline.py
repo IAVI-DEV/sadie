@@ -152,7 +152,7 @@ class GermlineData:
         """
         from sadie.germlines.providers.base import normalize_species
 
-        name = self.name = normalize_species(name)
+        self.name = name
         self.providers = providers
 
         # Handle prebuilt database path - skip all other lookups
@@ -184,6 +184,7 @@ class GermlineData:
             self.igdata = self.base_dir / "Ig"
         elif _use_germlines_module():
             # Use germlines module paths (new default)
+            name = self.name = normalize_species(name)
             germlines_igblast = _get_germlines_igblast_dir()
             internal_data_species = germlines_igblast / "Ig" / "internal_data" / name
             database_species = germlines_igblast / "database" / name
@@ -218,6 +219,7 @@ class GermlineData:
                 )
         else:
             # Legacy G3 paths (deprecated, for backwards compatibility)
+            name = self.name = normalize_species(name)
             self._use_legacy_paths(name, receptor, scheme)
 
     def _use_legacy_paths(self, name: str, receptor: str, scheme: str) -> None:

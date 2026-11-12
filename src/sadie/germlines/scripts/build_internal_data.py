@@ -12,7 +12,7 @@ IgBLAST expects internal_data/{species}/{species}_V to contain ALL gene segments
 (V, D, J, C) for proper annotation.
 
 Usage:
-    python build_internal_data.py mouse rhesus_macaque chicken
+    python build_internal_data.py mouse macaque chicken
 """
 
 import argparse

@@ -513,6 +513,23 @@ def test_runtime_reference(fixture_setup: SadieFixture) -> None:
     airr_table = airr_api.run_fasta(fixture_setup.get_OAS_liable_file())
 
 
+def test_custom_reference_named_rhesus_macaque_keeps_that_name_in_each_explicit_handle(tmp_path: Path) -> None:
+    reference = Reference()
+    for gene in ["IGHV1-69*01", "IGHD1-1*01", "IGHJ4*01"]:
+        reference.add_gene({"species": "macaque", "gene": gene, "source": "imgt"})
+    references = References()
+    references.add_reference("rhesus_macaque", reference)
+    database = references.make_airr_database(tmp_path / "database")
+
+    assert Airr("rhesus_macaque", references=references, temp_directory=tmp_path).name == "rhesus_macaque"
+    assert Airr("rhesus_macaque", database=database, temp_directory=tmp_path).name == "rhesus_macaque"
+    assert GermlineData("rhesus_macaque", database_dir=database, prebuilt=True).name == "rhesus_macaque"
+
+
+def test_airr_with_bundled_rhesus_macaque_opens_the_macaque_dataset(tmp_path: Path) -> None:
+    assert Airr("rhesus_macaque", temp_directory=tmp_path).name == "macaque"
+
+
 def test_airrtable_init(fixture_setup: SadieFixture) -> None:
     test_tsv = fixture_setup.get_dog_airrtable()
     airr_table = AirrTable.read_airr(test_tsv)

@@ -231,13 +231,6 @@ organisms:
     - D
     - J
     - C
-  rhesus_macaque:
-    aux_file: ../aux_db/rhesus_macaque_gl.aux
-    database_path: ../database/rhesus_macaque
-    segments:
-    - V
-    - D
-    - J
   sheep:
     aux_file: ../aux_db/sheep_gl.aux
     database_path: ../database/sheep

@@ -76,3 +76,23 @@ class TestGermlineDataLegacyAPI:
         finally:
             if original is not None:
                 os.environ["SADIE_USE_GERMLINES_MODULE"] = original
+
+    def test_germline_data_legacy_mode_with_rhesus_macaque_uses_macaque_paths(self, monkeypatch):
+        from sadie.airr.igblast.germline import GermlineData
+
+        monkeypatch.setenv("SADIE_USE_GERMLINES_MODULE", "false")
+        rhesus_macaque_data = GermlineData("rhesus_macaque")
+        macaque_data = GermlineData("macaque")
+
+        assert rhesus_macaque_data.blast_dir == macaque_data.blast_dir
+        assert rhesus_macaque_data.aux_path == macaque_data.aux_path
+
+    def test_germline_data_module_mode_with_rhesus_macaque_uses_macaque_paths(self, monkeypatch):
+        from sadie.airr.igblast.germline import GermlineData
+
+        monkeypatch.setenv("SADIE_USE_GERMLINES_MODULE", "true")
+        rhesus_macaque_data = GermlineData("rhesus_macaque")
+        macaque_data = GermlineData("macaque")
+
+        assert rhesus_macaque_data.blast_dir == macaque_data.blast_dir
+        assert rhesus_macaque_data.aux_path == macaque_data.aux_path
