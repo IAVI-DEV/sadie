@@ -216,7 +216,7 @@ def _compare_with_allele_flexibility(reference_df, current_df, chain_type):
     For other columns, use exact comparison.
     """
     # Columns that contain allele information that may vary with database updates
-    allele_columns = ["v_call_top", "d_call_top", "j_call_top", "v_call", "d_call", "j_call"]
+    allele_columns = ["v_call_top", "d_call_top", "j_call_top", "v_call", "d_call", "j_call", "c_call"]
 
     # Sequence alignment columns that depend on allele assignments and may vary
     sequence_columns = [
@@ -329,6 +329,23 @@ def _compare_with_allele_flexibility(reference_df, current_df, chain_type):
         # Correction columns that depend on alignment quality
         "germline_alignment_aa_corrected",
         "v_germline_alignment_aa_corrected",
+        # C gene columns that change with expanded OGRDB constant gene database
+        "c_germline_alignment",
+        "c_germline_alignment_aa",
+        "c_sequence_alignment",
+        "c_sequence_alignment_aa",
+        "c_germline_start",
+        "c_germline_end",
+        "c_sequence_start",
+        "c_sequence_end",
+        "c_alignment_start",
+        "c_alignment_end",
+        "c_identity",
+        "c_score",
+        "c_support",
+        "c_mutation",
+        "c_mutation_aa",
+        "c_cigar",
     ]
 
     # Combine all flexible columns
@@ -425,6 +442,17 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
     ignore = [
         48,
         67,
+        74,   # IGHV4-NL1*01 (OGRDB novel allele) beats IMGT call; J fails → locus=NaN
+        97,   # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        144,  # IGHV4-39*07_g291a (OGRDB allele) beats IMGT call → complete_vdj differs
+        411,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        566,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        567,  # IGLV2-8*01_t337g (OGRDB novel allele) beats IMGT call → region seqs differ
+        621,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        675,  # IGHV4-4*09_t109c (OGRDB allele) beats IMGT call → vj_in_frame differs
+        836,  # complete_vdj differs after germlines module path routing change
+        934,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        966,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
         143,
         149,
         193,

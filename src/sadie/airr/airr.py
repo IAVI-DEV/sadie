@@ -5,8 +5,6 @@ from __future__ import annotations
 import itertools
 import logging
 import os
-import platform
-import shutil
 import tempfile
 import warnings
 from multiprocessing import cpu_count
@@ -26,6 +24,8 @@ from sadie.airr.airrtable import AirrTable, LinkedAirrTable
 from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.reference.reference import References
+from sadie.utility.binaries import find_binary
+from sadie.utility.exception import BinaryNotFoundError
 
 logger = logging.getLogger("AIRR")
 warnings.filterwarnings("ignore", "Partial codon")
@@ -86,6 +86,7 @@ class Airr:
         scheme: str = "imgt",
         references: Optional[References] = None,
         debug: bool = False,
+        database: Optional[str | Path] = None,
         # Additional IgBLAST parameters with SADIE defaults
         num_alignments_v: int = 3,
         num_alignments_d: int = 3,
@@ -169,21 +170,9 @@ class Airr:
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-        # check for package executable, then path igblastn in path
-        if not igblast_exe:
-            try:
-                self.executable = self._get_package_igblast_exe()
-            except BadIgBLASTExe:
-                logger.error(f"Could not find igblast executable {igblast_exe}, searching path")
-                try:
-                    # cast this to string for type checking
-                    self.executable = Path(str(shutil.which("igblastn")))
-                except BadIgBLASTExe as e:
-                    logger.error(f"package igblast and path igblast not working: {os.environ['PATH']}")
-                    raise e
-            logger.debug(f"Using igblastn from {self.executable}")
-        else:
-            self.executable = Path(igblast_exe)
+        # bundled igblastn for this OS and chipset, then igblastn on PATH
+        self.executable = Path(igblast_exe) if igblast_exe else self._get_package_igblast_exe()
+        logger.debug(f"Using igblastn from {self.executable}")
 
         # give executable to IgBLASTN
         self.igblast = IgBLASTN(self.executable)
@@ -241,9 +230,15 @@ class Airr:
 
         # Properties that will be passed to germline Data Class.
         # Pass theese as private since germline class will handle setter logic
+        from sadie.germlines.providers.base import normalize_species
+
         self._name = reference_name
         self.scheme = scheme  # Store scheme as instance attribute
-        if isinstance(references, References):
+        self._database = database
+        if database is not None:
+            # Prebuilt database path: skip References lookup entirely
+            self.germline_data = GermlineData(reference_name, receptor, database)
+        elif isinstance(references, References):
             _custom_avail = list(references.get_dataframe()["name"].unique())
             if self.name not in _custom_avail:
                 raise BadDataSet(self.name, _custom_avail)
@@ -254,6 +249,7 @@ class Airr:
             # set the germline database
             self.germline_data = GermlineData(reference_name, receptor, out_data_path)
         else:
+            reference_name = normalize_species(reference_name)
             self._name = reference_name
 
             # Check if this requested dataset is available
@@ -572,6 +568,7 @@ class Airr:
                                 adaptable=False,
                                 references=self.references,
                                 debug=self.debug,
+                                database=self._database,
                                 # Pass through IgBLAST parameters
                                 num_alignments_v=self.num_alignments_v,
                                 num_alignments_d=self.num_alignments_d,
@@ -614,6 +611,7 @@ class Airr:
                             adaptable=False,
                             references=self.references,
                             debug=self.debug,
+                            database=self._database,
                             # Pass through IgBLAST parameters
                             num_alignments_v=self.num_alignments_v,
                             num_alignments_d=self.num_alignments_d,
@@ -732,15 +730,14 @@ class Airr:
         return LinkedAirrTable(linked_table)
 
     def _get_package_igblast_exe(self) -> Path:
-        """Get package igblastn"""
+        """Bundled igblastn for this OS and chipset, else igblastn on PATH"""
 
         # this patch allows us to mock a non-existant igblast that is not in package
-        if "IGBLASTN_MONEKY_PATCH" in os.environ:
-            executable = os.environ["IGBLASTN_MONEKY_PATCH"]
-        else:
-            executable = "igblastn"
-        system = platform.system().lower()
-        return Path(os.path.dirname(os.path.abspath(__file__))) / "bin" / system / executable
+        tool = os.environ.get("IGBLASTN_MONEKY_PATCH", "igblastn")
+        try:
+            return find_binary(tool, Path(__file__).parent / "bin")
+        except BinaryNotFoundError as e:
+            raise BadIgBLASTExe(tool, str(e)) from e
 
     @staticmethod
     def get_available_datasets() -> Set[str]:

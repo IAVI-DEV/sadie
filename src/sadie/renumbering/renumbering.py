@@ -69,7 +69,7 @@ class Renumbering:
             assign germline; falls back on hardcoded dict in germlines.py, by default True
         allowed_species : list, optional
             query sequnce only hits HMMs build with the species requested, by default ["human"]
-            options: human, mouse, rat, rabbit, rhesus, pig, alpaca, dog, cat
+            options: human, mouse, rat, rabbit, macaque, pig, alpaca, dog, cat
         threshold : int, optional
             HMMER specific bitscore threshold determined by the best domain hit found, by default 80
             notes: anything over 160 is a likely position and anything below 80 is a likely false positive hit. Anything inbetween is open to interpretation.
@@ -98,7 +98,10 @@ class Renumbering:
         self.threshold_bit = threshold
 
         self.hmmer = HMMER(
-            species=self.allowed_species, chains=self.allowed_chains, use_numbering_hmms=use_numbering_hmms
+            species=self.allowed_species,
+            chains=self.allowed_chains,
+            use_numbering_hmms=use_numbering_hmms,
+            validate_pairs=False,
         )
         self.numbering = Numbering()
 
@@ -237,7 +240,7 @@ class Renumbering:
         Parameters
         ----------
         allowed_species: list,
-            ["human", "mouse", "rat", "rabbit", "rhesus ", "pig", "alpaca"],
+            ["human", "mouse", "rat", "rabbit", "macaque", "pig", "alpaca"],
         """
         _allowed_species = self.get_allowed_species()
         _diff = list(set(map(lambda x: x.lower(), allowed_species)).difference(_allowed_species))
@@ -259,7 +262,7 @@ class Renumbering:
             "mouse",
             "rat",
             "rabbit",
-            "rhesus",
+            "macaque",
             "pig",
             "alpaca",
             "dog",
