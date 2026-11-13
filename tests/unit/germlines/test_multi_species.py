@@ -253,7 +253,7 @@ class TestAirrAnnotationRhesus:
     @pytest.fixture(autouse=True)
     def check_infrastructure(self):
         """Check if rhesus IgBLAST internal_data exists."""
-        internal_data = GERMLINES_ROOT / "igblast" / "Ig" / "internal_data" / "rhesus_macaque"
+        internal_data = GERMLINES_ROOT / "igblast" / "Ig" / "internal_data" / "macaque"
         if not internal_data.exists():
             pytest.skip(
                 f"Rhesus AIRR annotation requires IgBLAST internal_data at {internal_data}. "
@@ -359,7 +359,7 @@ class TestRenumberingRabbit:
 class TestMultiSpeciesBatch:
     """T095: Test batch processing across multiple species."""
 
-    SPECIES_WITH_VH_DATA = ["human", "mouse", "rhesus_macaque", "dog", "rabbit"]
+    SPECIES_WITH_VH_DATA = ["human", "mouse", "macaque", "dog", "rabbit"]
 
     def test_germline_manager_multi_species(self):
         """Test GermlineManager works with multiple species."""
@@ -387,3 +387,19 @@ class TestMultiSpeciesBatch:
 
         species_count = len(config.get("organisms", {}))
         assert species_count >= 29, f"Should have at least 29 species, found {species_count}"
+
+
+def test_germlines_data_ships_no_rhesus_macaque_path():
+    assert not list(GERMLINES_ROOT.rglob("*rhesus_macaque*"))
+
+
+def test_references_mixing_imgt_and_ogrdb_macaque_genes_keep_plain_gene_labels():
+    from sadie.reference import Reference, References
+
+    reference = Reference()
+    reference.add_gene({"species": "macaque", "gene": "IGHV1-69*01", "source": "imgt"})
+    reference.add_gene({"species": "macaque", "gene": "IGHV1-JIGE*01", "source": "ogrdb"})
+    references = References()
+    references.add_reference("macaque", reference)
+
+    assert sorted(references.get_dataframe()["gene"]) == ["IGHV1-69*01", "IGHV1-JIGE*01"]

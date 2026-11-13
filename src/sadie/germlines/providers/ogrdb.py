@@ -34,12 +34,6 @@ from .base import GermlineProvider
 
 logger = logging.getLogger(__name__)
 
-# Aliases for consistent naming across providers
-# Both "macaque" and "rhesus_macaque" should work
-SPECIES_ALIASES = {
-    "macaque": "rhesus_macaque",  # Normalize to OGRDB canonical name
-}
-
 
 class OGRDBProvider(GermlineProvider):
     """
@@ -89,10 +83,6 @@ class OGRDBProvider(GermlineProvider):
         super().__init__(data_dir)
         self.name = "ogrdb"
 
-    def _normalize_species(self, species: str) -> str:
-        """Normalize species name using aliases."""
-        return SPECIES_ALIASES.get(species, species)
-
     def fetch_genes(self, species: str, segment: str, chain: str) -> List[GermlineGene]:
         """
         Fetch OGRDB genes from downloaded FASTA files.
@@ -111,8 +101,6 @@ class OGRDBProvider(GermlineProvider):
         List[GermlineGene]
             OGRDB genes
         """
-        # Normalize species name (e.g., macaque -> rhesus_macaque)
-        species = self._normalize_species(species)
         fasta_path = self.get_fasta_path(species, segment, chain)
         gapped_path = self._get_gapped_fasta_path(species, segment, chain)
 
@@ -337,8 +325,6 @@ class OGRDBProvider(GermlineProvider):
         bool
             True if data available
         """
-        # Normalize species name (e.g., macaque -> rhesus_macaque)
-        species = self._normalize_species(species)
         species_dir = self.data_dir / species
 
         if not species_dir.exists():

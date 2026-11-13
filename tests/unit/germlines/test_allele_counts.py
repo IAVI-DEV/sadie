@@ -108,5 +108,5 @@ def test_check_allele_counts_on_committed_ogrdb_species_reports_every_file():
 
     print(format_count_report(rows, findings))
 
-    assert {row["species"] for row in rows} >= {"human", "mouse"}
+    assert {row["species"] for row in rows} >= {"human", "macaque", "mouse"}
     assert all(row["src"] == row["kept"] + row["by_higher"] + row["collapsed"] for row in rows)

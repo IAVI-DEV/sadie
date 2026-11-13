@@ -85,7 +85,7 @@ class VDJbaseProvider(GermlineProvider):
         │   ├── IGKJ.fasta
         │   ├── IGLV.fasta
         │   └── IGLJ.fasta
-        ├── rhesus_macaque/
+        ├── macaque/
         │   └── ...
         └── mouse/
             └── ...
@@ -97,7 +97,7 @@ class VDJbaseProvider(GermlineProvider):
     >>> print(f"Found {len(genes)} VDJbase IGHV genes")
 
     >>> # Download data from VDJbase API
-    >>> provider.download(["human", "rhesus_macaque"])
+    >>> provider.download(["human", "macaque"])
     """
 
     def __init__(self, data_dir: Optional[Path] = None, template_dir: Optional[Path] = None):
@@ -165,7 +165,7 @@ class VDJbaseProvider(GermlineProvider):
         Parameters
         ----------
         species : str
-            Species name (e.g., "human", "rhesus_macaque")
+            Species name (e.g., "human", "macaque")
         segment : str
             Segment type: "V", "D", or "J"
         chain : str
@@ -410,7 +410,7 @@ class VDJbaseProvider(GermlineProvider):
         Parameters
         ----------
         species : List[str]
-            Species to download (e.g., ["human", "rhesus_macaque"])
+            Species to download (e.g., ["human", "macaque"])
         """
         start_time = time.time()
 

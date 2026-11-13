@@ -78,22 +78,14 @@ ZENODO_API_URL = "https://zenodo.org/api/records"
 SPECIES_MAP = {
     "Homo sapiens": "human",
     "Mus musculus": "mouse",
-    "Macaca mulatta": "rhesus_macaque",
+    "Macaca mulatta": "macaque",
     "Rattus norvegicus": "rat",
     "Canis lupus familiaris": "dog",
     "Oryctolagus cuniculus": "rabbit",
     # Add more as needed
 }
 
-# Aliases for consistent naming across providers
-# Both "macaque" and "rhesus_macaque" should work
-SPECIES_ALIASES = {
-    "macaque": "rhesus_macaque",  # Normalize to canonical name for OGRDB
-}
-
 SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
-# Add alias reverse mappings
-SPECIES_MAP_REVERSE["macaque"] = "Macaca mulatta"
 
 # Segment type detection from gene names
 SEGMENT_PATTERNS = {
@@ -119,7 +111,7 @@ OGRDB_API_BASE_URL = "https://ogrdb.airr-community.org/api_v2"
 TAXONOMY_ID_MAP = {
     "9606": "human",
     "10090": "mouse",
-    "9544": "rhesus_macaque",
+    "9544": "macaque",
 }
 TAXONOMY_ID_MAP_REVERSE = {v: k for k, v in TAXONOMY_ID_MAP.items()}
 
@@ -216,6 +208,7 @@ class OGRDBApiClient:
             FASTA formatted sequences
         """
         from urllib.parse import quote
+
         format_type = "gapped" if gapped else "ungapped"
         encoded_id = quote(germline_set_id, safe=".")
         return self._get(f"/germline/set/{encoded_id}/{version}/{format_type}")
@@ -350,14 +343,12 @@ class OGRDBDownloader(OGRDBApiClient):
         logger.info("Checking API for missing alleles...")
 
         for sp in species:
-            # Normalize alias (e.g. macaque -> rhesus_macaque) before taxonomy lookup
-            canonical_sp = SPECIES_ALIASES.get(sp, sp)
-            taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(canonical_sp) or TAXONOMY_ID_MAP_REVERSE.get(sp)
+            taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(sp)
             if not taxonomy_id:
                 logger.debug(f"No taxonomy ID for {sp}, skipping API supplement")
                 continue
 
-            species_dir = self.output_dir / canonical_sp
+            species_dir = self.output_dir / sp
             if not species_dir.exists():
                 species_dir.mkdir(parents=True, exist_ok=True)
 
@@ -431,7 +422,7 @@ class OGRDBDownloader(OGRDBApiClient):
                     merged_ungapped = dict(archive_ungapped)  # Start with archive
                     merged_gapped = dict(archive_gapped)
                     api_added = 0
-                    counts = self.allele_counts.setdefault(canonical_sp, {}).setdefault(f"IG{chain}{segment}", {})
+                    counts = self.allele_counts.setdefault(sp, {}).setdefault(f"IG{chain}{segment}", {})
                     counts["api"] = counts.get("api", 0) + len(api_ungapped)
                     counts["written"] = len(set(merged_ungapped) | {n for n, _ in api_ungapped})
 
@@ -577,6 +568,7 @@ class OGRDBDownloader(OGRDBApiClient):
         logger.info(f"URL: {download_url}")
 
         try:
+
             def progress_hook(count, block_size, total_size):
                 if total_size > 0:
                     percent = int(count * block_size * 100 / total_size)
