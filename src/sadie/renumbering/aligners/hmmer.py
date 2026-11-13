@@ -467,7 +467,7 @@ class HMMER:
                         "query_seq": ali.target_sequence.upper(),
                         "query_start": ali.target_from - 1,  # target seq starts on pythonic index
                         "query_end": ali.target_to,
-                        "species": hmm_name.split("_")[0],
+                        "species": _HMM_SPECIES_ALIASES.get(hmm_name.split("_")[0], hmm_name.split("_")[0]),
                         "chain_type": hmm_name.split("_")[1],
                     }
                 )

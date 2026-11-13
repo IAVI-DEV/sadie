@@ -263,6 +263,7 @@ class Renumbering:
             "rat",
             "rabbit",
             "rhesus",
+            "macaque",  # canonical slug; maps to rhesus HMMs internally
             "pig",
             "alpaca",
             "dog",
@@ -336,13 +337,17 @@ class Renumbering:
             limit=1,
             for_numbering=True,
         )
+        # Translate canonical slugs to the names used in the germlines data
+        # (e.g. "macaque" → "rhesus" which is the key in numbering/germlines.py)
+        _GERMLINE_SLUG_MAP = {"macaque": "rhesus"}
+        germline_species = [_GERMLINE_SLUG_MAP.get(sp, sp) for sp in self.allowed_species]
         _numbered, _alignment_details, _hit_tables = self.numbering.number_sequences_from_alignment(
             _sequences,
             _alignments,
             scheme=self.scheme,
             allow=self.allowed_chains,
             assign_germline=self.assign_germline,
-            allowed_species=self.allowed_species,
+            allowed_species=germline_species,
         )
 
         return _sequences, _numbered, _alignment_details

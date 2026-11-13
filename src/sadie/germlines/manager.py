@@ -17,6 +17,7 @@ from typing import Dict, List, Optional
 
 from .models import GermlineGene
 from .providers.base import GermlineProvider
+from .registry import SpeciesRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -186,6 +187,7 @@ class GermlineManager:
         >>> genes = manager.get_genes("human", "V", "H")
         >>> print(f"Found {len(genes)} genes")
         """
+        species = SpeciesRegistry.normalize(species)
         all_genes: Dict[str, GermlineGene] = {}
         seq_to_gene: Dict[str, str] = {}
 
@@ -299,6 +301,7 @@ class GermlineManager:
         GermlineGene or None
             Gene if found, None otherwise
         """
+        species = SpeciesRegistry.normalize(species)
         for provider in self.providers:
             try:
                 gene = provider.fetch_gene_by_name(name, species)
