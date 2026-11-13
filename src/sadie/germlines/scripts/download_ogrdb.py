@@ -50,6 +50,8 @@ from typing import Dict, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
+from ..registry import SpeciesRegistry
+
 logger = logging.getLogger(__name__)
 
 CHECKPOINT_FILE = ".download_progress.json"
@@ -116,18 +118,8 @@ ZENODO_RECORD_ID = "23947887"
 ZENODO_ARCHIVE_URL = f"https://zenodo.org/records/{ZENODO_RECORD_ID}/files/ogrdb_archive.tgz?download=1"
 ZENODO_API_URL = "https://zenodo.org/api/records"
 
-# Species name mapping (OGRDB names to internal names)
-SPECIES_MAP = {
-    "Homo sapiens": "human",
-    "Mus musculus": "mouse",
-    "Macaca mulatta": "macaque",
-    "Rattus norvegicus": "rat",
-    "Canis lupus familiaris": "dog",
-    "Oryctolagus cuniculus": "rabbit",
-    # Add more as needed
-}
-
-SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
+SPECIES_MAP = SpeciesRegistry.FROM_OGRDB
+SPECIES_MAP_REVERSE = SpeciesRegistry.TO_OGRDB
 
 # Segment type detection from gene names
 SEGMENT_PATTERNS = {
@@ -149,13 +141,8 @@ CHAIN_PATTERNS = {
 # OGRDB REST API base URL
 OGRDB_API_BASE_URL = "https://ogrdb.airr-community.org/api_v2"
 
-# NCBI Taxonomy ID to internal species name mapping
-TAXONOMY_ID_MAP = {
-    "9606": "human",
-    "10090": "mouse",
-    "9544": "macaque",
-}
-TAXONOMY_ID_MAP_REVERSE = {v: k for k, v in TAXONOMY_ID_MAP.items()}
+TAXONOMY_ID_MAP = SpeciesRegistry.FROM_TAXON
+TAXONOMY_ID_MAP_REVERSE = SpeciesRegistry.TAXONOMY_IDS
 
 
 class OGRDBApiClient:

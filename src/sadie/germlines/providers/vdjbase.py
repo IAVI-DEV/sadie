@@ -34,6 +34,7 @@ from Bio import SeqIO
 
 from ..builders.gapper import GapperService
 from ..models import GermlineGene, ProviderMetadata
+from ..registry import SpeciesRegistry
 from .base import GermlineProvider
 
 logger = logging.getLogger(__name__)
@@ -42,23 +43,6 @@ logger = logging.getLogger(__name__)
 # VDJbase API configuration
 VDJBASE_API_BASE = "https://vdjbase.org/api"
 VDJBASE_ADMIN_API_BASE = "https://vdjbase.org/admin/api"
-
-# Species name mapping (VDJbase API names to internal names)
-SPECIES_MAP = {
-    "Human": "human",
-    "Rhesus Macaque": "macaque",
-    "Mouse": "mouse",
-}
-
-# Aliases for consistent naming across providers
-# Both "macaque" and "rhesus_macaque" should work
-SPECIES_ALIASES = {
-    "rhesus_macaque": "macaque",  # Normalize to canonical name
-}
-
-SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
-# Add alias reverse mappings
-SPECIES_MAP_REVERSE["rhesus_macaque"] = "Rhesus Macaque"
 
 # Chain to dataset mapping
 CHAIN_TO_DATASET = {
@@ -155,8 +139,8 @@ class VDJbaseProvider(GermlineProvider):
         return self._gappers[cache_key]
 
     def _normalize_species(self, species: str) -> str:
-        """Normalize species name using aliases."""
-        return SPECIES_ALIASES.get(species, species)
+        """Normalize species name using the shared registry."""
+        return SpeciesRegistry.normalize(species)
 
     def fetch_genes(self, species: str, segment: str, chain: str) -> List[GermlineGene]:
         """
@@ -438,7 +422,7 @@ class VDJbaseProvider(GermlineProvider):
         species_dir.mkdir(parents=True, exist_ok=True)
 
         # Map to VDJbase API species name
-        api_species = SPECIES_MAP_REVERSE.get(species, species)
+        api_species = SpeciesRegistry.TO_VDJBASE.get(species, species)
 
         # Download each chain
         for chain, dataset in CHAIN_TO_DATASET.items():
@@ -639,7 +623,7 @@ class VDJbaseProvider(GermlineProvider):
                 data = json.loads(response.read().decode("utf-8"))
 
             # Map API names to internal names
-            return [SPECIES_MAP.get(sp, sp.lower().replace(" ", "_")) for sp in data]
+            return [SpeciesRegistry.FROM_VDJBASE.get(sp, sp.lower().replace(" ", "_")) for sp in data]
 
         except Exception as e:
             logger.error(f"Failed to fetch species list: {e}")
@@ -659,7 +643,7 @@ class VDJbaseProvider(GermlineProvider):
         List[str]
             Available dataset names (IGH, IGK, IGL)
         """
-        api_species = SPECIES_MAP_REVERSE.get(species, species)
+        api_species = SpeciesRegistry.TO_VDJBASE.get(SpeciesRegistry.normalize(species), species)
 
         try:
             url = f"{VDJBASE_ADMIN_API_BASE}/genomic/data_sets/{quote(api_species)}"

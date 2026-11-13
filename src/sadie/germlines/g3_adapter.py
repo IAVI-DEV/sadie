@@ -20,6 +20,7 @@ from typing import Any, Dict, List
 from sadie.germlines.builders.imgt_positions import derive_imgt_v_regions
 from sadie.germlines.builders.j_gene_data import get_j_gene_data
 from sadie.germlines.models import GermlineGene
+from sadie.germlines.registry import SpeciesRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -191,17 +192,8 @@ class GermlineToG3Adapter:
         str
             Latin name with underscores (e.g., "Homo_sapiens")
         """
-        latin_names = {
-            "human": "Homo_sapiens",
-            "mouse": "Mus_musculus",
-            "rat": "Rattus_norvegicus",
-            "rabbit": "Oryctolagus_cuniculus",
-            "dog": "Canis_lupus_familiaris",
-            "cat": "Felis_catus",
-            "macaque": "Macaca_mulatta",
-            "alpaca": "Vicugna_pacos",
-        }
-        return latin_names.get(common_name.lower(), common_name.capitalize())
+        slug = SpeciesRegistry.normalize(common_name.lower())
+        return SpeciesRegistry.TO_LATIN.get(slug, common_name.capitalize())
 
     def _add_regions_to_imgt(self, imgt_dict: Dict[str, Any], gene: GermlineGene) -> None:
         """

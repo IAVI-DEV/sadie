@@ -166,7 +166,7 @@ def get_all_provider_species(provider_name: str) -> List[str]:
         return ["human", "mouse"]
     elif provider_name == "vdjbase":
         provider = get_provider(provider_name)
-        return provider.get_available_species() or ["human", "rhesus_macaque"]
+        return provider.get_available_species() or ["human", "macaque"]
     return []
 
 

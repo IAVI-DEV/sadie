@@ -21,6 +21,7 @@ import re
 import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
+from sadie.germlines.registry import SpeciesRegistry
 from sadie.reference.settings import get_motif_lookup
 
 logger = logging.getLogger(__name__)
@@ -112,31 +113,10 @@ CHAIN_TYPE_MAP = {
     "L": "JL",
 }
 
-# Species name normalization (handles variations in naming)
-SPECIES_ALIASES = {
-    "rhesus_monkey": "macaque",
-    "rhesus": "macaque",
-    "cynomolgus_monkey": "cynomolgus",
-    "crab-eating_macaque": "crab_eating_macaque",
-    "sus_scrofa": "pig",
-    "bos_taurus": "cow",
-    "canis_familiaris": "dog",
-    "felis_catus": "cat",
-    "oryctolagus_cuniculus": "rabbit",
-    "mus_musculus": "mouse",
-    "rattus_norvegicus": "rat",
-    "homo_sapiens": "human",
-    "danio_rerio": "zebrafish",
-    "oncorhynchus_mykiss": "rainbow_trout",
-    "salmo_salar": "atlantic_salmon",
-    "gallus_gallus": "chicken",
-}
-
-
 def _normalize_species(species: str) -> str:
     """Normalize species name to match motif lookup keys."""
     normalized = species.lower().replace(" ", "_").replace("-", "_")
-    return SPECIES_ALIASES.get(normalized, normalized)
+    return SpeciesRegistry.normalize(normalized)
 
 
 def _get_gene_type(gene_name: str) -> str:
