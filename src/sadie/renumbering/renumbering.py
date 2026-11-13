@@ -69,7 +69,7 @@ class Renumbering:
             assign germline; falls back on hardcoded dict in germlines.py, by default True
         allowed_species : list, optional
             query sequnce only hits HMMs build with the species requested, by default ["human"]
-            options: human, mouse, rat, rabbit, rhesus, pig, alpaca, dog, cat
+            options: human, mouse, rat, rabbit, macaque, pig, alpaca, dog, cat
         threshold : int, optional
             HMMER specific bitscore threshold determined by the best domain hit found, by default 80
             notes: anything over 160 is a likely position and anything below 80 is a likely false positive hit. Anything inbetween is open to interpretation.
@@ -240,7 +240,7 @@ class Renumbering:
         Parameters
         ----------
         allowed_species: list,
-            ["human", "mouse", "rat", "rabbit", "rhesus ", "pig", "alpaca"],
+            ["human", "mouse", "rat", "rabbit", "macaque", "pig", "alpaca"],
         """
         _allowed_species = self.get_allowed_species()
         _diff = list(set(map(lambda x: x.lower(), allowed_species)).difference(_allowed_species))
@@ -262,8 +262,7 @@ class Renumbering:
             "mouse",
             "rat",
             "rabbit",
-            "rhesus",
-            "macaque",  # canonical slug; maps to rhesus HMMs internally
+            "macaque",
             "pig",
             "alpaca",
             "dog",
@@ -337,17 +336,13 @@ class Renumbering:
             limit=1,
             for_numbering=True,
         )
-        # Translate canonical slugs to the names used in the germlines data
-        # (e.g. "macaque" → "rhesus" which is the key in numbering/germlines.py)
-        _GERMLINE_SLUG_MAP = {"macaque": "rhesus"}
-        germline_species = [_GERMLINE_SLUG_MAP.get(sp, sp) for sp in self.allowed_species]
         _numbered, _alignment_details, _hit_tables = self.numbering.number_sequences_from_alignment(
             _sequences,
             _alignments,
             scheme=self.scheme,
             allow=self.allowed_chains,
             assign_germline=self.assign_germline,
-            allowed_species=germline_species,
+            allowed_species=self.allowed_species,
         )
 
         return _sequences, _numbered, _alignment_details

@@ -34,7 +34,8 @@ class SpeciesRegistry:
         "rhesus": "macaque",
         # other common aliases used across sources and tools
         "cynomolgus_monkey": "cynomolgus",
-        "crab-eating_macaque": "crab_eating_macaque",
+        "crab_eating_macaque": "cynomolgus",
+        "crab-eating_macaque": "cynomolgus",
         "sus_scrofa": "pig",
         "bos_taurus": "cow",
         "canis_familiaris": "dog",
@@ -118,6 +119,7 @@ class SpeciesRegistry:
         "human": "9606",
         "mouse": "10090",
         "macaque": "9544",
+        "cynomolgus": "9541",
         "rat": "10116",
         "dog": "9615",
         "rabbit": "9986",
@@ -162,6 +164,19 @@ class SpeciesRegistry:
     # Public API
     # ------------------------------------------------------------------
 
+    # ANARCI/HMMER HMM file prefix → slug (e.g. "rhesus_H" prefix → "macaque")
+    FROM_ANARCI: dict[str, str] = {
+        "human": "human",
+        "mouse": "mouse",
+        "rat": "rat",
+        "rabbit": "rabbit",
+        "rhesus": "macaque",
+        "pig": "pig",
+        "alpaca": "alpaca",
+        "dog": "dog",
+        "cat": "cat",
+    }
+
     @classmethod
     def normalize(cls, name: str) -> str:
         """Resolve a user-supplied name to its canonical slug.
@@ -171,3 +186,25 @@ class SpeciesRegistry:
         error types.
         """
         return cls.ALIASES.get(name, name)
+
+    @classmethod
+    def from_native(cls, name: str) -> str:
+        """Map a provider-native or tool-native name to a canonical slug.
+
+        Checks (in order): OGRDB Latin names, VDJbase display names, IMGT
+        directory names, ANARCI HMM prefixes, taxonomy IDs, user aliases.
+        Raises KeyError for names not found in any source column.
+        """
+        for table in (
+            cls.FROM_OGRDB,
+            cls.FROM_VDJBASE,
+            cls.FROM_IMGT,
+            cls.FROM_ANARCI,
+            cls.FROM_TAXON,
+        ):
+            if name in table:
+                return table[name]
+        # Also resolve user-facing aliases (Latin binomials with underscores etc.)
+        if name in cls.ALIASES:
+            return cls.ALIASES[name]
+        raise KeyError(f"No registry row found for native name: {name!r}")

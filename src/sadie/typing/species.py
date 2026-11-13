@@ -11,7 +11,7 @@ SPECIES = {
     "mus": "mouse",
     "rattus_norvegicus": "rat",
     "oryctolagus_cuniculus": "rabbit",
-    "macaca_mulatta": "rhesus",
+    "macaca_mulatta": "macaque",
     "sus_scrofa": "pig",
     "vicugna_pacos": "alpaca",
     "bos_taurus": "cow",
