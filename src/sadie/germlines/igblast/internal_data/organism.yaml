@@ -71,14 +71,6 @@ organisms:
     - D
     - J
     - C
-  crab_eating_macaque:
-    aux_file: ../aux_db/crab_eating_macaque_gl.aux
-    database_path: ../database/crab_eating_macaque
-    segments:
-    - V
-    - D
-    - J
-    - C
   cynomolgus:
     aux_file: ../aux_db/cynomolgus_gl.aux
     database_path: ../database/cynomolgus

@@ -6,7 +6,7 @@
   "description": "cynomolgus_C",
   "number-of-letters": 3685,
   "number-of-sequences": 16,
-  "last-updated": "2026-11-11T15:02:00",
+  "last-updated": "2026-11-13T21:37:00",
   "number-of-volumes": 1,
   "bytes-total": 199527,
   "bytes-to-cache": 1257,
