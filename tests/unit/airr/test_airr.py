@@ -647,59 +647,77 @@ def test_genbank():
         GenBank(sequence="ATCG", id="test").add_feature(feature="bad_feature")
 
 
-# Issue #24 — camel and goat crashed because igblastn 1.22.0 always looks for
+# Issue #24 — camel and goat crashed because igblastn 1.22.0 always opens
 # {organism}_gl_D even for light-chain queries; placeholder D databases fix this.
-_CAMEL_IGKV1_12_01 = (
+#
+# Queries: V allele trimmed to whole codons + J allele from its J frame start
+# (camel IGKJ1*01 frame start = 1; goat IGKJ1*01 = 2; goat IGLJ1*01 = 1).
+_CAMEL_IGK_QUERY = (
     "GCTACCCAGGTGACCCAGTCTCCCTCCTCCCTGTCTGCGTCTCTGGGAGACACAGTCACCATCACCTGCC"
     "GGGCCAGTCAGAGCATCAGCAATGAGTTATCCTGGTATCAGCAGAAACCAGGGCAAGCTCCTAAGCTCCT"
     "GATCTATGATGCATCCAGTTTGCACACTGGGGTCCCTTCCAAGTTCAGTGGCAGTGGATCAGGGACAAGT"
     "TTCACCCTCACCATCAGCGGCGTGGAGGCTGAAGATGCCGGAACTTACTACAGTCAGCAGTATTACAGAG"
-    "CGCCTCC"
+    "CGCCTAGGACGTTAGGCCAGGGAACCAAGCTGGAAATCAAAC"
 )
-_GOAT_IGKV1_1_01 = (
+_GOAT_IGK_QUERY = (
     "GACATCCAGGTGACCCAGTCTCCATCCTCCCTATCTGCATGTCTAGGAGACAGAGTCTCCATCACTTGCC"
     "AGGCCAGTCAGAACATTGACACTAAATTAGCCTGGTATCAACAGAAACCAAGGAAAGCTCCTAAGCTCCTC"
     "ATCTATGCAGTATCCAGGTCACCCTCCTGGTTCCCATCCCAGTTCAGTGGCAGTGGATTTGGGATAGATTT"
     "CACCCTCACCATCAGCAGCCTGAAGGCTGATGATATTGCAACTTACTACTGTCAGCAGGATCACGGTTTAC"
-    "CTCC"
+    "CTAATAGTTTCGGGCAAGGAACCAAGCTAGAGATCAAAA"
 )
-_GOAT_IGLV1_17_01 = (
+_GOAT_IGL_QUERY = (
     "CAGGCTGTGCTGACTCAGCCATCCTCCGTGTCCAAGTCCCTGGGCCAGAGTGTCTCCATCACCTGCTCTGG"
     "AAGCAGCAGCAACGTTGGATATGGTAATTATGTGAGCTGGTACCAACAGGTCCCAGGATCAGCCCCCAAAC"
     "TCCTCATCTATGGTGCAACCAGTCGAGCCTCGGGGGTCCCCGCCCGATTCTCCGGCTCCAGGTCTGGCAAC"
     "ACAGCGACTCTGAGCATCAGCTCGCTCCAGGCTGAGGACGAGGCCGATTATTACTGTGCATCTTATGACAG"
-    "CAGTAGCTATAATGG"
+    "CAGTAGCTATAATTTCGTCTTAGGTGGCGGGACCCAGCTCACCGTCCTAG"
+)
+# Human IGHV1-2*02 + IGHD3-10*01 + IGHJ4*02 — used to verify the placeholder
+# does not corrupt real human D-gene calls.
+_HUMAN_IGH_QUERY = (
+    "CAGGTGCAGCTGGTGCAGTCTGGGGCTGAGGTGAAGAAGCCTGGGGCCTCAGTGAAGGTCTCCTGCAAGG"
+    "CTTCTGGATACACCTTCACCGGCTACTATATGCACTGGGTGCGACAGGCCCCTGGACAAGGGCTTGAGTGG"
+    "ATGGGATGGATCAACCCTAACAGTGGTGGCACAAACTATGCACAGAAGTTTCAGGGCAGGGTCACCATGAC"
+    "CAGGGACACGTCCATCAGCACAGCCTACATGGAGCTGAGCAGGCTGAGATCTGACGACACGGCCGTGTATT"
+    "ACTGTGCGAGAGTATTACTATGGTTCGGGGAGTTATTATAACACTACTTTGACTACTGGGGCCAGGGAACC"
+    "CTGGTCACCGTCTCCTCAG"
 )
 
 
 def test_camel_igk_run_single_does_not_crash() -> None:
-    """Camel IGK light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
-    airr_api = Airr("camel")
-    result = airr_api.run_single("camel_igk", _CAMEL_IGKV1_12_01)
+    """Camel IGK: no IgBLASTRunTimeError, correct V/J calls, locus IGK, productive (issue #24)."""
+    result = Airr("camel").run_single("camel_igk", _CAMEL_IGK_QUERY)
     assert not result.empty
-    assert "IGKV" in str(result["v_call"].iloc[0])
+    assert result["v_call"].iloc[0] == "IGKV1-12*01"
+    assert result["j_call"].iloc[0] == "IGKJ1*01"
+    assert result["locus"].iloc[0] == "IGK"
+    assert result["productive"].iloc[0] is True
 
 
 def test_goat_igk_run_single_does_not_crash() -> None:
-    """Goat IGK light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
-    airr_api = Airr("goat")
-    result = airr_api.run_single("goat_igk", _GOAT_IGKV1_1_01)
+    """Goat IGK: no IgBLASTRunTimeError, correct V/J calls, locus IGK, productive (issue #24)."""
+    result = Airr("goat").run_single("goat_igk", _GOAT_IGK_QUERY)
     assert not result.empty
-    assert "IGKV" in str(result["v_call"].iloc[0])
+    assert result["v_call"].iloc[0] == "IGKV1-1*01"
+    assert result["j_call"].iloc[0] == "IGKJ1*01"
+    assert result["locus"].iloc[0] == "IGK"
+    assert result["productive"].iloc[0] is True
 
 
 def test_goat_igl_run_single_does_not_crash() -> None:
-    """Goat IGL light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
-    airr_api = Airr("goat")
-    result = airr_api.run_single("goat_igl", _GOAT_IGLV1_17_01)
+    """Goat IGL: no IgBLASTRunTimeError, correct V/J calls, locus IGL, productive (issue #24)."""
+    result = Airr("goat").run_single("goat_igl", _GOAT_IGL_QUERY)
     assert not result.empty
-    assert "IGLV" in str(result["v_call"].iloc[0])
+    assert result["v_call"].iloc[0] == "IGLV1-17*01"
+    assert result["j_call"].iloc[0] == "IGLJ1*01"
+    assert result["locus"].iloc[0] == "IGL"
+    assert result["productive"].iloc[0] is True
 
 
-def test_human_igh_d_call_unaffected_by_placeholder(fixture_setup: SadieFixture) -> None:
-    """Human IGH D-gene call must not be corrupted by camel/goat placeholder databases."""
-    pg9_heavy_seq = fixture_setup.get_pg9_heavy_sequence().seq.__str__()
-    airr_api = Airr("human")
-    result = airr_api.run_single("PG9", pg9_heavy_seq)
-    d_call = result["d_call"].iloc[0]
-    assert d_call and "IGHD" in str(d_call), f"Human IGHD call absent or wrong: {d_call}"
+def test_human_igh_d_call_unaffected_by_placeholder() -> None:
+    """Placeholder D databases must not corrupt human IGHD3-10*01 call (issue #24)."""
+    result = Airr("human").run_single("human_igh", _HUMAN_IGH_QUERY)
+    assert result["d_call"].iloc[0] == "IGHD3-10*01", (
+        f"Expected IGHD3-10*01, got {result['d_call'].iloc[0]}"
+    )
