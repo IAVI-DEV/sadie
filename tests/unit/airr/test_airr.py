@@ -645,3 +645,61 @@ def test_genbank():
         GenBank(sequence=1, id="test", name="test")
     with pytest.raises(TypeError):
         GenBank(sequence="ATCG", id="test").add_feature(feature="bad_feature")
+
+
+# Issue #24 — camel and goat crashed because igblastn 1.22.0 always looks for
+# {organism}_gl_D even for light-chain queries; placeholder D databases fix this.
+_CAMEL_IGKV1_12_01 = (
+    "GCTACCCAGGTGACCCAGTCTCCCTCCTCCCTGTCTGCGTCTCTGGGAGACACAGTCACCATCACCTGCC"
+    "GGGCCAGTCAGAGCATCAGCAATGAGTTATCCTGGTATCAGCAGAAACCAGGGCAAGCTCCTAAGCTCCT"
+    "GATCTATGATGCATCCAGTTTGCACACTGGGGTCCCTTCCAAGTTCAGTGGCAGTGGATCAGGGACAAGT"
+    "TTCACCCTCACCATCAGCGGCGTGGAGGCTGAAGATGCCGGAACTTACTACAGTCAGCAGTATTACAGAG"
+    "CGCCTCC"
+)
+_GOAT_IGKV1_1_01 = (
+    "GACATCCAGGTGACCCAGTCTCCATCCTCCCTATCTGCATGTCTAGGAGACAGAGTCTCCATCACTTGCC"
+    "AGGCCAGTCAGAACATTGACACTAAATTAGCCTGGTATCAACAGAAACCAAGGAAAGCTCCTAAGCTCCTC"
+    "ATCTATGCAGTATCCAGGTCACCCTCCTGGTTCCCATCCCAGTTCAGTGGCAGTGGATTTGGGATAGATTT"
+    "CACCCTCACCATCAGCAGCCTGAAGGCTGATGATATTGCAACTTACTACTGTCAGCAGGATCACGGTTTAC"
+    "CTCC"
+)
+_GOAT_IGLV1_17_01 = (
+    "CAGGCTGTGCTGACTCAGCCATCCTCCGTGTCCAAGTCCCTGGGCCAGAGTGTCTCCATCACCTGCTCTGG"
+    "AAGCAGCAGCAACGTTGGATATGGTAATTATGTGAGCTGGTACCAACAGGTCCCAGGATCAGCCCCCAAAC"
+    "TCCTCATCTATGGTGCAACCAGTCGAGCCTCGGGGGTCCCCGCCCGATTCTCCGGCTCCAGGTCTGGCAAC"
+    "ACAGCGACTCTGAGCATCAGCTCGCTCCAGGCTGAGGACGAGGCCGATTATTACTGTGCATCTTATGACAG"
+    "CAGTAGCTATAATGG"
+)
+
+
+def test_camel_igk_run_single_does_not_crash() -> None:
+    """Camel IGK light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
+    airr_api = Airr("camel")
+    result = airr_api.run_single("camel_igk", _CAMEL_IGKV1_12_01)
+    assert not result.empty
+    assert "IGKV" in str(result["v_call"].iloc[0])
+
+
+def test_goat_igk_run_single_does_not_crash() -> None:
+    """Goat IGK light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
+    airr_api = Airr("goat")
+    result = airr_api.run_single("goat_igk", _GOAT_IGKV1_1_01)
+    assert not result.empty
+    assert "IGKV" in str(result["v_call"].iloc[0])
+
+
+def test_goat_igl_run_single_does_not_crash() -> None:
+    """Goat IGL light-chain annotation must not raise IgBLASTRunTimeError (issue #24)."""
+    airr_api = Airr("goat")
+    result = airr_api.run_single("goat_igl", _GOAT_IGLV1_17_01)
+    assert not result.empty
+    assert "IGLV" in str(result["v_call"].iloc[0])
+
+
+def test_human_igh_d_call_unaffected_by_placeholder(fixture_setup: SadieFixture) -> None:
+    """Human IGH D-gene call must not be corrupted by camel/goat placeholder databases."""
+    pg9_heavy_seq = fixture_setup.get_pg9_heavy_sequence().seq.__str__()
+    airr_api = Airr("human")
+    result = airr_api.run_single("PG9", pg9_heavy_seq)
+    d_call = result["d_call"].iloc[0]
+    assert d_call and "IGHD" in str(d_call), f"Human IGHD call absent or wrong: {d_call}"
