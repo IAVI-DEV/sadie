@@ -44,10 +44,15 @@ from typing import Dict, List, Optional, Set, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from ..registry import SpeciesRegistry
+
 logger = logging.getLogger(__name__)
 
 CHECKPOINT_FILE = ".download_progress.json"
 SPECIES_MAPPING_FILE = "species_mapping.json"
+
+# Re-export for callers that import SPECIES_MAP from this module directly.
+SPECIES_MAP = SpeciesRegistry.TO_IMGT
 
 
 def _load_checkpoint(checkpoint_path: Path) -> dict:
@@ -91,45 +96,7 @@ IMGT_BASE_URL = "https://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_di
 # IMGT GENE-DB URL for C genes (not available in V-QUEST)
 IMGT_GENEDB_URL = "https://www.imgt.org/download/GENE-DB/IMGTGENEDB-ReferenceSequences.fasta-nt-WithoutGaps-F+ORF+allP"
 
-# Species name mapping (internal names to IMGT directory names)
-SPECIES_MAP = {
-    "human": "Homo_sapiens",
-    "mouse": "Mus_musculus",
-    "mouse_c57bl6j": "Mus_musculus_C57BL6J",
-    "rat": "Rattus_norvegicus",
-    "rabbit": "Oryctolagus_cuniculus",
-    "rhesus_macaque": "Macaca_mulatta",
-    "macaque": "Macaca_mulatta",  # Alias for canonical name
-    "cynomolgus": "Macaca_fascicularis",
-    "dog": "Canis_lupus_familiaris",
-    "cat": "Felis_catus",
-    "pig": "Sus_scrofa",
-    "cow": "Bos_taurus",
-    "sheep": "Ovis_aries",
-    "goat": "Capra_hircus",
-    "horse": "Equus_caballus",
-    "chicken": "Gallus_gallus",
-    "alpaca": "Vicugna_pacos",
-    "camel": "Camelus_dromedarius",
-    "zebrafish": "Danio_rerio",
-    "gorilla": "Gorilla_gorilla_gorilla",
-    "chimpanzee": "Pan_troglodytes",
-    "orangutan_sumatran": "Pongo_abelii",
-    "orangutan_bornean": "Pongo_pygmaeus",
-    "ferret": "Mustela_putorius_furo",
-    "mink": "Neogale_vison",
-    "dolphin": "Tursiops_truncatus",
-    "platypus": "Ornithorhynchus_anatinus",
-    "atlantic_salmon": "Salmo_salar",
-    "rainbow_trout": "Oncorhynchus_mykiss",
-    "atlantic_cod": "Gadus_morhua",
-    "channel_catfish": "Ictalurus_punctatus",
-    "lemur": "Lemur_catta",
-    "owl_monkey": "Aotus_nancymaae",
-    "naked_mole_rat": "Heterocephalus_glaber",
-}
-
-SPECIES_MAP_REVERSE = {v: k for k, v in SPECIES_MAP.items()}
+SPECIES_MAP_REVERSE = SpeciesRegistry.FROM_IMGT
 
 # Standard IG segment files
 IG_SEGMENTS = ["IGHV", "IGHD", "IGHJ", "IGKV", "IGKJ", "IGLV", "IGLJ"]
@@ -253,9 +220,10 @@ class IMGTDownloader:
                 segments.extend(TR_SEGMENTS)
 
         for sp in species:
-            # Map internal name to IMGT name if needed
-            imgt_name = SPECIES_MAP.get(sp.lower(), sp)
-            internal_name = SPECIES_MAP_REVERSE.get(imgt_name, sp.lower().replace(" ", "_"))
+            # Normalize alias (e.g., rhesus_macaque → macaque) then map to IMGT name
+            canonical = SpeciesRegistry.normalize(sp.lower())
+            imgt_name = SpeciesRegistry.TO_IMGT.get(canonical, sp)
+            internal_name = SpeciesRegistry.FROM_IMGT.get(imgt_name, sp.lower().replace(" ", "_"))
 
             logger.info(f"Downloading IMGT data for {internal_name} ({imgt_name})...")
 

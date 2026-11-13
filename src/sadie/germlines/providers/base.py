@@ -16,15 +16,14 @@ from pathlib import Path
 from typing import List, Optional
 
 from ..models import GermlineGene, ProviderMetadata
+from ..registry import SpeciesRegistry
 
 logger = logging.getLogger(__name__)
-
-SPECIES_ALIASES = {"rhesus_macaque": "macaque"}
 
 
 def normalize_species(species: str) -> str:
     """Return the canonical species name, e.g. "rhesus_macaque" -> "macaque"."""
-    return SPECIES_ALIASES.get(species, species)
+    return SpeciesRegistry.normalize(species)
 
 
 ERROR_TEMPLATES = {
