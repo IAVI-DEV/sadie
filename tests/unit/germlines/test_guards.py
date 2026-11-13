@@ -30,9 +30,7 @@ LITERAL_GUARD_EXEMPT = {
     SRC_ROOT / "renumbering" / "aligners" / "hmmer.py",
 }
 
-# Alias names that may still appear in disk artifacts until their source dir
-# is renamed.  Remove from this set after each disk rename lands.
-DISK_GUARD_DEFERRED = {"crab_eating_macaque"}
+DISK_GUARD_DEFERRED: set[str] = set()
 
 # The set of non-slug alias keys we guard against
 _ALIASES = set(SpeciesRegistry.ALIASES.keys())
@@ -91,13 +89,7 @@ def _species_stems_in_germlines() -> set[str]:
 
 
 def test_disk_guard_no_aliases_in_germlines_paths():
-    """
-    Species directory names and organism.yaml keys should only be canonical
-    slugs (or helper dirs like _template, raw).
-
-    Deferred entries in DISK_GUARD_DEFERRED are explicitly allowed until
-    their source directories are renamed.
-    """
+    """Species directory names and organism.yaml keys should only be canonical slugs."""
     allowed_dirs = {"_template", "raw"} | DISK_GUARD_DEFERRED
     stems = _species_stems_in_germlines()
     offenders = set()
