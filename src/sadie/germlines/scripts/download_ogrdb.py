@@ -68,6 +68,48 @@ def _save_checkpoint(checkpoint_path: Path, data: dict):
     checkpoint_path.write_text(json.dumps(data, indent=2))
 
 
+def _extract_insert_blocks(content: str, table_name: str) -> list[str]:
+    """Extract the VALUES portion of every INSERT INTO <table_name> statement.
+
+    Uses a character-level state machine so that semicolons inside quoted string
+    fields do not terminate the match prematurely — a failure mode of the simpler
+    ``(.*?);`` regex used previously (issue #19).
+    """
+    header_pat = re.compile(
+        r"INSERT\s+INTO\s+[`'\"]?" + re.escape(table_name) + r"[`'\"]?\s+VALUES\s*",
+        re.IGNORECASE,
+    )
+    blocks: list[str] = []
+    pos = 0
+    while True:
+        m = header_pat.search(content, pos)
+        if not m:
+            break
+        start = m.end()
+        i = start
+        in_string = False
+        string_char = ""
+        while i < len(content):
+            ch = content[i]
+            if in_string:
+                if ch == "\\" and i + 1 < len(content):
+                    i += 2
+                    continue
+                if ch == string_char:
+                    in_string = False
+            elif ch in ("'", '"'):
+                in_string = True
+                string_char = ch
+            elif ch == ";":
+                blocks.append(content[start:i])
+                pos = i + 1
+                break
+            i += 1
+        else:
+            break
+    return blocks
+
+
 # Zenodo archive — record ID is updated when OGRDB publishes a new version.
 # _get_latest_zenodo_record() queries the API to auto-discover newer versions.
 ZENODO_RECORD_ID = "23947887"
@@ -642,11 +684,11 @@ class OGRDBDownloader(OGRDBApiClient):
         with open(sql_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
-        # Find ALL gene_description INSERT blocks
-        # Format: INSERT INTO `gene_description` VALUES\n(row1),\n(row2),...;
-        gene_desc_matches = re.findall(
-            r"INSERT INTO [`'\"]?gene_description[`'\"]?\s+VALUES\s*\n?(.*?);", content, re.IGNORECASE | re.DOTALL
-        )
+        # Find ALL gene_description INSERT blocks.
+        # Cannot use a simple (.*?); regex: a text field may contain ';', causing
+        # the pattern to stop early and silently drop all rows after that field.
+        # Use a state-machine that only stops at an unquoted semicolon.
+        gene_desc_matches = _extract_insert_blocks(content, "gene_description")
 
         if not gene_desc_matches:
             logger.warning("No gene_description INSERT statement found")

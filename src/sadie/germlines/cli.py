@@ -722,6 +722,8 @@ def status_cmd() -> None:
     if rows:
         console.print("\nOGRDB allele counts per pipeline stage (sadie.germlines.scripts.validate.check_allele_counts)")
         console.print(format_count_report(rows, findings), markup=False, highlight=False, soft_wrap=True)
+        if any(f["kind"] == "UNEXPLAINED" for f in findings):
+            raise SystemExit(1)
 
 
 @germlines.command("rebuild")
