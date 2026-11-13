@@ -389,6 +389,50 @@ class TestMultiSpeciesBatch:
         assert species_count >= 29, f"Should have at least 29 species, found {species_count}"
 
 
+# Issue #27 — cat IGHC source was missing; orangutan IGHC lacked IgD constant genes.
+# Queries use V + J from the committed normalized database FASTAs, plus the C exon
+# from the species BLAST database — no network access required.
+def _load_fasta(path: Path) -> dict:
+    from Bio import SeqIO
+    return {r.id: str(r.seq) for r in SeqIO.parse(path, "fasta")}
+
+
+def test_cat_ighm_c_call_after_ighc_source_added() -> None:
+    """cat_C.fasta must have IGHM*01 and Airr must return c_call=IGHM*01 (issue #27)."""
+    from sadie.airr import Airr
+
+    db = GERMLINES_ROOT / "igblast" / "database" / "cat"
+    cat_v = _load_fasta(db / "cat_V.fasta")
+    cat_j = _load_fasta(db / "cat_J.fasta")
+    cat_c = _load_fasta(db / "cat_C.fasta")
+
+    assert "IGHM*01" in cat_c, "cat_C.fasta must contain IGHM*01 after IGHC source was added"
+
+    query = cat_v["IGHV1-21*01"] + cat_j["IGHJ1*01"] + cat_c["IGHM*01"]
+    result = Airr("cat").run_single("cat_IgM", query)
+    assert result["c_call"].iloc[0] == "IGHM*01", (
+        f"Expected c_call=IGHM*01, got {result['c_call'].iloc[0]}"
+    )
+
+
+def test_orangutan_bornean_ighd_c_call_after_ighd_records_added() -> None:
+    """orangutan_bornean_C.fasta must have IGHD*01 and Airr must return c_call=IGHD*01 (issue #27)."""
+    from sadie.airr import Airr
+
+    db = GERMLINES_ROOT / "igblast" / "database" / "orangutan_bornean"
+    ob_v = _load_fasta(db / "orangutan_bornean_V.fasta")
+    ob_j = _load_fasta(db / "orangutan_bornean_J.fasta")
+    ob_c = _load_fasta(db / "orangutan_bornean_C.fasta")
+
+    assert "IGHD*01" in ob_c, "orangutan_bornean_C.fasta must contain IGHD*01 after refresh"
+
+    query = ob_v["IGHV3-23*01"] + ob_j["IGHJ4*01"] + ob_c["IGHD*01"]
+    result = Airr("orangutan_bornean").run_single("orangutan_IgD", query)
+    assert result["c_call"].iloc[0] == "IGHD*01", (
+        f"Expected c_call=IGHD*01, got {result['c_call'].iloc[0]}"
+    )
+
+
 def test_germlines_data_ships_no_rhesus_macaque_path():
     assert not list(GERMLINES_ROOT.rglob("*rhesus_macaque*"))
 
