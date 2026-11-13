@@ -90,9 +90,61 @@ def test_macaque_taxonomy_id():
     ("rhesus_macaque", "macaque"),
     ("rhesus_monkey", "macaque"),
     ("cynomolgus_monkey", "cynomolgus"),
+    ("crab_eating_macaque", "cynomolgus"),
+    ("crab-eating_macaque", "cynomolgus"),
     ("homo_sapiens", "human"),
     ("mus_musculus", "mouse"),
     ("sus_scrofa", "pig"),
 ])
 def test_known_aliases_resolve_to_expected_slug(alias, expected):
     assert SpeciesRegistry.normalize(alias) == expected
+
+
+def test_taxon_9541_has_one_slug():
+    assert SpeciesRegistry.TAXONOMY_IDS["cynomolgus"] == "9541"
+    assert SpeciesRegistry.FROM_TAXON["9541"] == "cynomolgus"
+    assert SpeciesRegistry.normalize("crab_eating_macaque") == "cynomolgus"
+    assert SpeciesRegistry.normalize("crab-eating_macaque") == "cynomolgus"
+
+
+@pytest.mark.parametrize("native,expected_slug", [
+    # OGRDB Latin names
+    ("Homo sapiens", "human"),
+    ("Mus musculus", "mouse"),
+    ("Macaca mulatta", "macaque"),
+    # VDJbase display names
+    ("Human", "human"),
+    ("Mouse", "mouse"),
+    ("Rhesus Macaque", "macaque"),
+    # IMGT directory names
+    ("Homo_sapiens", "human"),
+    ("Mus_musculus", "mouse"),
+    ("Macaca_mulatta", "macaque"),
+    ("Macaca_fascicularis", "cynomolgus"),
+    # ANARCI HMM prefixes
+    ("rhesus", "macaque"),
+    ("human", "human"),
+    # Taxonomy IDs
+    ("9606", "human"),
+    ("9544", "macaque"),
+    ("9541", "cynomolgus"),
+])
+def test_from_native_maps_to_slug(native, expected_slug):
+    assert SpeciesRegistry.from_native(native) == expected_slug
+
+
+def test_from_native_raises_for_unknown():
+    with pytest.raises(KeyError):
+        SpeciesRegistry.from_native("not_a_real_species_name")
+
+
+def test_from_native_to_native_round_trips_ogrdb():
+    for ogrdb_name, slug in SpeciesRegistry.FROM_OGRDB.items():
+        recovered = SpeciesRegistry.from_native(ogrdb_name)
+        assert recovered == slug, f"from_native({ogrdb_name!r}) returned {recovered!r}, expected {slug!r}"
+
+
+def test_from_native_to_native_round_trips_vdjbase():
+    for vdj_name, slug in SpeciesRegistry.FROM_VDJBASE.items():
+        recovered = SpeciesRegistry.from_native(vdj_name)
+        assert recovered == slug, f"from_native({vdj_name!r}) returned {recovered!r}, expected {slug!r}"
