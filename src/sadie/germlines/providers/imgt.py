@@ -26,6 +26,7 @@ from typing import Dict, List, Optional
 from Bio import SeqIO
 
 from ..models import GermlineGene, ProviderMetadata
+from ..registry import SpeciesRegistry
 from .base import GermlineProvider
 
 logger = logging.getLogger(__name__)
@@ -99,6 +100,7 @@ class IMGTProvider(GermlineProvider):
         List[GermlineGene]
             IMGT genes
         """
+        species = SpeciesRegistry.normalize(species)
         fasta_path = self.get_fasta_path(species, segment, chain)
         gapped_path = self._get_gapped_fasta_path(species, segment, chain)
 
