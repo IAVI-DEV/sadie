@@ -86,7 +86,6 @@ class Airr:
         scheme: str = "imgt",
         references: Optional[References] = None,
         debug: bool = False,
-        database: Optional[str | Path] = None,
         # Additional IgBLAST parameters with SADIE defaults
         num_alignments_v: int = 3,
         num_alignments_d: int = 3,
@@ -98,6 +97,7 @@ class Airr:
         gap_open: int = 5,
         gap_extend: int = 2,
         coerce: bool = False,
+        database: Optional[str | Path] = None,
     ):
         """Airr constructor
 
@@ -152,6 +152,9 @@ class Airr:
             Gap extension penalty, by default 2
         coerce : bool
             Accept the highest scored allele that exists in the auxiliary files when exact match not found, by default False
+        database : str | Path | None
+            Path to a pre-built IgBLAST germline database directory. When set, skips the References lookup
+            and uses the given directory directly, by default None
         """
 
         # If the temp directory is passed, it is important to keep track of it so we can delete it at the destructory
