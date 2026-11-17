@@ -375,6 +375,7 @@ class GermlineManager:
             If provider has no data for the species
         """
         provider = self.get_provider(name)
+        species = SpeciesRegistry.normalize(species)
 
         if provider.is_available(species):
             return

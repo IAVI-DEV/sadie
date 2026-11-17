@@ -175,3 +175,19 @@ CAGGTGCAGCTGGTGCAGTCTGGGGCT
             assert len(genes) >= 1
         finally:
             socket.socket = original_socket
+
+    def test_imgt_fetch_genes_with_rhesus_macaque_reads_macaque_without_download(self, tmp_path, monkeypatch):
+        from unittest.mock import Mock
+
+        from sadie.germlines.providers.imgt import IMGTProvider
+
+        macaque_dir = tmp_path / "imgt" / "macaque"
+        macaque_dir.mkdir(parents=True)
+        (macaque_dir / "IGHV.fasta").write_text(">IGHV1-2*01\nCAGGTGCAGCTGGTGCAGTCTGGGGCT\n")
+        download = Mock()
+        monkeypatch.setattr(IMGTProvider, "download", download)
+
+        genes = IMGTProvider(data_dir=tmp_path / "imgt").fetch_genes("rhesus_macaque", "V", "H")
+
+        assert [gene.name for gene in genes] == ["IGHV1-2*01"]
+        download.assert_not_called()

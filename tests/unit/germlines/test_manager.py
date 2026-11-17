@@ -38,6 +38,13 @@ def test_manager_custom_providers():
     assert manager.provider_names == ["ogrdb", "imgt"]
 
 
+@pytest.mark.parametrize("source", ["imgt", "ogrdb", "custom"])
+def test_validate_species_with_rhesus_macaque_accepts_macaque_data(source):
+    from sadie.germlines.manager import GermlineManager
+
+    GermlineManager(providers=[source]).validate_species(source, "rhesus_macaque")
+
+
 # TODO: Add more tests
 # - test_fetch_genes()
 # - test_priority_deduplication()
