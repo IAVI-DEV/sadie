@@ -409,18 +409,21 @@ def parse_j_gene(species: str, gene_name: str, sequence: str, reading_frame: Opt
                 # 3 frames. Some species (e.g. rainbow_trout IGHJ1T1) have the motif
                 # in a frame that differs from the longest-ORF inference.
                 frames_to_try = [reading_frame] + [f for f in range(3) if f != reading_frame]
+                match_objects: list = []
                 for frame in frames_to_try:
                     aa = _translate_sequence(sequence, frame)
-                    matches = re.findall(motif_pattern, aa)
-                    if matches:
+                    match_objects = list(re.finditer(motif_pattern, aa))
+                    if match_objects:
                         reading_frame = frame
                         j_gene_aa = aa
-                        expression = matches
+                        expression = [m.group() for m in match_objects]
                         break
 
-                if matches:
-                    end_motif = matches[0]
-                    end_cdr3_index = j_gene_aa.index(end_motif)
+                if match_objects:
+                    # Use the last match: when a motif occurs twice in a J gene
+                    # (e.g. sheep IGHJ2*01 has both WDSG and WGQR), the rightmost
+                    # position gives a FWR4 of ~10-12 aa matching IMGT FR4-IMGT length.
+                    end_cdr3_index = match_objects[-1].start()
                     end_index_codon = end_cdr3_index * 3 + reading_frame
 
                     cdr3_nt = sequence[:end_index_codon]

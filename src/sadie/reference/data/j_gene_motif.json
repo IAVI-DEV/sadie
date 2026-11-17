@@ -232,6 +232,8 @@
       "notes": "Legacy pattern - requires empirical validation"
     },
     "IGHJ": "WG.G",
+    "IGKJ": "FG.G",
+    "IGLJ": "FG.G",
     "TRBJ": "[F][GA].G",
     "TRAJ": "[F][GA].G",
     "ignore": []
@@ -499,9 +501,9 @@
       "source": "Legacy patterns from original implementation",
       "imgt_validated": false,
       "last_reviewed": "2026-05-08",
-      "notes": "Legacy pattern - requires empirical validation"
+      "notes": "Legacy pattern - requires empirical validation; IGHJ widened to W[GDV].[GQ] for IGHJ4 (WVQG) and IGHJ9 (WDQG/WD*G) variants"
     },
-    "IGHJ": "WG.G",
+    "IGHJ": "W[GDV].[GQ]",
     "IGKJ": "FG",
     "IGLJ": "FG.G",
     "ignore": []
@@ -511,9 +513,9 @@
       "source": "Legacy patterns from original implementation",
       "imgt_validated": false,
       "last_reviewed": "2026-05-08",
-      "notes": "Legacy pattern - requires empirical validation"
+      "notes": "Legacy pattern - requires empirical validation; IGHJ widened to W[GDV].[GQ] for IGHJ4 (WVQG) and IGHJ9 (WDQG) variants"
     },
-    "IGHJ": "WG.G",
+    "IGHJ": "W[GDV].[GQ]",
     "IGKJ": "FG",
     "IGLJ": "FG.G",
     "ignore": []

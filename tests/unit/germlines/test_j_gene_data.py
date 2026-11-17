@@ -349,3 +349,100 @@ class TestJGeneDataRegressionCompatibility:
         for chain, expected_chain_type in test_cases:
             _, chain_type, _, _ = get_j_gene_data('TEST*01', chain)
             assert chain_type == expected_chain_type
+
+
+class TestLastMotifMatch:
+    """Tests for issue #37: use last motif match, not first (sheep IGHJ2*01)."""
+
+    # Sheep IGHJ2*01 sequence has two W[GD].[GR] hits: WDSG (pos 1) and WGQR (pos 6).
+    # Using the last match (WGQR) gives FWR4 of 11 aa, matching IMGT FR4-IMGT length.
+    SHEEP_IGHJ2 = "TGCTGGGACTCGGGTCTCTGGGGCCAGCGCACCCCGGTCACCGTGTCCTTG"
+
+    def test_sheep_ighj2_cdr3_end_is_17(self):
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data(
+            "IGHJ2*01", "H", self.SHEEP_IGHJ2, species="sheep"
+        )
+        assert rf == 0
+        assert chain_type == "JH"
+        assert cdr3_end == 17, f"Expected CDR3 end 17 (last motif WGQR), got {cdr3_end}"
+
+    def test_sheep_ighj2_last_motif_is_wgqr(self):
+        result = parse_j_gene("sheep", "IGHJ2*01", self.SHEEP_IGHJ2)
+        assert result["expression_match"] is True
+        assert result["expression"][-1] == "WGQR", (
+            f"Expected last motif WGQR, got {result['expression']}"
+        )
+        assert len(result["fwr4_aa"]) <= 12, (
+            f"FWR4 length {len(result['fwr4_aa'])} exceeds IMGT FR4-IMGT max of 12"
+        )
+
+    def test_other_sheep_ighj_not_affected(self):
+        """The last-match fix must not change single-match alleles."""
+        from Bio import SeqIO
+        from pathlib import Path
+
+        j_fasta = Path("src/sadie/germlines/igblast/database/sheep/sheep_J.fasta")
+        if not j_fasta.exists():
+            pytest.skip("sheep J fasta not present")
+
+        for rec in SeqIO.parse(str(j_fasta), "fasta"):
+            if not rec.id.startswith("IGHJ") or rec.id == "IGHJ2*01":
+                continue
+            result = parse_j_gene("sheep", rec.id, str(rec.seq))
+            if result["expression_match"]:
+                assert len(result["expression"]) == 1, (
+                    f"{rec.id} has {len(result['expression'])} motif matches — "
+                    "review whether last-match fix is correct for this allele"
+                )
+
+
+class TestFerretKappaLambdaMotif:
+    """Tests for ferret IGKJ/IGLJ patterns added to j_gene_motif.json."""
+
+    def test_ferret_igkj5_uses_fgpg_frame0(self):
+        from Bio import SeqIO
+        from pathlib import Path
+
+        j_fasta = Path("src/sadie/germlines/igblast/database/ferret/ferret_J.fasta")
+        if not j_fasta.exists():
+            pytest.skip("ferret J fasta not present")
+
+        seqs = {r.id: str(r.seq) for r in SeqIO.parse(str(j_fasta), "fasta")}
+        rf, chain_type, cdr3_end, _ = get_j_gene_data(
+            "IGKJ5*01", "K", seqs["IGKJ5*01"], species="ferret"
+        )
+        assert rf == 0, f"IGKJ5*01 should use frame 0 (FGPG anchor), got {rf}"
+        assert cdr3_end == 5, f"IGKJ5*01 CDR3 end should be 5, got {cdr3_end}"
+
+    def test_ferret_igkj_iglj_in_motif_lookup(self):
+        assert "IGKJ" in MOTIF_LOOKUP.get("ferret", {}), "ferret missing IGKJ pattern"
+        assert "IGLJ" in MOTIF_LOOKUP.get("ferret", {}), "ferret missing IGLJ pattern"
+
+
+class TestOrangutanIGHJPattern:
+    """Tests for widened orangutan IGHJ pattern (W[GDV].[GQ]) for IGHJ4/9 variants."""
+
+    def _get_j_seqs(self, species_dir: str):
+        from Bio import SeqIO
+        from pathlib import Path
+
+        j_fasta = Path(f"src/sadie/germlines/igblast/database/{species_dir}/{species_dir}_J.fasta")
+        if not j_fasta.exists():
+            pytest.skip(f"{species_dir} J fasta not present")
+        return {r.id: str(r.seq) for r in SeqIO.parse(str(j_fasta), "fasta")}
+
+    def test_orangutan_bornean_ighj4_cdr3_end(self):
+        seqs = self._get_j_seqs("orangutan_bornean")
+        rf, _, cdr3_end, _ = get_j_gene_data(
+            "IGHJ4*01", "H", seqs["IGHJ4*01"], species="orangutan_bornean"
+        )
+        assert rf == 2, f"Expected frame 2 (WVQG anchor), got {rf}"
+        assert cdr3_end == 19, f"Expected CDR3 end 19, got {cdr3_end}"
+
+    def test_orangutan_sumatran_ighj9_cdr3_end(self):
+        seqs = self._get_j_seqs("orangutan_sumatran")
+        rf, _, cdr3_end, _ = get_j_gene_data(
+            "IGHJ9*01", "H", seqs["IGHJ9*01"], species="orangutan_sumatran"
+        )
+        assert rf == 2, f"Expected frame 2 (WDQG anchor), got {rf}"
+        assert cdr3_end == 19, f"Expected CDR3 end 19, got {cdr3_end}"
