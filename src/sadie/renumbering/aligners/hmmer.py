@@ -152,20 +152,29 @@ class HMMER:
                 # Priority 1: Numbering (legacy) HMMs — specifically designed
                 # for antibody numbering and produce correct IMGT gap patterns
                 # (e.g. conserved deletion at position 10 for VH).
+                # Only accepted when M ≥ 120: short models (e.g. rat_H.hmm,
+                # M=98) truncate before CDR3/FWR4 and are skipped so that
+                # Priority 2/3 can supply a full-domain model.
                 numbering_species = single_species
                 if numbering_species.strip() == "macaque":
                     numbering_species = "rhesus"
                 if (numbering_species, chain) in self.numbering.species_chain_to_paths:
                     hmm_paths = self.numbering.species_chain_to_paths[(numbering_species, chain)]
+                    candidate_hmms = []
                     for hmm_path in hmm_paths:
                         with pyhmmer.plan7.HMMFile(hmm_path) as hmm_file:
-                            hmm = next(hmm_file)
-                            hmms.append(hmm)
-                    self._loaded_pairs.add((canonical_species, chain))
-                    continue
+                            candidate_hmms.append(next(hmm_file))
+                    if all(h.M >= 120 for h in candidate_hmms):
+                        hmms.extend(candidate_hmms)
+                        self._loaded_pairs.add((canonical_species, chain))
+                        continue
+                    # Short model — fall through to Local or G3
 
                 # Priority 2: Local germlines HMM builder — fallback for
                 # species/chains not covered by legacy Numbering HMMs.
+                # Same M ≥ 120 requirement as Priority 1: short cached HMMs
+                # (e.g. a stale rat_H.hmm from ANARCI's bundled files) must
+                # fall through to G3 to get a full-domain model.
                 if use_local:
                     try:
                         if self._local_hmm_builder is None:
@@ -176,9 +185,11 @@ class HMMER:
                             self._local_hmm_builder = LocalHMMBuilder()
 
                         hmm = self._local_hmm_builder.get_hmm(species=canonical_species, chain=chain, source=source)
-                        hmms.append(hmm)
-                        self._loaded_pairs.add((canonical_species, chain))
-                        continue
+                        if hmm.M >= 120:
+                            hmms.append(hmm)
+                            self._loaded_pairs.add((canonical_species, chain))
+                            continue
+                        # Short HMM — fall through to G3
                     except Exception as e:
                         # Fall through to G3 on error
                         import logging
