@@ -199,3 +199,16 @@ class NumberingDecreasing(Error):
 
 #     def __str__(self) -> str:
 #         return f"Duplicate Ids are found {self.ids} {self.found} times"
+
+
+class BinaryNotFoundError(FileNotFoundError):
+    """sadie ships no executable for this operating system and chipset and none is on PATH."""
+
+    def __init__(self, tool: str, system: str, machine: str):
+        super().__init__(
+            f"sadie bundles no {tool} for {system}/{machine} and none was found on PATH; "
+            f"install NCBI IgBLAST/BLAST+ and put {tool} on PATH"
+        )
+        self.tool = tool
+        self.system = system
+        self.machine = machine

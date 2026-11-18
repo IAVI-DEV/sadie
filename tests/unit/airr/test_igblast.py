@@ -1,5 +1,4 @@
 import os
-import platform
 import re
 from pathlib import Path
 
@@ -17,6 +16,7 @@ from sadie.airr.exceptions import (
     MissingIgBLASTArgument,
 )
 from sadie.airr.igblast.igblast import IgBLASTArgument, IgBLASTN
+from sadie.utility.binaries import find_binary
 from tests.conftest import SadieFixture
 
 
@@ -25,8 +25,7 @@ def test_antibody_igblast_setup() -> None:
     testing if we can manually setup IgBlast databases
     """
 
-    system = platform.system().lower()
-    executable = os.path.join(os.path.dirname(sadie_airr_file), f"bin/{system}/igblastn")
+    executable = find_binary("igblastn", Path(sadie_airr_file).parent / "bin")
 
     ig_blast = igblast.IgBLASTN(executable)
     # Check that version is a valid semantic version (e.g., 1.19.0, 1.22.0, etc.)
@@ -85,8 +84,7 @@ def test_antibody_igblast_file_run(fixture_setup: SadieFixture) -> None:
     """
 
     # this should be fixture
-    system = platform.system().lower()
-    executable = os.path.join(os.path.dirname(sadie_airr_file), f"bin/{system}/igblastn")
+    executable = find_binary("igblastn", Path(sadie_airr_file).parent / "bin")
 
     ig_blast = igblast.IgBLASTN(executable)
     germline_ref = os.path.join(os.path.dirname(os.path.abspath(sadie_airr_file)), "data/germlines")
@@ -126,7 +124,7 @@ def test_IgBLASTArgument_exceptions() -> None:
 
 
 class TestIgBLASTN:
-    igblastn_exe = os.path.join(os.path.dirname(sadie_airr_file), f"bin/{platform.system().lower()}/igblastn")
+    igblastn_exe = find_binary("igblastn", Path(sadie_airr_file).parent / "bin")
     germline_ref = os.path.join(os.path.dirname(os.path.abspath(sadie_airr_file)), "data/germlines")
     db_ref = os.path.join(germline_ref, "Ig/blastdb/human/")
     aux_path = os.path.join(germline_ref, "aux_db/imgt/")

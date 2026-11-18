@@ -368,6 +368,7 @@ class ReferenceFixtures:
         return {
             ("mouse", "IGLJ4*01"): "igblast has wrong number of c-term remaining",
             ("rabbit", "IGHJ3*02"): "igblast has wrong reading frame",
+            ("rat", "IGKJ3*01"): "igblast bundled aux missing cdr3_end and left_over for this gene",
         }
 
     def get_internal_db_excetions(self) -> List[List[str]]:

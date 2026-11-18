@@ -314,7 +314,7 @@ def test_good_species(fixture_setup):
         "mouse",
         "rat",
         "rabbit",
-        "rhesus",
+        "macaque",
         "pig",
         "alpaca",
         "dog",

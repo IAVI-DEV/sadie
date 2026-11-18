@@ -128,7 +128,7 @@ def _test_auxilary_file_structure(tmpdir: Path, fixture_setup: SadieFixture) -> 
             header=None,
             names=["gene", "reading_frame", "segment", "cdr3_end", "left_over"],
         )
-        df.insert(0, "name", os.path.basename(file).split("_")[0])
+        df.insert(0, "name", os.path.basename(file).removesuffix("_gl.aux"))
         my_aux.append(df)
 
     # make the aux file structure into a dataframe
@@ -148,7 +148,7 @@ def _test_auxilary_file_structure(tmpdir: Path, fixture_setup: SadieFixture) -> 
             header=None,
             names=["gene", "reading_frame", "segment", "cdr3_end", "left_over"],
         )
-        df.insert(0, "name", os.path.basename(file).split("_")[0])
+        df.insert(0, "name", os.path.basename(file).removesuffix("_gl.aux"))
         # df.insert(1, "db_type", "imgt")  # pylint: disable=maybe-no-member
         igblast_aux.append(df)
 

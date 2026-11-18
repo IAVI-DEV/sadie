@@ -19,6 +19,10 @@ except ImportError:
 from sadie.airr import Airr
 from sadie.airr.methods import run_igl_assignment, run_mutational_analysis
 
+# germlines
+from sadie.germlines.cli import germlines
+from sadie.germlines.providers.base import normalize_species
+
 # reference
 from sadie.reference.reference import References
 
@@ -52,9 +56,19 @@ def sadie(verbose: int) -> None:
     logging.basicConfig(level=numeric_level)
 
 
+sadie.add_command(germlines)
+
+
+class _SpeciesChoice(click.Choice):
+    """Choice of canonical species names that also accepts aliases such as rhesus_macaque."""
+
+    def convert(self, value: Any, param: Any, ctx: Any) -> Any:
+        return super().convert(normalize_species(value), param, ctx)
+
+
 @sadie.command("airr")
 @click.option(
-    "--name", "-n", type=click.Choice(Airr.get_available_species()), help="Species to annotate", default="human"
+    "--name", "-n", type=_SpeciesChoice(Airr.get_available_species()), help="Species to annotate", default="human"
 )
 @click.option("--skip-igl", is_flag=True, help="Skip the igl assignment")
 @click.option("--skip-mutation", is_flag=True, help="Skip the somewhat time instansive mutational analysis")
