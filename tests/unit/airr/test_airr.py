@@ -287,6 +287,8 @@ def test_airr_from_dataframe(fixture_setup: SadieFixture) -> None:
     assert isinstance(unjoined_df, AirrTable)
     joined_df = airr_api.run_dataframe(dog_df, "sequence_id", "sequence", return_join=True)
     assert isinstance(joined_df, pd.DataFrame)
+    indexed_df = airr_api.run_dataframe(dog_df.head(2).set_index("sequence"), "sequence_id", "sequence")
+    assert len(indexed_df) == 2
 
     with pytest.raises(TypeError):
         airr_api.run_dataframe(fixture_setup.get_oas_fasta(), "sequence_id", "sequence")
@@ -389,6 +391,7 @@ def test_adaptable_penalty(fixture_setup: SadieFixture) -> None:
     assert isinstance(airr_table, pd.DataFrame)
     assert isinstance(airr_table, AirrTable)
     assert isinstance(airr_table, LinkedAirrTable)
+    assert airr_table["v_mutation_heavy"].dtype == "float32"
 
 
 def test_adaptable_correction(fixture_setup: SadieFixture) -> None:
@@ -593,9 +596,16 @@ def test_airrtable_init(fixture_setup: SadieFixture) -> None:
     ]
     assert sorted(airr_table.non_airr_columns) == non_airr_columns
     # Tes twe can init with a direct pandas call
-    airr_table = AirrTable(pd.read_csv(test_tsv, sep="\t"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pd.errors.PerformanceWarning)
+        airr_table = AirrTable(pd.read_csv(test_tsv, sep="\t"))
     assert not airr_table.empty
     assert isinstance(airr_table, AirrTable)
+
+    # an identity whose mutation rate is not float32-exact still fits the float32 mutation column
+    low_identity = pd.read_feather(fixture_setup.get_catnap_heavy_airrtable())
+    low_identity.loc[0, "v_identity"] = np.float32(0.123)
+    assert AirrTable(low_identity)["v_mutation"].iloc[0] == pytest.approx(0.877)
 
     # test we can read in json too
     test_json = fixture_setup.get_json_as_dataframe()

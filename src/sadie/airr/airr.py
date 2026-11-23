@@ -1,4 +1,5 @@
 """SADIE Airr module"""
+
 from __future__ import annotations
 
 # Std library
@@ -421,10 +422,13 @@ class Airr:
                 f"{dataframe[dataframe[seq_id_field].duplicated()][seq_id_field]} is duplicated. Nees to be unique"
             )
 
+        # a requested field may be the index; reset_index only then, it warns on fragmented frames
+        _frame = dataframe if {seq_id_field, seq_field} <= set(dataframe.columns) else dataframe.reset_index()
+
         def _get_seq_generator() -> Iterator[SeqRecord]:
             for seq_id, seq in zip(
-                dataframe.reset_index()[seq_id_field],
-                dataframe.reset_index()[seq_field],
+                _frame[seq_id_field],
+                _frame[seq_field],
             ):
                 if not isinstance(seq, str):
                     raise ValueError(f"{seq_id} needs to have string. passed {type(seq)}, drop nan's first")
