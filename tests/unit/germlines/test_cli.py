@@ -5,6 +5,7 @@ Tests the `sadie germlines populate` and `sadie germlines status` CLI commands.
 """
 
 import json
+import os
 import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -73,6 +74,91 @@ class TestGermlinesPopulateDryRun:
         assert "human" in result.output
 
 
+class TestGermlinesPopulateFailure:
+    @pytest.mark.parametrize(
+        "provider_name, species, fetched, imgt_answer, status, exit_code",
+        [
+            ("imgt", ["human"], ["human"], None, "success", 0),
+            ("imgt", ["human", "mouse"], ["human"], None, "partial", 1),
+            ("imgt", ["human"], [], None, "failed", 1),
+            ("ogrdb", ["human"], [], None, "failed", 1),
+            ("vdjbase", ["human"], [], None, "failed", 1),
+            ("imgt", ["human", "chimpanzee"], ["human"], "TR-only", "success", 0),
+            ("imgt", ["human", "chimpanzee"], ["human"], "network error", "partial", 1),
+            ("imgt", ["Humann X"], [], "network error", "failed", 1),
+        ],
+    )
+    def test_populate_with_stale_stamp_reports_what_this_run_fetched(
+        self, cli_runner, tmp_path, provider_name, species, fetched, imgt_answer, status, exit_code
+    ):
+        for sp in set(species) - {"chimpanzee", "Humann X"}:
+            stale = tmp_path / sp / "IGHV.fasta"
+            stale.parent.mkdir()
+            stale.write_text(">IGHV1-2*01\nACGT\n")
+            os.utime(stale, (0, 0))
+        (tmp_path / "VERSION.json").write_text('{"version": "release-200001"}')
+
+        def fetch(species_list, **kwargs):
+            for sp in species_list:
+                (tmp_path / sp.lower().replace(" ", "_")).mkdir(exist_ok=True)
+                if sp in fetched:
+                    (tmp_path / sp / "IGHV.fasta").write_text(">IGHV1-2*01\nACGTACGT\n")
+
+        provider = MagicMock(data_dir=tmp_path)
+        provider.download.side_effect = fetch
+        with (
+            patch("sadie.germlines.cli.get_provider_data_dir", return_value=tmp_path),
+            patch("sadie.germlines.cli.get_provider", return_value=provider),
+            patch("sadie.germlines.scripts.download_imgt.IMGTDownloader") as imgt,
+            patch("sadie.germlines.scripts.download_ogrdb.OGRDBDownloader") as ogrdb,
+            patch("sadie.germlines.cli.run_post_download_build") as build,
+            patch("sadie.germlines.cli.validate_provider_data", return_value=True) as validate,
+            patch("sadie.germlines.cli.logger"),  # live logging closes the CliRunner stream
+        ):
+            imgt.return_value.download.side_effect = fetch
+            imgt._IG_UNAVAILABLE_REASONS = {"tr_only": "TR-only"}
+            imgt.return_value.check_ig_unavailable_reason.return_value = f"chimpanzee: {imgt_answer}"
+            ogrdb.return_value.download.side_effect = fetch
+            ogrdb.return_value.allele_counts = {}
+            ogrdb.return_value.get_latest_version_string.return_value = "release-1"
+            args = [arg for sp in species for arg in ("-s", sp)]
+            result = cli_runner.invoke(sadie, ["germlines", "populate", "-p", provider_name, *args])
+
+        assert result.exit_code == exit_code, result.output
+        assert status in result.output
+        assert build.called == bool(fetched)
+        assert validate.called == (status == "success")
+        restamped = json.loads((tmp_path / "VERSION.json").read_text())["version"] != "release-200001"
+        assert restamped == (status == "success")
+        assert not [d for d in tmp_path.iterdir() if d.is_dir() and not any(d.iterdir())]
+        assert sorted(f.name for f in tmp_path.iterdir() if f.is_file()) == ["VERSION.json"]
+        if provider_name == "imgt":
+            assert imgt.return_value.download.call_args.kwargs == {"force": True}
+
+    @pytest.mark.parametrize(
+        "page, reason",
+        [
+            ('<a href="IG/">IG</a><a href="TR/">TR</a>', "IG data exists"),
+            ('<a href="TR/">TR</a>', "TR-only"),
+            ("<h1>Service temporarily unavailable</h1>", "could not determine"),
+        ],
+    )
+    def test_imgt_species_is_tr_only_only_when_the_page_lists_tr_without_ig(self, tmp_path, page, reason):
+        from sadie.germlines.scripts.download_imgt import IMGTDownloader
+
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = page.encode()
+        with patch("sadie.germlines.scripts.download_imgt.urlopen", return_value=response):
+            assert reason in IMGTDownloader(output_dir=tmp_path).check_ig_unavailable_reason("Homo_sapiens", "human")
+
+    def test_non_imgt_post_download_build_names_the_rebuild_command(self, capsys):
+        from sadie.germlines.cli import run_post_download_build
+
+        run_post_download_build("ogrdb", ["human", "mouse"], MagicMock())
+
+        assert "sadie germlines rebuild -s human -s mouse" in " ".join(capsys.readouterr().out.split())
+
+
 class TestGermlinesStatus:
     """Tests for status command."""
 
@@ -96,17 +182,22 @@ class TestVersionTracking:
             result = get_local_version("imgt")
             assert result is None
 
-    def test_get_local_version_exists(self, tmp_path):
-        """Test get_local_version reads version file."""
+    def test_save_version_counts_species_on_disk_and_merges_allele_counts(self, tmp_path):
         from sadie.germlines.cli import get_local_version, save_version
 
-        with patch("sadie.germlines.cli.get_provider_data_dir", return_value=tmp_path):
-            save_version("imgt", "release-202601", 29)
-            result = get_local_version("imgt")
+        for sp in ("human", "mouse", "_template"):
+            (tmp_path / sp).mkdir()
+            (tmp_path / sp / "IGHV.fasta").write_text(">a\nACGT\n")
+        (tmp_path / "raw").mkdir()
 
-            assert result is not None
-            assert result["version"] == "release-202601"
-            assert result["species_count"] == 29
+        with patch("sadie.germlines.cli.get_provider_data_dir", return_value=tmp_path):
+            save_version("ogrdb", "release-202601", {"human": {"IGHV": {"written": 1}}})
+            save_version("ogrdb", "release-202602", {"mouse": {"IGHV": {"written": 1}}})
+            result = get_local_version("ogrdb")
+
+        assert result["version"] == "release-202602"
+        assert result["species_count"] == 2
+        assert sorted(result["allele_counts"]) == ["human", "mouse"]
 
     def test_is_up_to_date(self, tmp_path):
         """Test is_up_to_date checks version."""
@@ -120,7 +211,7 @@ class TestVersionTracking:
             assert not is_up_to_date("imgt")
 
             current = get_current_version_string()
-            save_version("imgt", current, 29)
+            save_version("imgt", current)
 
             assert is_up_to_date("imgt")
 

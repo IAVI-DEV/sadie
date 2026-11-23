@@ -274,3 +274,51 @@ def test_process_sql_dump_keeps_latest_release_of_an_allele(tmp_path):
     fastas = parse_dump_to_fasta(tmp_path, superseded + "\n" + current)
 
     assert fastas["IGHV.fasta"] == ">IGHV1-1*01\nCAGGTG\n"
+
+
+@pytest.mark.parametrize(
+    "failing, message",
+    [
+        ("sets", "germline sets"),
+        ("set_fasta", "set 7"),
+        ("archive", "Failed to download OGRDB archive"),
+        (None, None),
+    ],
+)
+def test_download_replaces_fasta_only_when_archive_and_api_both_succeed(tmp_path, monkeypatch, failing, message):
+    from urllib.error import URLError
+
+    from sadie.germlines.scripts import download_ogrdb
+
+    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
+    (tmp_path / "cache" / "ogrdb_archive.tgz").write_bytes(b"cached")
+    on_disk = tmp_path / "out" / "human" / "IGHV.fasta"
+    on_disk.parent.mkdir(parents=True)
+    on_disk.write_text(">IGHV1-1*01\nAAAA\n>IGHV1-2*01\nCCCC\n")
+
+    def unreachable(*args, **kwargs):
+        raise URLError("offline")
+
+    def archive_pass(sql_file, species):
+        (downloader.output_dir / "human").mkdir(parents=True)
+        (downloader.output_dir / "human" / "IGHV.fasta").write_text(">IGHV1-1*01\nAAAA\n")
+
+    monkeypatch.setattr(downloader, "_get_latest_zenodo_record", lambda: ("1", "http://zenodo.invalid/a.tgz", "v1"))
+    monkeypatch.setattr(download_ogrdb, "urlretrieve", unreachable if failing == "archive" else lambda *a, **k: None)
+    monkeypatch.setattr(downloader, "_extract_archive", lambda archive, target: (target / "dump.sql").write_text(""))
+    monkeypatch.setattr(downloader, "_process_sql_dump", archive_pass)
+    sets = [{"germline_set_id": "7", "locus": "IGH"}]
+    monkeypatch.setattr(downloader, "get_germline_sets", unreachable if failing == "sets" else lambda _: sets)
+    api_fasta = ">IGHV1-1*01\nAAAA\n>IGHV1-3*01\nGGGG\n"
+    monkeypatch.setattr(
+        downloader, "get_germline_set_fasta", unreachable if failing == "set_fasta" else lambda *a, **k: api_fasta
+    )
+
+    if failing:
+        with pytest.raises(RuntimeError, match=message):
+            downloader.download(["human"])
+        assert on_disk.read_text() == ">IGHV1-1*01\nAAAA\n>IGHV1-2*01\nCCCC\n"
+    else:
+        downloader.download(["human"])
+        assert on_disk.read_text() == ">IGHV1-1*01\nAAAA\n>IGHV1-3*01\nGGGG\n"
+    assert downloader.output_dir == tmp_path / "out"

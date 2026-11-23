@@ -81,18 +81,18 @@ class TestSingleProvider:
 class TestErrorHandling:
     """T055, T059: Test error handling and no-fallback (FR-006, NFR-002)."""
 
-    def test_clear_error_missing_species_non_strict(self):
+    def test_clear_error_missing_species_non_strict(self, tmp_path):
         """T055: Verify empty result without strict mode."""
-        manager = GermlineManager(providers=["imgt"])
+        manager = GermlineManager(providers=["imgt"], data_dir=tmp_path)
 
         # Non-strict mode returns empty list
         result = manager.get_genes("nonexistent_species", "V", "H", strict=False)
         assert isinstance(result, list)
         assert len(result) == 0
 
-    def test_clear_error_missing_species_strict(self):
+    def test_clear_error_missing_species_strict(self, tmp_path):
         """T055: Verify clear error when provider lacks species data (strict mode)."""
-        manager = GermlineManager(providers=["imgt"])
+        manager = GermlineManager(providers=["imgt"], data_dir=tmp_path)
 
         # Strict mode raises ValueError with helpful message
         with pytest.raises(ValueError) as exc_info:

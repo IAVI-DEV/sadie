@@ -313,8 +313,24 @@ class OGRDBDownloader(OGRDBApiClient):
         self.allele_counts: Dict[str, Dict[str, Dict[str, int]]] = {}
 
     def download(self, species: List[str], force: bool = False) -> None:
+        """Download OGRDB data for species; FASTA files are replaced only when every step succeeded."""
+        final_dir = self.output_dir
+        # Staged outside output_dir: a failed archive or API step must not leave the species
+        # files rewritten with only part of the alleles.
+        with tempfile.TemporaryDirectory() as staging:
+            self.output_dir = Path(staging)
+            try:
+                self._download_staged(species, force)
+            finally:
+                self.output_dir = final_dir
+            for staged in Path(staging).rglob("*.fasta"):
+                target = final_dir / staged.relative_to(staging)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(staged, target)
+
+    def _download_staged(self, species: List[str], force: bool = False) -> None:
         """
-        Download OGRDB data for specified species.
+        Download OGRDB data for specified species into self.output_dir.
 
         Parameters
         ----------
@@ -390,8 +406,7 @@ class OGRDBDownloader(OGRDBApiClient):
             try:
                 germline_sets = self.get_germline_sets(taxonomy_id)
             except Exception as e:
-                logger.warning(f"Failed to get germline sets for {sp}: {e}")
-                continue
+                raise RuntimeError(f"OGRDB API failed for {sp} germline sets, nothing written: {e}") from e
 
             for gs in germline_sets:
                 set_id = gs.get("germline_set_id")
@@ -411,8 +426,7 @@ class OGRDBDownloader(OGRDBApiClient):
                     ungapped_fasta = self.get_germline_set_fasta(set_id, gapped=False)
                     gapped_fasta = self.get_germline_set_fasta(set_id, gapped=True)
                 except Exception as e:
-                    logger.warning(f"Failed to fetch {set_id}: {e}")
-                    continue
+                    raise RuntimeError(f"OGRDB API failed for {sp} set {set_id}, nothing written: {e}") from e
 
                 ungapped_seqs = self.parse_fasta(ungapped_fasta)
                 gapped_seqs = self.parse_fasta(gapped_fasta)
@@ -615,9 +629,7 @@ class OGRDBDownloader(OGRDBApiClient):
             logger.info(f"Downloaded archive (record {latest_record_id}, {latest_version_str}) to {archive_path}")
 
         except URLError as e:
-            if archive_path.exists():
-                logger.warning(f"Download failed ({e}); using existing cached archive.")
-                return archive_path
+            # A cached archive of unknown age is not used: the run would report stale data as downloaded
             raise RuntimeError(
                 f"Failed to download OGRDB archive: {e}. "
                 f"Check your internet connection or download manually from {download_url}"
