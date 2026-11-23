@@ -232,7 +232,7 @@
       "notes": "Legacy pattern - requires empirical validation"
     },
     "IGHJ": "WG.G",
-    "IGKJ": "FG.G",
+    "IGKJ": "F[GS].G",
     "IGLJ": "FG.G",
     "TRBJ": "[F][GA].G",
     "TRAJ": "[F][GA].G",
@@ -295,7 +295,7 @@
     },
     "IGHJ": "WG.G",
     "IGKJ": "F[GS].G",
-    "IGLJ": "FG.G",
+    "IGLJ": "F[GDS].G",
     "TRAJ": "[FSW][GW].[GRLER]",
     "TRBJ": "[F][GA].[G]",
     "TRGJ": "[LFM][GTA].[GDV]",
@@ -311,7 +311,7 @@
     },
     "IGHJ": "WG.G",
     "IGKJ": "F[G].G",
-    "IGLJ": "F[GNS].G",
+    "IGLJ": "F[GNSD].G",
     "TRAJ": "[FWL][ERGW].[GRCKEQ]",
     "TRBJ": "[F][TG].[G]",
     "TRGJ": "[SF][TGAD].[G]",
@@ -468,7 +468,7 @@
       "notes": "Legacy pattern - requires empirical validation"
     },
     "IGHJ": "WG.G",
-    "IGKJ": "FG.G",
+    "IGKJ": "F[GH].G",
     "IGLJ": "FG.G",
     "ignore": []
   },
