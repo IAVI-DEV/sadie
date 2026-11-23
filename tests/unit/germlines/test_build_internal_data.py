@@ -1,8 +1,8 @@
-"""Tests for build_internal_data script and combined VDJC structure.
+"""Tests for build_internal_data script and the internal_data structure.
 
 These tests verify that:
-1. build_internal_data creates combined VDJC FASTA files (not symlinks)
-2. The BLAST database is built from the combined file
+1. build_internal_data creates V-only FASTA files (not symlinks)
+2. The BLAST database is built from that file
 3. No symlinks exist in internal_data directories
 4. GermlineData paths point to the correct locations
 """
@@ -55,31 +55,23 @@ class TestInternalDataStructure:
         assert not (human_internal / "human_J.fasta").exists(), "Separate J file should not exist in internal_data"
         assert not (human_internal / "human_C.fasta").exists(), "Separate C file should not exist in internal_data"
 
-    def test_combined_fasta_contains_multiple_segments(self, internal_data_dir: Path) -> None:
-        """Test that combined FASTA contains V, D, J, and C genes."""
-        human_internal = internal_data_dir / "human"
-        combined_fasta = human_internal / "human_V.fasta"
+    def test_internal_fasta_holds_exactly_the_database_v_genes(
+        self, internal_data_dir: Path, database_dir: Path
+    ) -> None:
+        """D, J and C records in internal_data make igblastn drop J, C and CDR3 on long heavy chains."""
 
-        if not combined_fasta.exists():
-            pytest.skip("Human internal_data not built")
+        def headers(fasta: Path) -> set:
+            return {line for line in fasta.read_text().splitlines() if line.startswith(">")}
 
-        # Read and parse FASTA
-        content = combined_fasta.read_text()
-        headers = [line for line in content.split("\n") if line.startswith(">")]
+        differing = [
+            species.name
+            for species in sorted(database_dir.iterdir())
+            if species.is_dir()
+            if headers(internal_data_dir / species.name / f"{species.name}_V.fasta")
+            != headers(species / f"{species.name}_V.fasta")
+        ]
 
-        # Check for different segment types
-        has_v = any("IGHV" in h or "IGKV" in h or "IGLV" in h for h in headers)
-        has_d = any("IGHD" in h for h in headers)
-        has_j = any("IGHJ" in h or "IGKJ" in h or "IGLJ" in h for h in headers)
-        has_c = any("IGHA" in h or "IGHG" in h or "IGHM" in h or "IGKC" in h for h in headers)
-
-        assert has_v, "Combined FASTA should contain V genes"
-        assert has_d, "Combined FASTA should contain D genes"
-        assert has_j, "Combined FASTA should contain J genes"
-        assert has_c, "Combined FASTA should contain C genes"
-
-        # Should have significant number of sequences
-        assert len(headers) > 100, f"Expected 100+ sequences, got {len(headers)}"
+        assert differing == []
 
     def test_blast_database_files_exist(self, internal_data_dir: Path) -> None:
         """Test that BLAST database files are created from combined FASTA."""
@@ -151,52 +143,21 @@ class TestGermlineDataPaths:
 class TestBuildInternalDataScript:
     """Tests for the build_internal_data script functions."""
 
-    def test_build_combined_fasta(self, tmp_path: Path) -> None:
-        """Test build_combined_fasta creates combined file with deduplication."""
+    def test_build_combined_fasta_writes_v_genes_only(self, tmp_path: Path) -> None:
         from sadie.germlines.scripts.build_internal_data import build_combined_fasta
 
-        # Create mock database directory with test FASTAs
         database_dir = tmp_path / "database" / "test"
         database_dir.mkdir(parents=True)
         internal_data_dir = tmp_path / "internal_data" / "test"
         internal_data_dir.mkdir(parents=True)
+        (database_dir / "test_V.fasta").write_text(">IGHV1-1*01\nATGC\n>IGHV1-2*01\nGCTA\n>IGHV1-1*01\nATGC\n")
+        (database_dir / "test_D.fasta").write_text(">IGHD1-1*01\nAAA\n")
+        (database_dir / "test_J.fasta").write_text(">IGHJ1*01\nTTT\n")
+        (database_dir / "test_C.fasta").write_text(">IGHA1*01\nCCC\n")
 
-        # Create test V FASTA
-        v_fasta = database_dir / "test_V.fasta"
-        v_fasta.write_text(">IGHV1-1*01\nATGC\n>IGHV1-2*01\nGCTA\n")
-
-        # Create test D FASTA
-        d_fasta = database_dir / "test_D.fasta"
-        d_fasta.write_text(">IGHD1-1*01\nAAA\n")
-
-        # Create test J FASTA
-        j_fasta = database_dir / "test_J.fasta"
-        j_fasta.write_text(">IGHJ1*01\nTTT\n")
-
-        # Create test C FASTA with duplicate D entry
-        c_fasta = database_dir / "test_C.fasta"
-        c_fasta.write_text(">IGHA1*01\nCCC\n>IGHD1-1*01\nAAA\n")  # Duplicate!
-
-        # Build combined FASTA
         combined = build_combined_fasta("test", database_dir, internal_data_dir)
 
-        assert combined.exists()
-        content = combined.read_text()
-
-        # Should have 5 unique sequences (duplicate IGHD1-1*01 should be skipped)
-        # V: 2, D: 1, J: 1, C: 1 (IGHA1*01 only, IGHD1-1*01 is duplicate)
-        headers = [l for l in content.split("\n") if l.startswith(">")]
-        assert len(headers) == 5, f"Expected 5 sequences, got {len(headers)}: {headers}"
-
-        # Verify sequences are present
-        assert ">IGHV1-1*01" in content
-        assert ">IGHV1-2*01" in content
-        assert ">IGHD1-1*01" in content
-        assert ">IGHJ1*01" in content
-        assert ">IGHA1*01" in content
-
-        # Verify IGHD1-1*01 appears only once (from D file, not C file)
-        assert content.count(">IGHD1-1*01") == 1, "Duplicate should have been removed"
+        assert combined.read_text() == ">IGHV1-1*01\nATGC\n>IGHV1-2*01\nGCTA\n"
 
     def test_build_blast_db(self, tmp_path: Path) -> None:
         """Test build_blast_db creates BLAST database files."""

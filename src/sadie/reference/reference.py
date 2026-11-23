@@ -737,8 +737,7 @@ class References:
     def _make_internal_annotation_file(self, outpath: Path) -> None:
         """Generate the internal database file for IgBlast.
 
-        Creates combined VDJC FASTA and BLAST database for each reference name.
-        The combined file is required for IgBLAST's complete_vdj calculation.
+        Creates the V gene FASTA, BLAST database and NDM file for each reference name.
 
         Parameters
         ----------
@@ -748,9 +747,9 @@ class References:
 
         Notes
         -----
-        IgBLAST requires a single file named {name}_V in internal_data/ that
-        contains ALL gene segments (V, D, J, C) for proper complete_vdj calculation.
-        The NDM file still only includes V gene annotations (framework/CDR regions).
+        internal_data/{name}/{name}_V holds V genes only. D, J and C records in it
+        (long C genes above all) make igblastn drop J, D, C and CDR3 for heavy
+        chains with a constant region.
         """
         logger.debug(f"Generating internal annotation file at {outpath}")
         # The internal data file structure goes Ig/internal_path/{name}/
@@ -763,11 +762,8 @@ class References:
             database = _apply_name_mapping_to_dataframe(database, name_mapping)
 
         for name, group_df in database.groupby("name"):
-            # V genes for NDM file (framework/CDR regions)
+            # V genes only, for both the NDM file and the internal_data BLAST database
             v_genes = group_df.loc[group_df["gene_segment"] == "V"].copy()
-
-            # All segments for combined FASTA - IgBLAST needs V+D+J+C in internal_data
-            all_segments = group_df.loc[group_df["gene_segment"].isin(["V", "D", "J", "C"])].copy()
 
             # the species is the actual entity we are using for the annotation, e.g se09 or human
             name_internal_df_path = Path(outpath).joinpath(Path(f"Ig/internal_data/{name}/"))
@@ -809,13 +805,11 @@ class References:
                 logger.info(f"Writing to annotation file {internal_annotations_file_path}")
                 index_df.to_csv(internal_annotations_file_path, sep="\t", header=False, index=False)
 
-            # Build combined VDJC BLAST database
             # IgBLAST reads {name}_V from internal_data/ for its internal annotation
             suffix = "V"
             db_outpath = Path(str(name_internal_df_path) + f"/{name}_{suffix}")
-            # Pass ALL segments (V+D+J+C) to the BLAST database
-            make_blast_db_for_internal(all_segments, db_outpath)
-            logger.info(f"Built combined VDJC database with {len(all_segments)} sequences for {name}")
+            make_blast_db_for_internal(v_genes, db_outpath)
+            logger.info(f"Built internal V database with {len(v_genes)} sequences for {name}")
 
     def _make_hmm_files(self, outpath: Path) -> None:
         """Generate HMM files for renumbering from gapped AA sequences.
