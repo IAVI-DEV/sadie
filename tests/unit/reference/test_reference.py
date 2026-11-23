@@ -50,6 +50,14 @@ def test_yaml(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixt
     assert deduped.get_names() == {"clk"}  # still loads, just deduped
 
 
+@pytest.mark.parametrize("species", ["human", "mouse", "macaque"])
+def test_yaml_ogrdb_matches_provider(species: str) -> None:
+    from sadie.reference.generate import _get_all_alleles_for_provider
+
+    listed = yaml.safe_load(Path(YamlRef().ref_path).read_text())[species]["ogrdb"][species]
+    assert sorted(listed) == _get_all_alleles_for_provider("ogrdb", species)
+
+
 def test_check_models(fixture_setup: SadieFixture) -> None:
     """Coverage for all models including validations exceptions for bonehead entries"""
     entry = {"species": "human", "gene": "IGHV3-10*01", "source": "custom"}
@@ -127,6 +135,10 @@ def test_reference_class(tmp_path_factory: pytest.TempPathFactory) -> None:
     dataframe = references.get_dataframe()
     assert len(dataframe) == 3
 
+    json_path = tmp_path_factory.mktemp("test_reference_class") / "references.json"
+    dataframe.to_json(json_path, orient="records")
+    assert set(References.from_json(json_path).get_dataframe()["gene"]) == set(dataframe["gene"])
+
 
 def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test when we create reference without pasing any data, it uses yaml"""
@@ -136,6 +148,8 @@ def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert sorted([i.name for i in output.glob("*")]) == sorted(
         [".references_dataframe.csv.gz", ".allele_name_mapping.json", "aux_db", "Ig"]
     )
+    # igblastn opens {name}_D for every query, so D-less names (camel, cat, goat) need one too
+    assert [d.name for d in output.glob("Ig/blastdb/*") if not (d / f"{d.name}_D.ndb").exists()] == []
 
 
 def test_G3_errors() -> None:

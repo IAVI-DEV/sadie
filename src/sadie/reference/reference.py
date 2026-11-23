@@ -667,6 +667,12 @@ class References:
                 # Convert fasta file to blast db
                 write_blast_db(fasta_file, Path(str(fasta_file).split(".fasta")[0]))
                 logger.info(f"Wrote blast for {fasta_file}")
+            if "D" not in set(group_df["gene_segment"]):
+                # igblastn always opens {name}_D, so D-less references (camel, cat, goat) get the
+                # same 1-record placeholder as germlines/igblast/database/camel/camel_D.fasta
+                placeholder = SeqRecord(Seq("GGTACAACTGGAACGAC"), name="IGHD_placeholder*01")
+                fasta_file = write_out_fasta([placeholder], receptor_blast_dir.joinpath(f"{name}_D"))
+                write_blast_db(fasta_file, Path(str(fasta_file).split(".fasta")[0]))
 
     def _make_auxillary_file(self, outpath: Path) -> None:
         """Generate the auxillary file for the IgBlast reference database
@@ -1016,10 +1022,8 @@ class References:
         -------
         Reference - Reference Object
         """
-        _data = pd.read_json(path, orient="records").astype(
-            {"imgt.ignored": object, "imgt.not_implemented": object, "imgt.expression_match": object}
-        )
-        return References.from_dataframe(_data)  # type: ignore
+        # from_dataframe casts the imgt.* columns that are present
+        return References.from_dataframe(pd.read_json(path, orient="records"))  # type: ignore
 
     def make_airr_database(self, output_path: Path, build_hmms: bool = False) -> Path:
         """
