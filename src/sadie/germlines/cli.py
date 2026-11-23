@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 import click
-
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -140,6 +139,7 @@ def get_upstream_version_string(provider_name: str) -> str:
     if provider_name == "ogrdb":
         try:
             from .scripts.download_ogrdb import OGRDBDownloader
+
             return OGRDBDownloader().get_latest_version_string()
         except Exception:
             pass
@@ -253,7 +253,9 @@ def populate_provider(
             fasta_files = list(species_dir.glob("*.fasta")) if species_dir.exists() else []
             if not fasta_files:
                 if provider_name == "imgt":
-                    from .scripts.download_imgt import SPECIES_MAP, IMGTDownloader as _D
+                    from .scripts.download_imgt import SPECIES_MAP
+                    from .scripts.download_imgt import IMGTDownloader as _D
+
                     imgt_name = SPECIES_MAP.get(sp, sp)
                     reason = _D(output_dir=provider.data_dir).check_ig_unavailable_reason(imgt_name, sp)
                 else:
@@ -722,7 +724,7 @@ def status_cmd() -> None:
     if rows:
         console.print("\nOGRDB allele counts per pipeline stage (sadie.germlines.scripts.validate.check_allele_counts)")
         console.print(format_count_report(rows, findings), markup=False, highlight=False, soft_wrap=True)
-        if any(f["kind"] == "UNEXPLAINED" for f in findings):
+        if any(not r["ok"] for r in rows) or any(f["kind"] == "UNEXPLAINED" for f in findings):
             raise SystemExit(1)
 
 

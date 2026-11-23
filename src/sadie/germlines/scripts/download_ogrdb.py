@@ -108,6 +108,12 @@ def _extract_insert_blocks(content: str, table_name: str) -> list[str]:
                 break
             i += 1
         else:
+            logger.warning(
+                "Unterminated INSERT INTO %s at offset %d; %d chars dropped",
+                table_name,
+                m.start(),
+                len(content) - m.start(),
+            )
             break
     return blocks
 
