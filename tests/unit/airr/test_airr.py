@@ -17,6 +17,7 @@ from sadie.airr import exceptions as airr_exceptions
 from sadie.airr import methods as airr_methods
 from sadie.airr.airrtable.genbank import GenBank, GenBankFeature
 from sadie.airr.exceptions import BadDataSet, BadRequstedFileType
+from sadie.airr.igblast.germline import _use_germlines_module
 from sadie.airr.models import AirrSeriesModel
 from sadie.reference import Reference, References
 from tests.conftest import SadieFixture
@@ -196,6 +197,32 @@ def test_custom_mice_init(monkeypatch):
     """Test we can initialize custom Mice (legacy G3 path)"""
     monkeypatch.setenv("SADIE_USE_GERMLINES_MODULE", "false")
     Airr("se09")
+
+
+@pytest.mark.parametrize("name", ["clk", "se09"])
+def test_legacy_only_dataset_works_by_default(name, monkeypatch):
+    monkeypatch.delenv("SADIE_USE_GERMLINES_MODULE", raising=False)
+    assert Airr(name).germline_data.v_gene_dir.name == f"{name}_V"
+
+
+def test_every_available_dataset_has_a_usable_database(monkeypatch):
+    monkeypatch.delenv("SADIE_USE_GERMLINES_MODULE", raising=False)
+    available = Airr.get_available_datasets()
+    assert {"human", "clk", "se09"} <= available
+    for name in available:
+        GermlineData(name)
+
+
+@pytest.mark.parametrize("name", ["_template", "raw", "chimpanzee", "atlantic_cod"])
+def test_dataset_without_database_is_a_bad_dataset(name, monkeypatch):
+    monkeypatch.delenv("SADIE_USE_GERMLINES_MODULE", raising=False)
+    with pytest.raises(BadDataSet):
+        Airr(name)
+
+
+def test_feature_flag_on_enables_germlines_module(monkeypatch):
+    monkeypatch.setenv("SADIE_USE_GERMLINES_MODULE", "on")
+    assert _use_germlines_module() is True
 
 
 def test_airr_single_sequence(fixture_setup: SadieFixture) -> None:
@@ -715,6 +742,4 @@ def test_goat_igl_run_single_does_not_crash() -> None:
 def test_human_igh_d_call_unaffected_by_placeholder() -> None:
     """Placeholder D databases must not corrupt human IGHD3-10*01 call (issue #24)."""
     result = Airr("human").run_single("human_igh", _HUMAN_IGH_QUERY)
-    assert result["d_call"].iloc[0] == "IGHD3-10*01", (
-        f"Expected IGHD3-10*01, got {result['d_call'].iloc[0]}"
-    )
+    assert result["d_call"].iloc[0] == "IGHD3-10*01", f"Expected IGHD3-10*01, got {result['d_call'].iloc[0]}"
