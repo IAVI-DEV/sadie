@@ -4,7 +4,10 @@ import pytest
 from click.testing import CliRunner
 
 from sadie.germlines.cli import germlines
-from sadie.germlines.scripts.download_ogrdb import _extract_insert_blocks
+from sadie.germlines.scripts.download_ogrdb import (
+    OGRDBDownloader,
+    _extract_insert_blocks,
+)
 from sadie.germlines.scripts.validate import check_allele_counts, format_count_report
 
 
@@ -215,3 +218,46 @@ def test_extract_insert_blocks_warns_on_unterminated_statement(caplog):
 
     assert blocks == ["(1)"]
     assert "Unterminated INSERT INTO gene_description" in caplog.text
+
+
+def gene_description_dump(name, locus, sequence, coding_seq_imgt, gene_start, gene_end):
+    values = ["NULL"] * 46
+    values[1], values[8], values[9] = f"'{name}'", f"'{locus}'", f"'{name[3]}'"
+    values[16], values[17], values[41] = f"'{sequence}'", f"'{coding_seq_imgt}'", "'Homo sapiens'"
+    values[44], values[45] = gene_start, gene_end
+    return f"INSERT INTO `gene_description` VALUES ({','.join(values)});"
+
+
+def parse_dump_to_fasta(tmp_path, dump):
+    (tmp_path / "dump.sql").write_text(dump)
+    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
+    downloader._process_sql_dump(tmp_path / "dump.sql", ["human"])
+    return {path.name: path.read_text() for path in (tmp_path / "out").rglob("*.fasta")}
+
+
+@pytest.mark.parametrize(
+    "name, gene_start, gene_end",
+    [("IGHV1-1*01", "5", "10"), ("IGHV1-1*01", "NULL", "NULL"), ("IGHD1-1*01", "5", "10")],
+    ids=["gene_start_and_gene_end", "degapped_coding_seq_imgt_when_coordinates_missing", "d_segment"],
+)
+def test_process_sql_dump_writes_coding_region_not_full_genomic_sequence(tmp_path, name, gene_start, gene_end):
+    dump = gene_description_dump(name, "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", gene_start, gene_end)
+
+    fastas = parse_dump_to_fasta(tmp_path, dump)
+
+    assert fastas[f"{name[:4]}.fasta"] == f">{name}\nCAGGTG\n"
+
+
+def test_process_sql_dump_skips_t_cell_receptor_loci(tmp_path):
+    dump = gene_description_dump("TRBV19*01", "TRB", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10")
+
+    assert parse_dump_to_fasta(tmp_path, dump) == {}
+
+
+def test_process_sql_dump_keeps_latest_release_of_an_allele(tmp_path):
+    superseded = gene_description_dump("IGHV1-1*01", "IGH", "CAGGT", "CAG...GT", "1", "5")
+    current = gene_description_dump("IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10")
+
+    fastas = parse_dump_to_fasta(tmp_path, superseded + "\n" + current)
+
+    assert fastas["IGHV.fasta"] == ">IGHV1-1*01\nCAGGTG\n"

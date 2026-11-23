@@ -782,8 +782,9 @@ class OGRDBDownloader(OGRDBApiClient):
         - 1: sequence_name (gene name like IGHV1-2*i01)
         - 8: locus (IGH, IGK, IGL)
         - 9: sequence_type (V, D, J, C)
-        - 16: sequence (ungapped)
+        - 16: sequence (full genomic record, cut to the coding region below)
         - 17: coding_seq_imgt (gapped)
+        - 44/45: gene_start / gene_end (1-based coding region within sequence)
         - ~42: species
 
         Parameters
@@ -809,6 +810,16 @@ class OGRDBDownloader(OGRDBApiClient):
         seq_type = self._clean_sql_string(values[9])
         ungapped = self._clean_sql_string(values[16])
         gapped = self._clean_sql_string(values[17])
+
+        # Column 16 is the full genomic record (leader, intron, RSS). Keep only the
+        # coding region: gene_start..gene_end (1-based, columns 44/45), else the
+        # de-gapped coding_seq_imgt.
+        gene_start = self._clean_sql_string(values[44]) if len(values) > 45 else None
+        gene_end = self._clean_sql_string(values[45]) if len(values) > 45 else None
+        if ungapped and gene_start and gene_end and gene_start.isdigit() and gene_end.isdigit():
+            ungapped = ungapped[int(gene_start) - 1 : int(gene_end)]
+        elif gapped:
+            ungapped = gapped.replace(".", "")
 
         # Species is around index 42 (after many NULL fields)
         # Look for it by finding 'Homo sapiens' or similar
@@ -966,7 +977,8 @@ class OGRDBDownloader(OGRDBApiClient):
             Gapped sequence
         """
         # Determine chain from locus
-        chain_map = {"IGH": "H", "IGK": "K", "IGL": "L", "TRA": "A", "TRB": "B", "TRD": "D", "TRG": "G"}
+        # IG loci only: files are written as IG{chain}{segment}, so a TR row would land in e.g. IGBV.fasta
+        chain_map = {"IGH": "H", "IGK": "K", "IGL": "L"}
         chain = chain_map.get(locus)
 
         if not chain:
@@ -1382,13 +1394,9 @@ class OGRDBDownloader(OGRDBApiClient):
                     if not seqs:
                         continue
 
-                    # Deduplicate by gene name
-                    seen = set()
-                    unique_seqs = []
-                    for gene_name, ungapped, gapped in seqs:
-                        if gene_name not in seen:
-                            seen.add(gene_name)
-                            unique_seqs.append((gene_name, ungapped, gapped))
+                    # Deduplicate by gene name. The dump lists superseded releases before
+                    # the current one, so the last row for a name wins.
+                    unique_seqs = list({row[0]: row for row in seqs}.values())
 
                     # Write ungapped FASTA
                     ungapped_path = species_dir / f"IG{chain}{segment}.fasta"
