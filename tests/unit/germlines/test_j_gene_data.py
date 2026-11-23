@@ -10,19 +10,31 @@ User Story 3: Maintain Backward Compatibility
 - Test J gene parsing and CDR3/FWR4 boundary detection
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sadie.germlines.builders.j_gene_data import (
     MOTIF_LOOKUP,
-    parse_j_gene,
-    get_j_gene_data,
-    _normalize_species,
     _get_gene_type,
     _get_short_name,
+    _infer_reading_frame,
+    _normalize_species,
     _translate_sequence,
-    _infer_reading_frame
+    get_j_gene_data,
+    parse_j_gene,
 )
+
+
+def _normalized_j_seq(species, allele):
+    from pathlib import Path
+
+    from Bio import SeqIO
+
+    import sadie
+
+    fasta = Path(sadie.__file__).parent / "germlines" / "normalized" / species / "gapped" / f"{allele[:4]}.fasta"
+    return next(str(r.seq) for r in SeqIO.parse(str(fasta), "fasta") if r.id == allele)
 
 
 class TestJGeneDataIntegration:
@@ -34,70 +46,87 @@ class TestJGeneDataIntegration:
         assert len(MOTIF_LOOKUP) > 0
 
         # Should have expected species
-        assert 'human' in MOTIF_LOOKUP
-        assert 'mouse' in MOTIF_LOOKUP
+        assert "human" in MOTIF_LOOKUP
+        assert "mouse" in MOTIF_LOOKUP
 
         # Should have expected patterns
-        human_data = MOTIF_LOOKUP['human']
-        assert 'IGHJ' in human_data
-        assert isinstance(human_data['IGHJ'], str)
+        human_data = MOTIF_LOOKUP["human"]
+        assert "IGHJ" in human_data
+        assert isinstance(human_data["IGHJ"], str)
 
     def test_motif_lookup_no_provenance(self):
         """Test that MOTIF_LOOKUP doesn't contain provenance fields."""
         for species, patterns in MOTIF_LOOKUP.items():
-            assert '_provenance' not in patterns
+            assert "_provenance" not in patterns
 
     def test_species_normalization(self):
         """Test species name normalization."""
-        assert _normalize_species('Homo sapiens') == 'human'
-        assert _normalize_species('homo_sapiens') == 'human'
-        assert _normalize_species('Mus musculus') == 'mouse'
-        assert _normalize_species('mus_musculus') == 'mouse'
-        assert _normalize_species('human') == 'human'
+        assert _normalize_species("Homo sapiens") == "human"
+        assert _normalize_species("homo_sapiens") == "human"
+        assert _normalize_species("Mus musculus") == "mouse"
+        assert _normalize_species("mus_musculus") == "mouse"
+        assert _normalize_species("human") == "human"
 
     def test_gene_type_extraction(self):
         """Test gene type extraction from gene names."""
-        assert _get_gene_type('IGHJ1*01') == 'IGHJ'
-        assert _get_gene_type('IGKJ2*01') == 'IGKJ'
-        assert _get_gene_type('IGLJ3*01') == 'IGLJ'
-        assert _get_gene_type('traj1*01') == 'TRAJ'
+        assert _get_gene_type("IGHJ1*01") == "IGHJ"
+        assert _get_gene_type("IGKJ2*01") == "IGKJ"
+        assert _get_gene_type("IGLJ3*01") == "IGLJ"
+        assert _get_gene_type("traj1*01") == "TRAJ"
 
     def test_short_name_extraction(self):
         """Test short name extraction from gene names."""
-        assert _get_short_name('IGHJ1*01') == 'IGHJ1'
-        assert _get_short_name('IGKJ2*02') == 'IGKJ2'
-        assert _get_short_name('IGLJ3') == 'IGLJ3'
+        assert _get_short_name("IGHJ1*01") == "IGHJ1"
+        assert _get_short_name("IGKJ2*02") == "IGKJ2"
+        assert _get_short_name("IGLJ3") == "IGLJ3"
 
     def test_sequence_translation(self):
         """Test nucleotide to amino acid translation."""
         # Test known codon translations
-        assert _translate_sequence('TTT') == 'F'
-        assert _translate_sequence('TTG') == 'L'
-        assert _translate_sequence('TGG') == 'W'
-        assert _translate_sequence('GGG') == 'G'
+        assert _translate_sequence("TTT") == "F"
+        assert _translate_sequence("TTG") == "L"
+        assert _translate_sequence("TGG") == "W"
+        assert _translate_sequence("GGG") == "G"
 
         # Test reading frames
-        sequence = 'ATGTTTGGG'  # ATG TTT GGG
-        assert _translate_sequence(sequence, 0) == 'MFG'
-        assert _translate_sequence(sequence, 1) == 'CL'  # TGT TTG GG
-        assert _translate_sequence(sequence, 2) == 'VW'  # GTT TGG G
+        sequence = "ATGTTTGGG"  # ATG TTT GGG
+        assert _translate_sequence(sequence, 0) == "MFG"
+        assert _translate_sequence(sequence, 1) == "CL"  # TGT TTG GG
+        assert _translate_sequence(sequence, 2) == "VW"  # GTT TGG G
 
     def test_reading_frame_inference(self):
         """Test reading frame inference for different chain types."""
         # Mock sequence ending in different amino acids
-        heavy_seq = 'TTTGGGTCT'  # Should end with S (Ser) in correct frame
-        kappa_seq = 'TTTGGGAAA'  # Should end with K (Lys) in correct frame
-        lambda_seq = 'TTTGGGTTG'  # Should end with L (Leu) in correct frame
+        heavy_seq = "TTTGGGTCT"  # Should end with S (Ser) in correct frame
+        kappa_seq = "TTTGGGAAA"  # Should end with K (Lys) in correct frame
+        lambda_seq = "TTTGGGTTG"  # Should end with L (Leu) in correct frame
 
         # Test reading frame inference
-        heavy_rf = _infer_reading_frame(heavy_seq, 'IGHJ1*01')
-        kappa_rf = _infer_reading_frame(kappa_seq, 'IGKJ1*01')
-        lambda_rf = _infer_reading_frame(lambda_seq, 'IGLJ1*01')
+        heavy_rf = _infer_reading_frame(heavy_seq, "IGHJ1*01")
+        kappa_rf = _infer_reading_frame(kappa_seq, "IGKJ1*01")
+        lambda_rf = _infer_reading_frame(lambda_seq, "IGLJ1*01")
 
         # Should return valid reading frames
         assert heavy_rf in [0, 1, 2]
         assert kappa_rf in [0, 1, 2]
         assert lambda_rf in [0, 1, 2]
+
+    @pytest.mark.parametrize(
+        "species,allele",
+        [
+            ("cat", "IGKJ2*01_S7162"),
+            ("cat", "IGKJ2*01_S8013"),
+            ("cat", "IGKJ2*01_S0804"),
+            ("cat", "IGKJ2*01_S2581"),
+            ("cat", "IGKJ2*01_S4153"),
+            ("macaque", "IGLJ3-JLWC*02"),
+            ("macaque", "IGLJ3-JLWC*03"),
+        ],
+    )
+    def test_reading_frame_tie_goes_to_frame_with_j_fr4(self, species, allele):
+        seq = _normalized_j_seq(species, allele)
+        rf, _, cdr3_end, _ = get_j_gene_data(allele, allele[2], seq, species=species)
+        assert (rf, cdr3_end) == (1, 6)
 
 
 class TestJGeneParsingFunctionality:
@@ -106,37 +135,37 @@ class TestJGeneParsingFunctionality:
     def test_parse_j_gene_human_ighj(self):
         """Test parsing human IGHJ with known motif."""
         # Human IGHJ sequence that should match motif
-        sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
+        sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
 
-        result = parse_j_gene('human', 'IGHJ1*01', sequence)
+        result = parse_j_gene("human", "IGHJ1*01", sequence)
 
         # Should have valid structure
         assert isinstance(result, dict)
-        assert 'sequence_gapped_aa' in result
-        assert 'cdr3' in result
-        assert 'fwr4' in result
-        assert 'reading_frame' in result
-        assert 'expression_match' in result
-        assert 'not_implemented' in result
-        assert 'ignored' in result
+        assert "sequence_gapped_aa" in result
+        assert "cdr3" in result
+        assert "fwr4" in result
+        assert "reading_frame" in result
+        assert "expression_match" in result
+        assert "not_implemented" in result
+        assert "ignored" in result
 
     def test_parse_j_gene_unknown_species(self):
         """Test parsing with unknown species."""
-        sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
+        sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
 
-        result = parse_j_gene('unknown_species', 'IGHJ1*01', sequence)
+        result = parse_j_gene("unknown_species", "IGHJ1*01", sequence)
 
-        assert result['not_implemented'] is True
-        assert result['expression_match'] is False
+        assert result["not_implemented"] is True
+        assert result["expression_match"] is False
 
     def test_parse_j_gene_unknown_gene_type(self):
         """Test parsing with unknown gene type."""
-        sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
+        sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
 
-        result = parse_j_gene('human', 'UNKNOWN*01', sequence)
+        result = parse_j_gene("human", "UNKNOWN*01", sequence)
 
-        assert result['not_implemented'] is True
-        assert result['expression_match'] is False
+        assert result["not_implemented"] is True
+        assert result["expression_match"] is False
 
     def test_parse_j_gene_ignored_gene(self):
         """Test parsing with gene in ignore list."""
@@ -145,30 +174,30 @@ class TestJGeneParsingFunctionality:
         ignore_gene = None
 
         for species, patterns in MOTIF_LOOKUP.items():
-            if 'ignore' in patterns and patterns['ignore']:
+            if "ignore" in patterns and patterns["ignore"]:
                 species_with_ignore = species
-                ignore_gene = patterns['ignore'][0] if isinstance(patterns['ignore'], list) else patterns['ignore']
+                ignore_gene = patterns["ignore"][0] if isinstance(patterns["ignore"], list) else patterns["ignore"]
                 break
 
         if species_with_ignore and ignore_gene:
-            sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
-            gene_name = f'{ignore_gene}*01'
+            sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
+            gene_name = f"{ignore_gene}*01"
 
             result = parse_j_gene(species_with_ignore, gene_name, sequence)
 
-            assert result['ignored'] is True
+            assert result["ignored"] is True
 
     def test_parse_j_gene_sequence_cleaning(self):
         """Test that sequence is properly cleaned."""
         # Sequence with gaps and dots
-        dirty_sequence = 'TTT.GGG-ACAAGG...TGACCGT'
-        clean_sequence = 'TTTGGGACAAGGTGACCGT'
+        dirty_sequence = "TTT.GGG-ACAAGG...TGACCGT"
+        clean_sequence = "TTTGGGACAAGGTGACCGT"
 
-        result1 = parse_j_gene('human', 'IGHJ1*01', dirty_sequence)
-        result2 = parse_j_gene('human', 'IGHJ1*01', clean_sequence)
+        result1 = parse_j_gene("human", "IGHJ1*01", dirty_sequence)
+        result2 = parse_j_gene("human", "IGHJ1*01", clean_sequence)
 
         # Should produce same results after cleaning
-        assert result1['sequence_gapped_aa'] == result2['sequence_gapped_aa']
+        assert result1["sequence_gapped_aa"] == result2["sequence_gapped_aa"]
 
 
 class TestJGeneDataFunction:
@@ -177,58 +206,56 @@ class TestJGeneDataFunction:
     def test_get_j_gene_data_human_known(self):
         """Test getting data for known human genes."""
         # Test known human gene
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('IGHJ1*01', 'H')
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ1*01", "H")
 
         assert isinstance(rf, int)
         assert rf in [0, 1, 2]
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(cdr3_end, int)
         assert isinstance(extra_bps, int)
 
     def test_get_j_gene_data_mouse_known(self):
         """Test getting data for known mouse genes."""
         # Test known mouse gene
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('IGHJ1*01', 'H', species='mouse')
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ1*01", "H", species="mouse")
 
         assert isinstance(rf, int)
         assert rf in [0, 1, 2]
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(cdr3_end, int)
         assert isinstance(extra_bps, int)
 
     def test_get_j_gene_data_with_sequence(self):
         """Test getting data with sequence for dynamic calculation."""
         # Test with sequence for dynamic calculation
-        sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
+        sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
 
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data(
-            'IGHJ1*01', 'H', sequence=sequence, species='human'
-        )
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ1*01", "H", sequence=sequence, species="human")
 
         assert isinstance(rf, int)
         assert rf in [0, 1, 2]
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(cdr3_end, int)
         assert isinstance(extra_bps, int)
 
     def test_get_j_gene_data_unknown_allele(self):
         """Test getting data for unknown allele with defaults."""
         # Test unknown allele - should return defaults
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('UNKNOWN*01', 'H')
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("UNKNOWN*01", "H")
 
         assert isinstance(rf, int)
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(cdr3_end, int)
         assert isinstance(extra_bps, int)
 
     def test_get_j_gene_data_different_chains(self):
         """Test getting data for different chain types."""
         # Test different chain types
-        chains = ['H', 'K', 'L']
-        expected_chain_types = ['JH', 'JK', 'JL']
+        chains = ["H", "K", "L"]
+        expected_chain_types = ["JH", "JK", "JL"]
 
         for chain, expected_chain_type in zip(chains, expected_chain_types):
-            rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('TEST*01', chain)
+            rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("TEST*01", chain)
             assert chain_type == expected_chain_type
 
 
@@ -237,42 +264,42 @@ class TestJGeneDataErrorHandling:
 
     def test_empty_sequence_handling(self):
         """Test handling of empty sequences."""
-        result = parse_j_gene('human', 'IGHJ1*01', '')
+        result = parse_j_gene("human", "IGHJ1*01", "")
 
         # Should handle gracefully
         assert isinstance(result, dict)
-        assert result['sequence_gapped_aa'] == ''
+        assert result["sequence_gapped_aa"] == ""
 
     def test_invalid_nucleotides(self):
         """Test handling of invalid nucleotide characters."""
         # Sequence with invalid characters
-        sequence = 'TTTGGGXYZACAAGGT'
+        sequence = "TTTGGGXYZACAAGGT"
 
-        result = parse_j_gene('human', 'IGHJ1*01', sequence)
+        result = parse_j_gene("human", "IGHJ1*01", sequence)
 
         # Should handle gracefully (invalid codons become 'X')
         assert isinstance(result, dict)
-        assert 'X' in result['sequence_gapped_aa']  # Invalid codons translated to X
+        assert "X" in result["sequence_gapped_aa"]  # Invalid codons translated to X
 
     def test_short_sequence_handling(self):
         """Test handling of very short sequences."""
         # Very short sequence
-        sequence = 'TTT'
+        sequence = "TTT"
 
-        result = parse_j_gene('human', 'IGHJ1*01', sequence)
+        result = parse_j_gene("human", "IGHJ1*01", sequence)
 
         assert isinstance(result, dict)
-        assert len(result['sequence_gapped_aa']) <= 1
+        assert len(result["sequence_gapped_aa"]) <= 1
 
     def test_motif_pattern_error_handling(self):
         """Test error handling when motif pattern is malformed."""
         # Mock a malformed pattern
-        with patch.dict(MOTIF_LOOKUP, {'test_species': {'IGHJ': '[invalid_regex'}}):
-            sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGG'
+        with patch.dict(MOTIF_LOOKUP, {"test_species": {"IGHJ": "[invalid_regex"}}):
+            sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGG"
 
             # Currently j_gene_data.py doesn't handle regex errors - expect exception
             with pytest.raises(Exception):  # Could be re.error or other regex exception
-                parse_j_gene('test_species', 'IGHJ1*01', sequence)
+                parse_j_gene("test_species", "IGHJ1*01", sequence)
 
 
 class TestJGeneDataPerformance:
@@ -282,13 +309,13 @@ class TestJGeneDataPerformance:
         """Test that parsing is reasonably fast."""
         import time
 
-        sequence = 'TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC'
+        sequence = "TTTGGGACAAGGTGACCGTGATCCTCTGGACAGGCTACGGC"
 
         # Test multiple parses
         start_time = time.time()
 
         for _ in range(100):
-            result = parse_j_gene('human', 'IGHJ1*01', sequence)
+            result = parse_j_gene("human", "IGHJ1*01", sequence)
             assert result is not None
 
         elapsed = time.time() - start_time
@@ -303,7 +330,7 @@ class TestJGeneDataPerformance:
         start_time = time.time()
 
         for _ in range(100):
-            result = get_j_gene_data('IGHJ1*01', 'H')
+            result = get_j_gene_data("IGHJ1*01", "H")
             assert result is not None
 
         elapsed = time.time() - start_time
@@ -318,10 +345,10 @@ class TestJGeneDataRegressionCompatibility:
     def test_human_ighj1_regression(self):
         """Test that human IGHJ1*01 produces expected results."""
         # Known human IGHJ1*01 data
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('IGHJ1*01', 'H')
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ1*01", "H")
 
         # Should match known values from reference data
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(rf, int) and rf >= 0
         assert isinstance(cdr3_end, int) and cdr3_end > 0
         assert isinstance(extra_bps, int) and extra_bps >= 0
@@ -329,10 +356,10 @@ class TestJGeneDataRegressionCompatibility:
     def test_mouse_ighj1_regression(self):
         """Test that mouse IGHJ1*01 produces expected results."""
         # Known mouse IGHJ1*01 data
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data('IGHJ1*01', 'H', species='mouse')
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ1*01", "H", species="mouse")
 
         # Should match known values from reference data
-        assert chain_type == 'JH'
+        assert chain_type == "JH"
         assert isinstance(rf, int) and rf >= 0
         assert isinstance(cdr3_end, int) and cdr3_end > 0
         assert isinstance(extra_bps, int) and extra_bps >= 0
@@ -341,13 +368,13 @@ class TestJGeneDataRegressionCompatibility:
         """Test that chain type mapping is preserved."""
         # Test all chain types
         test_cases = [
-            ('H', 'JH'),
-            ('K', 'JK'),
-            ('L', 'JL'),
+            ("H", "JH"),
+            ("K", "JK"),
+            ("L", "JL"),
         ]
 
         for chain, expected_chain_type in test_cases:
-            _, chain_type, _, _ = get_j_gene_data('TEST*01', chain)
+            _, chain_type, _, _ = get_j_gene_data("TEST*01", chain)
             assert chain_type == expected_chain_type
 
 
@@ -359,9 +386,7 @@ class TestLastMotifMatch:
     SHEEP_IGHJ2 = "TGCTGGGACTCGGGTCTCTGGGGCCAGCGCACCCCGGTCACCGTGTCCTTG"
 
     def test_sheep_ighj2_cdr3_end_is_17(self):
-        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data(
-            "IGHJ2*01", "H", self.SHEEP_IGHJ2, species="sheep"
-        )
+        rf, chain_type, cdr3_end, extra_bps = get_j_gene_data("IGHJ2*01", "H", self.SHEEP_IGHJ2, species="sheep")
         assert rf == 0
         assert chain_type == "JH"
         assert cdr3_end == 17, f"Expected CDR3 end 17 (last motif WGQR), got {cdr3_end}"
@@ -369,17 +394,14 @@ class TestLastMotifMatch:
     def test_sheep_ighj2_last_motif_is_wgqr(self):
         result = parse_j_gene("sheep", "IGHJ2*01", self.SHEEP_IGHJ2)
         assert result["expression_match"] is True
-        assert result["expression"][-1] == "WGQR", (
-            f"Expected last motif WGQR, got {result['expression']}"
-        )
-        assert len(result["fwr4_aa"]) <= 12, (
-            f"FWR4 length {len(result['fwr4_aa'])} exceeds IMGT FR4-IMGT max of 12"
-        )
+        assert result["expression"][-1] == "WGQR", f"Expected last motif WGQR, got {result['expression']}"
+        assert len(result["fwr4_aa"]) <= 12, f"FWR4 length {len(result['fwr4_aa'])} exceeds IMGT FR4-IMGT max of 12"
 
     def test_other_sheep_ighj_not_affected(self):
         """The last-match fix must not change single-match alleles."""
-        from Bio import SeqIO
         from pathlib import Path
+
+        from Bio import SeqIO
 
         j_fasta = Path("src/sadie/germlines/igblast/database/sheep/sheep_J.fasta")
         if not j_fasta.exists():
@@ -397,22 +419,24 @@ class TestLastMotifMatch:
 
 
 class TestFerretKappaLambdaMotif:
-    """Tests for ferret IGKJ/IGLJ patterns added to j_gene_motif.json."""
+    """Tests for J motif anchors in j_gene_motif.json."""
 
-    def test_ferret_igkj5_uses_fgpg_frame0(self):
-        from Bio import SeqIO
-        from pathlib import Path
-
-        j_fasta = Path("src/sadie/germlines/igblast/database/ferret/ferret_J.fasta")
-        if not j_fasta.exists():
-            pytest.skip("ferret J fasta not present")
-
-        seqs = {r.id: str(r.seq) for r in SeqIO.parse(str(j_fasta), "fasta")}
-        rf, chain_type, cdr3_end, _ = get_j_gene_data(
-            "IGKJ5*01", "K", seqs["IGKJ5*01"], species="ferret"
-        )
-        assert rf == 0, f"IGKJ5*01 should use frame 0 (FGPG anchor), got {rf}"
-        assert cdr3_end == 5, f"IGKJ5*01 CDR3 end should be 5, got {cdr3_end}"
+    @pytest.mark.parametrize(
+        "species,allele,expected",
+        [
+            ("ferret", "IGKJ5*01", (0, 5)),
+            ("ferret", "IGKJ2*01", (0, 5)),
+            ("lemur", "IGKJ5*01", (1, 6)),
+            ("cat", "IGLJ11*01_S9269", (1, 3)),
+            ("cat", "IGLJ5*01_S1411", (1, 3)),
+            ("dog", "IGLJ3*01_S2029", (1, 3)),
+            ("dog", "IGLJ3*01_S4255", (1, 3)),
+        ],
+    )
+    def test_motif_anchors_frame_and_cdr3_end(self, species, allele, expected):
+        result = parse_j_gene(species, allele, _normalized_j_seq(species, allele))
+        assert result["expression_match"]
+        assert (result["reading_frame"], result["cdr3_end"]) == expected
 
     def test_ferret_igkj_iglj_in_motif_lookup(self):
         assert "IGKJ" in MOTIF_LOOKUP.get("ferret", {}), "ferret missing IGKJ pattern"
@@ -423,8 +447,9 @@ class TestOrangutanIGHJPattern:
     """Tests for widened orangutan IGHJ pattern (W[GDV].[GQ]) for IGHJ4/9 variants."""
 
     def _get_j_seqs(self, species_dir: str):
-        from Bio import SeqIO
         from pathlib import Path
+
+        from Bio import SeqIO
 
         j_fasta = Path(f"src/sadie/germlines/igblast/database/{species_dir}/{species_dir}_J.fasta")
         if not j_fasta.exists():
@@ -433,16 +458,12 @@ class TestOrangutanIGHJPattern:
 
     def test_orangutan_bornean_ighj4_cdr3_end(self):
         seqs = self._get_j_seqs("orangutan_bornean")
-        rf, _, cdr3_end, _ = get_j_gene_data(
-            "IGHJ4*01", "H", seqs["IGHJ4*01"], species="orangutan_bornean"
-        )
+        rf, _, cdr3_end, _ = get_j_gene_data("IGHJ4*01", "H", seqs["IGHJ4*01"], species="orangutan_bornean")
         assert rf == 2, f"Expected frame 2 (WVQG anchor), got {rf}"
         assert cdr3_end == 19, f"Expected CDR3 end 19, got {cdr3_end}"
 
     def test_orangutan_sumatran_ighj9_cdr3_end(self):
         seqs = self._get_j_seqs("orangutan_sumatran")
-        rf, _, cdr3_end, _ = get_j_gene_data(
-            "IGHJ9*01", "H", seqs["IGHJ9*01"], species="orangutan_sumatran"
-        )
+        rf, _, cdr3_end, _ = get_j_gene_data("IGHJ9*01", "H", seqs["IGHJ9*01"], species="orangutan_sumatran")
         assert rf == 2, f"Expected frame 2 (WDQG anchor), got {rf}"
         assert cdr3_end == 19, f"Expected CDR3 end 19, got {cdr3_end}"

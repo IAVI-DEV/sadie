@@ -106,12 +106,16 @@ MOUSE_J_GENE_DATA = {
     "IGLJ5*01": (1, 6, 1),
 }
 
+# Conserved J FR4 core, used to break reading-frame ties
+J_FR4_CORE = re.compile(r"T.[LV].[IV]")
+
 # Chain type mapping
 CHAIN_TYPE_MAP = {
     "H": "JH",
     "K": "JK",
     "L": "JL",
 }
+
 
 def _normalize_species(species: str) -> str:
     """Normalize species name to match motif lookup keys."""
@@ -266,6 +270,9 @@ def _get_longest_frame(reading_frames: Dict[int, str]) -> int:
     """
     Find reading frame with longest sequence before stop codon.
 
+    Ties go to the frame carrying the J FR4 core ``TxLxV``/``TxVxI``
+    (e.g. TKLEIK, TRLTVL, TLVTVSS), then to the lowest frame.
+
     Parameters
     ----------
     reading_frames : Dict[int, str]
@@ -276,17 +283,13 @@ def _get_longest_frame(reading_frames: Dict[int, str]) -> int:
     int
         Best reading frame (0, 1, or 2)
     """
-    longest = 0
-    longest_rf = 0
-    for rf, aa_seq in reading_frames.items():
-        if "*" in aa_seq:
-            stop_index = aa_seq.index("*")
-        else:
-            stop_index = len(aa_seq)
-        if stop_index > longest:
-            longest_rf = rf
-            longest = stop_index
-    return longest_rf
+
+    def rank(rf: int) -> Tuple[int, bool]:
+        aa_seq = reading_frames[rf]
+        stop_index = aa_seq.index("*") if "*" in aa_seq else len(aa_seq)
+        return stop_index, bool(J_FR4_CORE.search(aa_seq))
+
+    return max(reading_frames, key=rank)
 
 
 def _infer_reading_frame(sequence: str, gene_name: str) -> int:
