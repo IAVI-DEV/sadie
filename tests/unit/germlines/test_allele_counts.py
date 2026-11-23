@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
+from sadie.germlines.cli import germlines
 from sadie.germlines.scripts.download_ogrdb import _extract_insert_blocks
 from sadie.germlines.scripts.validate import check_allele_counts, format_count_report
 
@@ -65,15 +67,27 @@ def test_check_allele_counts_row_accounts_for_every_source_allele(two_stage_germ
     )
 
 
-def test_check_allele_counts_passes_when_every_source_allele_is_accounted_for(two_stage_germlines):
+@pytest.mark.parametrize(
+    "blastdbcmd_path, db_fasta_built, row_ok",
+    [(None, False, True), ("/usr/bin/blastdbcmd", False, True), ("/usr/bin/blastdbcmd", True, False)],
+)
+def test_check_allele_counts_passes_when_every_source_allele_is_accounted_for(
+    two_stage_germlines, monkeypatch, blastdbcmd_path, db_fasta_built, row_ok
+):
+    monkeypatch.setattr("sadie.germlines.scripts.validate.shutil.which", lambda _: blastdbcmd_path)
     write_fasta(
         two_stage_germlines / "sources/ogrdb/fake/IGHV.fasta", {"IGHV1-1*01": "ACGTACGTAC", "IGHV1-2*01": "GGGGCCCCAA"}
     )
+    if db_fasta_built:
+        write_fasta(
+            two_stage_germlines / "igblast/database/fake/fake_V.fasta",
+            {"IGHV1-1*01": "ACGTACGTAC", "IGHV1-2*01": "GGGGCCCCAA"},
+        )
 
     rows, findings = run_check(two_stage_germlines)
 
-    assert rows[0]["ok"] is True
-    assert [f for f in findings if f["kind"] == "UNEXPLAINED"] == []
+    assert rows[0]["ok"] is row_ok
+    assert ([f for f in findings if f["kind"] == "UNEXPLAINED"] == []) is row_ok
 
 
 def test_check_allele_counts_flags_reference_yml_name_without_source_record(two_stage_germlines):
@@ -102,6 +116,17 @@ def test_format_count_report_marks_row_with_unexplained_loss_as_mismatch(two_sta
 
     assert "MISMATCH sources->normalized" in report
     assert "rows matching end to end: 0/1; unexplained findings: 1" in report
+
+
+def test_germlines_status_exits_nonzero_on_mismatch_row_without_findings(two_stage_germlines, monkeypatch):
+    rows, _ = run_check(two_stage_germlines)
+    rows[0]["ok"] = False
+    monkeypatch.setattr("sadie.germlines.scripts.validate.check_allele_counts", lambda: (rows, []))
+
+    result = CliRunner().invoke(germlines, ["status"])
+
+    assert "unexplained findings: 0" in result.output
+    assert result.exit_code == 1
 
 
 def test_check_allele_counts_on_committed_ogrdb_species_reports_every_file():
@@ -181,3 +206,12 @@ def test_extract_insert_blocks_unrelated_table_not_included():
 
     assert len(blocks) == 1
     assert "IGHV1-1*01" in blocks[0]
+
+
+def test_extract_insert_blocks_warns_on_unterminated_statement(caplog):
+    dump = "INSERT INTO gene_description VALUES (1);\nINSERT INTO gene_description VALUES (2)"
+
+    blocks = _extract_insert_blocks(dump, "gene_description")
+
+    assert blocks == ["(1)"]
+    assert "Unterminated INSERT INTO gene_description" in caplog.text

@@ -204,9 +204,9 @@ def _rank(provider: Optional[str]) -> int:
 
 
 def _blast_ids(prefix: Path) -> Optional[list[str]]:
-    # None  = blastdbcmd not on PATH (column shown as '-', not a failure)
-    # []    = executable available but DB files absent or unreadable (flags all DB alleles as lost)
-    if not shutil.which("blastdbcmd"):
+    # None  = blastdbcmd not on PATH or DB not built (no FASTA): column shown as '-', not a failure
+    # []    = DB FASTA present but no .nsq, or blastdbcmd failed (flags all DB alleles as lost)
+    if not shutil.which("blastdbcmd") or not Path(f"{prefix}.fasta").exists():
         return None
     if not any(prefix.parent.glob(prefix.name + "*.nsq")):
         return []
@@ -425,7 +425,9 @@ def check_allele_counts(
         all_species.update(d.name for d in normalized.iterdir() if d.is_dir() and not d.name.startswith("."))
     if ogrdb_sources.exists():
         all_species.update(
-            d.name for d in ogrdb_sources.iterdir() if d.is_dir() and not d.name.startswith(".") and d.name != "VERSION.json"
+            d.name
+            for d in ogrdb_sources.iterdir()
+            if d.is_dir() and not d.name.startswith(".") and d.name != "VERSION.json"
         )
 
     for sp_name in sorted(all_species):

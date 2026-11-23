@@ -5,10 +5,12 @@ import glob
 import io
 import os
 import sys
+from pathlib import Path
 from typing import List
 
 import pandas as pd
 import pytest
+import yaml
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from click.testing import CliRunner
@@ -28,14 +30,17 @@ def test_yaml(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixt
     # Core species must be present (OGRDB update added many more species)
     core_species = {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
     assert core_species.issubset(yaml_object.get_names())
-    assert len(yaml_object.get_genes("human", "imgt", "human")) == 479
+    raw = yaml.safe_load(Path(yaml_object.ref_path).read_text())
+    assert len(yaml_object.get_genes("human", "imgt", "human")) == len(raw["human"]["imgt"]["human"])
     v_genes: List[str] = yaml_object.get_gene_segment("human", "imgt", "human", "V")
     assert all([x[3] == "V" for x in v_genes])
     assert isinstance(yaml_object.get_yaml_as_dataframe(), pd.DataFrame)
     assert yaml_object.__repr__()
     assert core_species.issubset(set([i for i in yaml_object]))
     assert yaml_object["human"]
-    assert len(yaml_object) > 0
+    assert len(yaml_object) == len(
+        {(n, sp, g) for n, srcs in raw.items() for s in srcs.values() for sp, gs in s.items() for g in gs}
+    )
 
     with pytest.raises(ValueError):
         YamlRef(fixture_setup.get_duplicated_yaml())
@@ -128,7 +133,9 @@ def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
     tmpdir = tmp_path_factory.mktemp("test_creation_from_empty_reference")
     ref_class = References()
     output = ref_class.make_airr_database(tmpdir)
-    assert sorted([i.name for i in output.glob("*")]) == sorted([".references_dataframe.csv.gz", ".allele_name_mapping.json", "aux_db", "Ig"])
+    assert sorted([i.name for i in output.glob("*")]) == sorted(
+        [".references_dataframe.csv.gz", ".allele_name_mapping.json", "aux_db", "Ig"]
+    )
 
 
 def test_G3_errors() -> None:
