@@ -176,18 +176,21 @@ CAGGTGCAGCTGGTGCAGTCTGGGGCT
         finally:
             socket.socket = original_socket
 
-    def test_imgt_fetch_genes_with_rhesus_macaque_reads_macaque_without_download(self, tmp_path, monkeypatch):
+    @pytest.mark.parametrize("provider_name", ["IMGTProvider", "OGRDBProvider", "CustomProvider"])
+    def test_fetch_genes_with_rhesus_macaque_reads_macaque_without_download(self, provider_name, tmp_path, monkeypatch):
         from unittest.mock import Mock
 
-        from sadie.germlines.providers.imgt import IMGTProvider
+        from sadie.germlines import providers
 
-        macaque_dir = tmp_path / "imgt" / "macaque"
+        provider_class = getattr(providers, provider_name)
+        macaque_dir = tmp_path / "source" / "macaque"
         macaque_dir.mkdir(parents=True)
         (macaque_dir / "IGHV.fasta").write_text(">IGHV1-2*01\nCAGGTGCAGCTGGTGCAGTCTGGGGCT\n")
         download = Mock()
-        monkeypatch.setattr(IMGTProvider, "download", download)
+        monkeypatch.setattr(provider_class, "download", download, raising=False)
+        provider = provider_class(data_dir=tmp_path / "source")
 
-        genes = IMGTProvider(data_dir=tmp_path / "imgt").fetch_genes("rhesus_macaque", "V", "H")
+        genes = provider.fetch_genes("rhesus_macaque", "V", "H")
 
         assert [gene.name for gene in genes] == ["IGHV1-2*01"]
         download.assert_not_called()
