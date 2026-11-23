@@ -25,6 +25,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from .models import GermlineGene
+from .registry import SpeciesRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ class GermlinePipeline:
         species : str
             Species name (e.g., "human", "mouse")
         """
+        species = SpeciesRegistry.normalize(species)
         logger.info(f"Checking {species} germlines (offline mode)...")
 
         ready, error_msg = _check_offline_ready(self.sources_dir, species)
@@ -132,6 +134,7 @@ class GermlinePipeline:
         species : str
             Species name
         """
+        species = SpeciesRegistry.normalize(species)
         start = time.time()
         logger.info(f"Force rebuilding {species}...")
         self._rebuild_normalized(species)

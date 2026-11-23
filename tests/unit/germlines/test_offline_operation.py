@@ -110,6 +110,21 @@ class TestMissingDataErrors:
 
         assert "No germline data found" in str(excinfo.value)
 
+    @pytest.mark.parametrize("method", ["update", "force_rebuild"])
+    def test_pipeline_with_rhesus_macaque_rebuilds_macaque(self, method, tmp_path, monkeypatch):
+        from sadie.germlines.pipeline import GermlinePipeline
+
+        macaque_dir = tmp_path / "sources" / "imgt" / "macaque"
+        macaque_dir.mkdir(parents=True)
+        (macaque_dir / "IGHV.fasta").write_text(">IGHV1-2*01\nCAGGTGCAGCTGGTGCAGTCTGGGGCT\n")
+        rebuilt = []
+        monkeypatch.setattr(GermlinePipeline, "_rebuild_normalized", lambda self, species: rebuilt.append(species))
+        monkeypatch.setattr(GermlinePipeline, "_rebuild_igblast", lambda self, species: rebuilt.append(species))
+
+        getattr(GermlinePipeline(tmp_path), method)("rhesus_macaque")
+
+        assert rebuilt == ["macaque", "macaque"]
+
 
 class TestCachedDataUsage:
     def test_old_data_still_works(self, tmp_path):
