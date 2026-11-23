@@ -281,22 +281,14 @@ def _check_species(
     flag("database routing", f"{species}_C", "UNEXPLAINED", misrouted_c, "D-segment records inside the C database", "C")
     flag("database routing", f"{species}_D", "UNEXPLAINED", misrouted_d, "non-D records inside the D database", "D")
 
-    # database V+D+J+C -> internal_data combined fasta; database V -> ndm.imgt; database J -> aux
-    union: set = set()
-    repeated = []
-    for s in SEGMENTS:
-        for name in (r["name"] for r in db[s]):
-            if name in union:
-                repeated.append(name)
-            union.add(name)
-    # Compare against internal_data whenever the directory exists (even if the combined fasta is empty).
+    # database V -> internal_data fasta (V only) and ndm.imgt; database J -> aux
+    db_v, db_j = {r["name"] for r in db["V"]}, {r["name"] for r in db["J"]}
+    # Compare against internal_data whenever the directory exists (even if its fasta is empty).
     if internal_dir.exists():
         stage, where = "database->internal_data", f"{species}_V"
         for s in SEGMENTS:
-            diff = sorted(i for i in union ^ internal if _segment(i) == s)
-            flag(stage, where, "UNEXPLAINED", diff, "ids differ from union of V, D, J, C", s)
-        flag(stage, where, "EXPECTED", repeated, "ids repeated across segment files, kept once")
-    db_v, db_j = {r["name"] for r in db["V"]}, {r["name"] for r in db["J"]}
+            diff = sorted(i for i in db_v ^ internal if _segment(i) == s)
+            flag(stage, where, "UNEXPLAINED", diff, "ids differ from database V", s)
     gapped_v = {r["name"] for c in CHAINS for r in normg[(c, "V")]}
     no_gap = {i for _, n, i in expected_ids["V"] if n not in gapped_v}
     truncated_v = {i for _, n, i in expected_ids["V"] if n != i}

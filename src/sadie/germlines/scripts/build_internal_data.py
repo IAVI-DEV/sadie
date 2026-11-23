@@ -3,13 +3,13 @@
 Build IgBLAST internal_data directories for species.
 
 Creates Ig/internal_data/{species}/ with:
-1. Combined VDJC FASTA file ({species}_V.fasta) containing all segments
-2. BLAST database built from combined FASTA
+1. V gene FASTA file ({species}_V.fasta)
+2. BLAST database built from that FASTA
 3. Generated .ndm.imgt files from gapped sequences
 
-The combined VDJC file is required for IgBLAST's complete_vdj calculation.
-IgBLAST expects internal_data/{species}/{species}_V to contain ALL gene segments
-(V, D, J, C) for proper annotation.
+internal_data/{species}/{species}_V holds V genes only, as in IgBLAST's own
+internal_data. Long C genes in it make igblastn drop J, D, C and CDR3 for
+heavy chains that carry a constant region.
 
 Usage:
     python build_internal_data.py mouse macaque chicken
@@ -41,13 +41,10 @@ CHAIN_TYPES = {
 
 def build_combined_fasta(species: str, database_dir: Path, internal_data_dir: Path) -> Path:
     """
-    Concatenate V+D+J+C FASTAs into single combined file with deduplication.
+    Write the V genes into internal_data/{species}_V.fasta, deduplicated by ID.
 
-    IgBLAST requires a single file named {species}_V.fasta in internal_data/
-    that contains ALL gene segments (V, D, J, C) for proper complete_vdj calculation.
-
-    Sequences are deduplicated by ID to avoid BLAST database errors when the
-    same gene appears in multiple segment files.
+    V only: D, J and C records in this database (long C genes above all) make
+    igblastn drop J, D, C and CDR3 for heavy chains with a constant region.
 
     Parameters
     ----------
@@ -61,12 +58,11 @@ def build_combined_fasta(species: str, database_dir: Path, internal_data_dir: Pa
     Returns
     -------
     Path
-        Path to combined FASTA file
+        Path to the V gene FASTA file
     """
     combined_fasta = internal_data_dir / f"{species}_V.fasta"
 
-    # Ordered segments: V, D, J, C (D may not exist for all species)
-    segments = ["V", "D", "J", "C"]
+    segments = ["V"]
 
     # Track seen IDs to deduplicate
     seen_ids: set = set()
@@ -247,13 +243,12 @@ def build_internal_data(species: str, germlines_root: Path) -> bool:
 
     Creates:
     - Ig/internal_data/{species}/ directory
-    - Combined VDJC FASTA ({species}_V.fasta) containing all segments
-    - BLAST database built from combined FASTA
+    - V gene FASTA ({species}_V.fasta)
+    - BLAST database built from that FASTA
     - {species}.ndm.imgt file (V genes only, for region annotations)
 
-    The combined VDJC file is required for IgBLAST's complete_vdj calculation.
     IgBLAST reads {species}_V from internal_data/ for its internal annotation
-    database, which must contain ALL gene segments.
+    database, which must contain V genes only (see build_combined_fasta).
 
     Note: The separate V/D/J/C BLAST databases in database/{species}/ are used
     by IgBLAST's -germline_db_V, -germline_db_D, etc. options for alignment.
@@ -290,13 +285,13 @@ def build_internal_data(species: str, germlines_root: Path) -> bool:
     internal_data_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Created: {internal_data_dir}")
 
-    # Create combined VDJC FASTA
+    # Create V gene FASTA
     combined_fasta = build_combined_fasta(species, database_dir, internal_data_dir)
     if not combined_fasta.exists() or combined_fasta.stat().st_size == 0:
         logger.error(f"Failed to create combined FASTA for {species}")
         return False
 
-    # Build BLAST database from combined file
+    # Build BLAST database from the V gene FASTA
     db_prefix = internal_data_dir / f"{species}_V"
     if not build_blast_db(combined_fasta, db_prefix):
         logger.error(f"Failed to build BLAST database for {species}")

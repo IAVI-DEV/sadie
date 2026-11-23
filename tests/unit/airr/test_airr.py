@@ -547,10 +547,24 @@ def test_custom_reference_named_rhesus_macaque_keeps_that_name_in_each_explicit_
     references = References()
     references.add_reference("rhesus_macaque", reference)
     database = references.make_airr_database(tmp_path / "database")
+    internal_fasta = database / "Ig/internal_data/rhesus_macaque/rhesus_macaque_V.fasta"
 
+    assert [line for line in internal_fasta.read_text().splitlines() if line[0] == ">"] == [">IGHV1-69*01"]
     assert Airr("rhesus_macaque", references=references, temp_directory=tmp_path).name == "rhesus_macaque"
     assert Airr("rhesus_macaque", database=database, temp_directory=tmp_path).name == "rhesus_macaque"
     assert GermlineData("rhesus_macaque", database_dir=database, prebuilt=True).name == "rhesus_macaque"
+
+
+@pytest.mark.parametrize("sequence_id", ["48d_AY515000", "10E8v4_KU951247"])
+def test_heavy_chain_with_long_constant_region_keeps_j_c_and_cdr3(
+    fixture_setup: SadieFixture, sequence_id: str
+) -> None:
+    records = SeqIO.parse(fixture_setup.get_catnap_heavy_nt(), "fasta")
+    record = next(record for record in records if record.id.startswith(sequence_id))
+
+    row = Airr("human").run_single(record.id, str(record.seq)).iloc[0]
+
+    assert row[["j_call", "c_call", "cdr3_aa"]].notna().all()
 
 
 def test_airr_with_bundled_rhesus_macaque_opens_the_macaque_dataset(tmp_path: Path) -> None:
