@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from sadie.airr.igblast.igblast import ensure_prefix_to
-from sadie.reference import YamlRef
 
 logger = logging.getLogger(__name__)
 
@@ -88,21 +87,26 @@ def validate_prebuilt_database(database_path: Path, name: str) -> Dict[str, Path
 
 
 def _use_germlines_module() -> bool:
-    import os
+    from sadie.germlines.utils import use_germlines_module
 
-    env_value = os.environ.get("SADIE_USE_GERMLINES_MODULE", "true").lower()
-    use_germlines = env_value in ("true", "1", "yes")
-    if not use_germlines:
-        logger.warning(
-            "G3 API is deprecated. Set SADIE_USE_GERMLINES_MODULE=true. " "G3 will be removed after 2026-06-01."
-        )
-    return use_germlines
+    # uncached, so a flag changed after import is still seen
+    return getattr(use_germlines_module, "__wrapped__", use_germlines_module)()
 
 
 def _get_germlines_igblast_dir() -> Path:
     from sadie.germlines import get_germlines_base_dir
 
     return get_germlines_base_dir() / "igblast"
+
+
+def _get_legacy_germlines_dir() -> Path:
+    return Path(__file__).absolute().parent / "../data/germlines/"
+
+
+def _can_annotate(blastdb_species_dir: Path) -> bool:
+    """IgBLAST needs a V and a J database; D and C are optional."""
+    name = blastdb_species_dir.name
+    return all(ensure_prefix_to(blastdb_species_dir / f"{name}_{segment}") for segment in "VJ")
 
 
 class GermlineData:
@@ -209,6 +213,9 @@ class GermlineData:
                 # internal_data has combined VDJC file named {species}_V for IgBLAST's
                 # internal annotation database (used for complete_vdj calculation)
                 self.igdata = germlines_igblast / "Ig"
+            elif (_get_legacy_germlines_dir() / receptor / "blastdb" / name).exists():
+                # legacy-only datasets (clk, se09) have no germlines module build
+                self._use_legacy_paths(name, receptor, scheme)
             else:
                 # NFR-002: No silent fallback to G3 when germlines is selected
                 raise ValueError(
@@ -234,7 +241,7 @@ class GermlineData:
         scheme : str
             Numbering scheme
         """
-        self.base_dir = Path(__file__).absolute().parent / "../data/germlines/"
+        self.base_dir = _get_legacy_germlines_dir()
         self.blast_dir = Path(str(self.base_dir) + f"/{receptor}/blastdb/{name}/{name}_")
         self.v_gene_dir = Path(self.blast_dir.__str__() + "V")
         self.d_gene_dir = Path(self.blast_dir.__str__() + "D")
@@ -399,17 +406,20 @@ class GermlineData:
         """
         datasets: Set[str] = set()
 
-        # Add germlines module species if feature flag is enabled
+        # Germlines module species, when the feature flag is enabled
         if _use_germlines_module():
-            germlines_internal_data = _get_germlines_igblast_dir() / "Ig" / "internal_data"
+            germlines_igblast = _get_germlines_igblast_dir()
+            germlines_internal_data = germlines_igblast / "Ig" / "internal_data"
             if germlines_internal_data.exists():
-                for species_dir in germlines_internal_data.iterdir():
-                    if species_dir.is_dir() and not species_dir.name.startswith("."):
-                        datasets.add(species_dir.name)
+                datasets.update(
+                    species_dir.name
+                    for species_dir in germlines_internal_data.iterdir()
+                    if _can_annotate(germlines_igblast / "database" / species_dir.name)
+                )
 
-        # Also add legacy G3 species for backwards compatibility
-        y = YamlRef()
-        datasets.update(y.get_names())
+        # Legacy datasets (the only home of clk and se09)
+        legacy_blastdb = _get_legacy_germlines_dir() / "Ig" / "blastdb"
+        datasets.update(species_dir.name for species_dir in legacy_blastdb.iterdir() if _can_annotate(species_dir))
 
         return datasets
 
