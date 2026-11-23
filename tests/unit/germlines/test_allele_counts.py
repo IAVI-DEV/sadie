@@ -139,6 +139,19 @@ def test_check_allele_counts_on_committed_ogrdb_species_reports_every_file():
 
     assert {row["species"] for row in rows} >= {"human", "macaque", "mouse"}
     assert all(row["src"] == row["kept"] + row["by_higher"] + row["collapsed"] for row in rows)
+    assert [f["species"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == []
+
+
+@pytest.mark.parametrize("fwr3_end, flagged", [(6, []), (9, [["IGHV1-1*01"]])])
+def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(two_stage_germlines, fwr3_end, flagged):
+    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHV.fasta", {"IGHV1-1*01 source=ogrdb": "AAATGTAAA"})
+    ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
+    ndm.parent.mkdir(parents=True)
+    ndm.write_text(f"IGHV1-1*01\t1\t1\t1\t1\t1\t1\t1\t1\t1\t{fwr3_end}\tVH\t0\n")
+
+    _, findings = run_check(two_stage_germlines)
+
+    assert [f["names"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == flagged
 
 
 # --- issue #19 "Done when" fixture tests ---

@@ -20,11 +20,15 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from Bio import SeqIO
 
-from sadie.germlines.builders.imgt_positions import calculate_imgt_v_positions
+from sadie.germlines.builders.imgt_positions import (
+    alignment_region_columns,
+    calculate_imgt_v_positions,
+    gap_layout,
+)
 from sadie.utility.binaries import find_binary
 from sadie.utility.exception import BinaryNotFoundError
 
@@ -148,7 +152,9 @@ def get_germlines_root() -> Path:
     return Path(__file__).parent.parent
 
 
-def generate_ndm_entry(gene_name: str, gapped_seq: str, chain: str) -> Optional[str]:
+def generate_ndm_entry(
+    gene_name: str, gapped_seq: str, chain: str, region_columns: Optional[Dict[str, Tuple[int, int]]] = None
+) -> Optional[str]:
     """
     Generate an NDM file entry for a V gene.
 
@@ -163,6 +169,8 @@ def generate_ndm_entry(gene_name: str, gapped_seq: str, chain: str) -> Optional[
         IMGT-gapped nucleotide sequence
     chain : str
         Chain type (H, K, L)
+    region_columns : dict, optional
+        Region bounds of this sequence's gap layout within its alignment file
 
     Returns
     -------
@@ -172,7 +180,7 @@ def generate_ndm_entry(gene_name: str, gapped_seq: str, chain: str) -> Optional[
     if not gapped_seq or "." not in gapped_seq:
         return None
 
-    regions = calculate_imgt_v_positions(gapped_seq, zero_based=False)
+    regions = calculate_imgt_v_positions(gapped_seq, zero_based=False, region_columns=region_columns)
 
     # Need at least FR1 through FR3 start
     required = ["fwr1", "cdr1", "fwr2", "cdr2", "fwr3"]
@@ -225,11 +233,11 @@ def build_ndm_file(species: str, germlines_root: Path) -> List[str]:
             logger.debug(f"No gapped V file: {gapped_fasta}")
             continue
 
-        for record in SeqIO.parse(gapped_fasta, "fasta"):
-            gene_name = record.id
-
-            gapped_seq = str(record.seq).upper()
-            entry = generate_ndm_entry(gene_name, gapped_seq, chain)
+        # region bounds belong to the gap layout, so they are derived over the whole file
+        gapped = [(record.id, str(record.seq).upper()) for record in SeqIO.parse(gapped_fasta, "fasta")]
+        layout_columns = alignment_region_columns(gapped_seq for _, gapped_seq in gapped)
+        for gene_name, gapped_seq in gapped:
+            entry = generate_ndm_entry(gene_name, gapped_seq, chain, layout_columns[gap_layout(gapped_seq)])
 
             if entry:
                 entries.append(entry)

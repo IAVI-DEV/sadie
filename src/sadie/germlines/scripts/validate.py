@@ -176,6 +176,9 @@ def print_results(results: dict, verbose: bool = False):
 CHAINS, SEGMENTS = "HKL", "VDJC"
 PRIORITY = ["vdjbase", "ogrdb", "imgt", "custom"]  # GermlineManager.DEFAULT_PROVIDERS order
 D_REGION = re.compile(r"IGHD\d")  # providers/imgt.py D filter; IgD constants are IGHD*0x
+# Share of ndm rows whose FWR3 must end on the 2nd-CYS codon. Pseudogenes and truncated alleles miss it:
+# the lowest share shipped on main is mouse 457/554 (82%); shifted region bounds gave 0-72%.
+MIN_FWR3_CYS_SHARE = 0.8
 
 
 def _fasta(path: Path) -> list[dict]:
@@ -396,6 +399,26 @@ def _check_species(
         )
 
 
+def _check_fwr3_cys(base: Path, species: str, findings: list) -> None:
+    """Flag a species whose ndm.imgt FWR3 ends mostly miss the 2nd-CYS codon (CDR3 would start early)."""
+    ndm_path = base / "igblast" / "Ig" / "internal_data" / species / f"{species}.ndm.imgt"
+    if not ndm_path.exists():
+        return
+    seqs = {
+        r["name"]: r["seq"]
+        for c in CHAINS
+        for r in _fasta(base / "normalized" / species / "ungapped" / f"IG{c}V.fasta")
+    }
+    ends = {f[0]: int(f[10]) for f in (line.split("\t") for line in ndm_path.read_text().splitlines()) if f[0] in seqs}
+    no_cys = sorted(name for name, end in ends.items() if seqs[name][end - 3 : end] not in ("TGT", "TGC"))
+    if len(ends) - len(no_cys) < MIN_FWR3_CYS_SHARE * len(ends):
+        what = f"of {len(ends)} annotation rows end FWR3 off the 2nd-CYS codon (limit {1 - MIN_FWR3_CYS_SHARE:.0%})"
+        findings.append(
+            {"species": species, "stage": "ndm.imgt FWR3 end", "file": ndm_path.name, "kind": "UNEXPLAINED"}
+            | {"what": what, "names": no_cys}
+        )
+
+
 def check_allele_counts(
     germlines_dir: Optional[Path] = None, reference_yml: Optional[Path] = None
 ) -> tuple[list[dict], list[dict]]:
@@ -427,13 +450,14 @@ def check_allele_counts(
         if ogrdb_dir.is_dir():
             listed = [g for names in ((yml.get(sp_name) or {}).get("ogrdb") or {}).values() for g in names or []]
             _check_species(base, sp_name, ogrdb_dir, counts.get(sp_name, {}), listed, rows, findings)
+        _check_fwr3_cys(base, sp_name, findings)
     return rows, findings
 
 
 def format_count_report(rows: list[dict], findings: list[dict], max_names: int = 8) -> str:
     columns = ["file", "api", "src", "kept", "by_higher", "collapsed", "norm", "db", "blast", "ndm", "aux"]
     lines = []
-    for species in dict.fromkeys(r["species"] for r in rows):
+    for species in dict.fromkeys([r["species"] for r in rows] + [f["species"] for f in findings]):
         lines += [species, "  " + "".join(f"{c:>10}" for c in columns) + "  verdict"]
         for r in (r for r in rows if r["species"] == species):
             cells = "".join(f"{'-' if r[c] is None else r[c]:>10}" for c in columns)
