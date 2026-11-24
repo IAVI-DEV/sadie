@@ -110,8 +110,7 @@ class OGRDBProvider(GermlineProvider):
         if not fasta_path.exists():
             logger.debug(f"No OGRDB file: {fasta_path}")
             logger.info(
-                "Run 'python -m sadie.germlines.scripts.download_ogrdb --species {species}' "
-                "or add FASTA manually. See sources/ogrdb/OGRDB_DATA.md"
+                "Run 'python -m sadie.germlines.scripts.download_ogrdb --species {species}' " "or add FASTA manually."
             )
             return []
 

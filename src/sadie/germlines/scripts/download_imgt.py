@@ -162,10 +162,10 @@ class IMGTDownloader:
         return sorted(species)
 
     _IG_UNAVAILABLE_REASONS: Dict[str, str] = {
-        "tr_only":      "exists on IMGT but has no IG data (TR-only)",
-        "not_found":    "not found on IMGT",
+        "tr_only": "exists on IMGT but has no IG data (TR-only)",
+        "not_found": "not found on IMGT",
         "ig_available": "IG data exists on IMGT but download produced no files",
-        "unknown":      "could not determine availability (network error)",
+        "unknown": "could not determine availability (network error)",
     }
 
     def check_ig_unavailable_reason(self, imgt_name: str, internal_name: str) -> str:
@@ -183,7 +183,13 @@ class IMGTDownloader:
             req = Request(base_url, headers={"User-Agent": "SADIE-Germlines/1.0"})
             with urlopen(req, timeout=self.timeout) as response:
                 html = response.read().decode("utf-8")
-            status = "ig_available" if ('href="IG/' in html or "href='IG/" in html) else "tr_only"
+            if 'href="IG/' in html or "href='IG/" in html:
+                status = "ig_available"
+            elif 'href="TR/' in html or "href='TR/" in html:
+                status = "tr_only"
+            else:
+                # A 200 page that lists neither locus (e.g. a maintenance page) proves nothing
+                status = "unknown"
         except HTTPError as e:
             status = "not_found" if e.code == 404 else "unknown"
         except Exception:

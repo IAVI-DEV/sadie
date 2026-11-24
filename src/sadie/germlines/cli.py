@@ -11,6 +11,7 @@ post-download build pipeline.
 
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Set
@@ -107,18 +108,32 @@ def get_local_version(provider_name: str) -> Optional[dict]:
     return None
 
 
-def save_version(provider_name: str, version: str, species_count: int, allele_counts: Optional[dict] = None):
-    """Save version info after download; allele_counts holds the per-species, per-file counts the downloader saw."""
+def get_species_on_disk(provider_name: str) -> List[str]:
+    """Species directories of a provider that hold at least one FASTA file."""
+    data_dir = get_provider_data_dir(provider_name)
+    if not data_dir.exists():
+        return []
+    return sorted(d.name for d in data_dir.iterdir() if d.is_dir() and d.name[0] not in "._" and any(d.glob("*.fasta")))
+
+
+def save_version(provider_name: str, version: str, allele_counts: Optional[dict] = None):
+    """Save version info after download.
+
+    species_count is the number of species on disk, not of the last run; allele_counts
+    (per-species, per-file counts the downloader saw) are merged into the stored ones.
+    """
     version_path = get_provider_data_dir(provider_name) / VERSION_FILE
     version_path.parent.mkdir(parents=True, exist_ok=True)
+    species = get_species_on_disk(provider_name)
+    stored = (get_local_version(provider_name) or {}).get("allele_counts") or {}
     version_path.write_text(
         json.dumps(
             {
                 "version": version,
                 "downloaded_at": datetime.now().isoformat(),
                 "provider": provider_name,
-                "species_count": species_count,
-                "allele_counts": allele_counts or {},
+                "species_count": len(species),
+                "allele_counts": {**stored, **(allele_counts or {})},
             },
             indent=2,
         )
@@ -232,13 +247,17 @@ def populate_provider(
 
     for sp in remaining:
         progress.update(task, description=f"[cyan]{provider_name}[/cyan]: {sp}")
+        started = time.time()
+        species_dir = provider.data_dir / sp
 
         try:
             if provider_name == "imgt":
                 from .scripts.download_imgt import IMGTDownloader
 
+                # Past the up-to-date check a stale stamp means re-fetch: without force the
+                # downloader keeps the files on disk and nothing new arrives.
                 downloader = IMGTDownloader(output_dir=provider.data_dir)
-                downloader.download([sp], force=force)
+                downloader.download([sp], force=True)
             elif provider_name == "ogrdb":
                 from .scripts.download_ogrdb import OGRDBDownloader
 
@@ -248,20 +267,29 @@ def populate_provider(
             else:
                 provider.download([sp])
 
-            # Verify files actually landed — 404-only runs produce empty dirs
-            species_dir = provider.data_dir / sp
+            # Downloaded means this run wrote a FASTA: files of an earlier run do not count,
+            # the downloaders log a failed fetch and return normally.
+            # shortcut: one fetched file counts the whole species; upgrade if downloaders report per-file failures
             fasta_files = list(species_dir.glob("*.fasta")) if species_dir.exists() else []
-            if not fasta_files:
-                if provider_name == "imgt":
+            if not any(f.stat().st_mtime >= started for f in fasta_files):
+                no_data = False
+                if fasta_files:
+                    reason = f"{sp}: nothing fetched in this run, files on disk are from an earlier download"
+                elif provider_name == "imgt":
                     from .scripts.download_imgt import SPECIES_MAP
                     from .scripts.download_imgt import IMGTDownloader as _D
 
                     imgt_name = SPECIES_MAP.get(sp, sp)
                     reason = _D(output_dir=provider.data_dir).check_ig_unavailable_reason(imgt_name, sp)
+                    # IMGT answered and lists the species without IG sequences (TR-only): not a failed fetch
+                    no_data = reason.endswith(_D._IG_UNAVAILABLE_REASONS["tr_only"])
                 else:
                     reason = f"{sp}: no sequences downloaded"
                 logger.warning(f"{provider_name}: {reason}")
-                results["failed"].append({"species": sp, "error": reason})
+                if no_data:
+                    console.print(f"[yellow]{reason}, skipped[/yellow]")
+                else:
+                    results["failed"].append({"species": sp, "error": reason})
             else:
                 completed.add(sp)
                 results["downloaded"].append(sp)
@@ -271,13 +299,23 @@ def populate_provider(
             logger.error(f"Failed to download {sp} from {provider_name}: {e}")
             results["failed"].append({"species": sp, "error": str(e)})
 
+        # A species without data leaves no empty directory behind (the IMGT downloader names it in lower snake case)
+        for leftover in {species_dir, provider.data_dir / sp.lower().replace(" ", "_")}:
+            if leftover.is_dir() and not any(leftover.iterdir()):
+                leftover.rmdir()
+
         progress.advance(task)
 
     # Only stamp the version when at least one species produced real data
     if results["downloaded"] and not results["failed"]:
         clear_checkpoint(provider_name)
         version = get_upstream_version_string(provider_name)
-        save_version(provider_name, version, len(results["downloaded"]), allele_counts)
+        save_version(provider_name, version, allele_counts)
+    elif results["failed"]:
+        results["status"] = "partial" if results["downloaded"] else "failed"
+        clear_checkpoint(provider_name)  # the retry advice is --force, which ignores the checkpoint
+    elif not results["downloaded"]:
+        results["status"] = "no data"
 
     results["species_count"] = len(results["downloaded"]) + len(results["skipped"])
     return results
@@ -299,7 +337,10 @@ def run_post_download_build(provider_name: str, species_list: List[str], progres
         Rich progress instance
     """
     if provider_name != "imgt":
-        console.print(f"[dim]Post-download build only needed for IMGT[/dim]")
+        console.print(
+            f"[yellow]{provider_name} sources changed; the databases Airr reads were not rebuilt. Run:[/yellow]"
+        )
+        console.print(f"sadie germlines rebuild {' '.join(f'-s {sp}' for sp in species_list)}", soft_wrap=True)
         return
 
     console.print("\n[bold]Running post-download build pipeline...[/bold]")
@@ -466,12 +507,13 @@ def populate_germlines(
             results = populate_provider(prov_name, species, force, dry_run, progress)
             all_results[prov_name] = results
 
-            if not dry_run and results.get("status") == "success":
-                downloaded = results.get("downloaded", [])
-                if downloaded:
-                    run_post_download_build(prov_name, downloaded, progress)
+            # Downloaded species are built even when other species failed; validation covers
+            # the whole provider, so it only runs when no species failed
+            downloaded = results.get("downloaded", [])
+            if not dry_run and downloaded:
+                run_post_download_build(prov_name, downloaded, progress)
 
-                if not validate_provider_data(prov_name):
+                if not results.get("failed") and not validate_provider_data(prov_name):
                     console.print(f"[yellow]Warning: {prov_name} validation had issues[/yellow]")
 
     console.print("\n[bold]Summary[/bold]")
@@ -488,7 +530,9 @@ def populate_germlines(
         downloaded = len(results.get("downloaded", []))
         failed = len(results.get("failed", []))
 
-        status_style = "green" if status == "success" else "yellow" if status in ["skipped", "dry_run"] else "red"
+        status_style = (
+            "green" if status == "success" else "yellow" if status in ["skipped", "dry_run", "no data"] else "red"
+        )
         summary_table.add_row(
             prov_name,
             f"[{status_style}]{status}[/{status_style}]",
@@ -501,7 +545,8 @@ def populate_germlines(
     total_failed = sum(len(r.get("failed", [])) for r in all_results.values())
     if total_failed > 0:
         console.print(f"\n[red]Warning: {total_failed} species failed to download[/red]")
-        console.print("Re-run the command to resume from checkpoint")
+        console.print("Re-run the command with --force to retry")
+        raise SystemExit(1)
 
 
 def get_all_downloaded_species() -> List[str]:
@@ -515,12 +560,7 @@ def get_all_downloaded_species() -> List[str]:
     """
     species = set()
     for provider_name in ["imgt", "ogrdb", "vdjbase", "custom"]:
-        data_dir = get_provider_data_dir(provider_name)
-        if not data_dir.exists():
-            continue
-        for d in data_dir.iterdir():
-            if d.is_dir() and not d.name.startswith("."):
-                species.add(d.name)
+        species.update(get_species_on_disk(provider_name))
     return sorted(species)
 
 
@@ -530,131 +570,55 @@ def rebuild_germlines(
     """
     Rebuild germline databases from already-downloaded data (no downloading).
 
-    Uses the Reference module to build IgBLAST databases:
-    1. Auto-generates reference YAML config if missing
-    2. Loads reference config via References.from_yaml()
-    3. Builds IgBLAST databases via References.make_airr_database()
-    4. Places output in the germlines/igblast/ directory
+    Runs the same pipeline as ``sadie.germlines.update_databases(species, force=True)``:
+    sources/ -> normalized/ -> igblast/database, aux_db and Ig/internal_data,
+    which are the files the default Airr reads.
 
     Parameters
     ----------
     species : List[str], optional
         Specific species to rebuild, or None for all downloaded
     """
-    import tempfile
-
-    import yaml
-
-    from sadie.reference.generate import generate_reference_yaml
-    from sadie.reference.reference import References
-
-    germlines_root = Path(__file__).parent
-    igblast_dir = germlines_root / "igblast"
+    from . import update_databases
+    from .manager import GermlineManager
 
     all_downloaded = get_all_downloaded_species()
 
     if species:
-        species = [normalize_species(sp) for sp in species]
+        species = list(dict.fromkeys(normalize_species(sp) for sp in species))
         target = [sp for sp in species if sp in all_downloaded]
-        missing = [sp for sp in species if sp not in all_downloaded]
-        if missing:
-            console.print(f"[yellow]Species not found locally: {', '.join(missing)}[/yellow]")
+        failed = [sp for sp in species if sp not in all_downloaded]
+        if failed:
+            console.print(f"[red]Species not found locally: {', '.join(failed)}[/red]")
     else:
-        target = all_downloaded
+        target, failed = all_downloaded, []
 
     if not target:
-        console.print("[yellow]No downloaded germline data found. Run 'sadie germlines populate' first.[/yellow]")
-        return
+        if not failed:
+            console.print("[yellow]No downloaded germline data found. Run 'sadie germlines populate' first.[/yellow]")
+        raise SystemExit(1)
 
     console.print("\n[bold]SADIE Germline Database Rebuild[/bold]")
     console.print("=" * 50)
-    console.print(f"[dim]Rebuilding {len(target)} species via Reference module (no downloads)[/dim]\n")
+    console.print(f"[dim]Rebuilding {len(target)} species from sources/ (no downloads)[/dim]\n")
 
-    # Step 1: Get or generate reference YAML config
-    yaml_path = Path(__file__).parent.parent / "reference" / "data" / "reference.yml"
+    manager = GermlineManager()
+    for sp in target:
+        try:
+            # The pipeline skips a segment without genes and would rebuild from stale normalized/ files
+            if not any(manager.get_genes(sp, "V", chain) for chain in "HKL"):
+                raise RuntimeError(f"no V genes could be read from sources/*/{sp}/, nothing rebuilt")
+            update_databases(sp, force=True)
+            console.print(f"  [green]{sp}[/green]: rebuilt successfully")
+        except Exception as e:
+            console.print(f"  [red]{sp}[/red]: failed - {e}")
+            logger.error(f"Failed to rebuild {sp}: {e}")
+            failed.append(sp)
 
-    if not yaml_path.exists():
-        console.print("[cyan]Reference config not found, auto-generating...[/cyan]")
-        generate_reference_yaml(output_path=yaml_path)
-        console.print(f"[green]Generated reference config at {yaml_path}[/green]")
-
-    # Step 2: Read the full config to filter by target species
-    with open(yaml_path) as f:
-        full_config = yaml.safe_load(f)
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeElapsedColumn(),
-        console=console,
-    ) as progress:
-        task = progress.add_task("[cyan]Rebuilding germlines...", total=len(target))
-
-        for sp in target:
-            progress.update(task, description=f"[cyan]Rebuilding {sp} via Reference module...")
-            try:
-                # Find the reference name for this species in the config
-                ref_name = _find_reference_name_for_species(full_config, sp)
-                if ref_name is None:
-                    console.print(f"  [yellow]{sp}[/yellow]: not found in reference config, skipping")
-                    progress.advance(task)
-                    continue
-
-                # Build a filtered config for just this species/reference
-                filtered_config = {ref_name: full_config[ref_name]}
-                filtered_yaml_content = yaml.dump(filtered_config, default_flow_style=False, sort_keys=False)
-
-                # Write to a temporary YAML file and build
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as tmp_yaml:
-                    tmp_yaml.write(filtered_yaml_content)
-                    tmp_yaml_path = Path(tmp_yaml.name)
-
-                try:
-                    refs = References.from_yaml(tmp_yaml_path, use_germlines=True)
-                    refs.make_airr_database(igblast_dir)
-                    console.print(f"  [green]{sp}[/green]: rebuilt successfully via Reference module")
-                finally:
-                    tmp_yaml_path.unlink(missing_ok=True)
-
-            except Exception as e:
-                console.print(f"  [red]{sp}[/red]: failed - {e}")
-                logger.error(f"Failed to rebuild {sp}: {e}")
-            progress.advance(task)
-
+    if failed:
+        console.print(f"\n[red]Rebuild failed for: {', '.join(failed)}[/red]")
+        raise SystemExit(1)
     console.print("\n[green]Rebuild complete[/green]")
-
-
-def _find_reference_name_for_species(config: dict, species: str) -> Optional[str]:
-    """Find the reference name that contains data for a given species.
-
-    Searches through the reference config to find a reference name that
-    has the species as a sub-key under any provider.
-
-    Parameters
-    ----------
-    config : dict
-        Full reference YAML config.
-    species : str
-        Species to find.
-
-    Returns
-    -------
-    str or None
-        Reference name if found, None otherwise.
-    """
-    # First check if species name is directly a reference name
-    if species in config:
-        return species
-
-    # Search through all reference names for the species
-    for ref_name in config:
-        for source in config[ref_name]:
-            if species in config[ref_name][source]:
-                return ref_name
-
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -736,9 +700,9 @@ def status_cmd() -> None:
     help="Species to rebuild (may be repeated). Defaults to all downloaded species.",
 )
 def rebuild_cmd(species: tuple) -> None:
-    """Rebuild IgBLAST databases from already-downloaded germline data via the Reference module.
+    """Rebuild the IgBLAST databases Airr reads from already-downloaded germline data.
 
-    Runs References.from_yaml() -> make_airr_database() to regenerate BLAST
-    databases in germlines/igblast/ without re-downloading source FASTA files.
+    Runs the germline pipeline (sources/ -> normalized/ -> igblast/) with a forced
+    rebuild, without re-downloading source FASTA files.
     """
     rebuild_germlines(species=list(species) if species else None)

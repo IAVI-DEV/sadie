@@ -9,7 +9,7 @@ This module replaces G3 API dependency with local, multi-source germline databas
 The germlines module provides:
 
 ✅ **Multiple Data Sources**: IMGT, OGRDB, VDJbase, and custom user sequences
-✅ **Priority-Based Merging**: Custom overrides OGRDB overrides VDJbase overrides IMGT
+✅ **Priority-Based Merging**: VDJbase > OGRDB > IMGT > custom (first provider wins)
 ✅ **Automatic Processing**: Auto-gaps ungapped sequences
 ✅ **IgBLAST Integration**: Builds databases and auxiliary files
 ✅ **Offline Operation**: Works without internet after initial setup
@@ -23,7 +23,8 @@ The germlines module provides:
 sources/          normalized/       igblast/
 ├── custom/  →   ├── gapped/   →   ├── database/
 ├── imgt/         └── ungapped/     ├── aux_db/
-└── ogrdb/                          └── internal_data/
+├── ogrdb/                          └── Ig/internal_data/
+└── vdjbase/
 
 Stage 1:          Stage 2:          Stage 3:
 Fetch & Parse     Merge & Gap       Build DBs
@@ -32,12 +33,12 @@ Fetch & Parse     Merge & Gap       Build DBs
 **Stage 1: Sources**
 - Raw FASTA files from each source
 - User adds custom sequences here
-- IMGT and OGRDB data downloaded once
+- IMGT, OGRDB and VDJbase data downloaded with `sadie germlines populate`
 
 **Stage 2: Normalized**
 - Merged sequences (priority-based deduplication)
 - Both gapped and ungapped versions
-- Change detection triggers rebuild
+- Rebuilt by `sadie germlines rebuild`
 
 **Stage 3: IgBLAST**
 - BLAST databases for V, D, J segments
@@ -97,16 +98,14 @@ germlines/
 │   ├── custom/             # USER EDITABLE
 │   │   ├── README.md
 │   │   ├── _template/
-│   │   └── human/
+│   │   └── mouse/
 │   │       ├── IGHV.fasta  ← Add your sequences here
 │   │       └── ...
 │   ├── imgt/               # IMGT data
-│   │   ├── IMGT_DATA.md   # How to populate
 │   │   └── human/
 │   │       ├── IGHV.fasta
 │   │       └── ...
 │   └── ogrdb/              # OGRDB data
-│       ├── OGRDB_DATA.md  # How to populate
 │       └── human/
 │           └── ...
 │
@@ -128,45 +127,56 @@ germlines/
 │   │       └── human_J.*
 │   ├── aux_db/
 │   │   └── human_gl.aux
-│   └── internal_data/      # IgBLAST internal data
+│   └── Ig/internal_data/   # IgBLAST internal data
 │
 ├── scripts/                 # Maintenance scripts
 │   ├── download_imgt.py
 │   ├── download_ogrdb.py
 │   └── validate.py
 │
-└── tests/                   # Unit tests
-    ├── test_manager.py
-    ├── test_pipeline.py
-    └── test_providers.py
+└── cli.py                   # `sadie germlines` commands
 ```
+
+Unit tests live in `tests/unit/germlines/` at the repository root.
 
 ## Quick Start
 
 ### 1. Add Custom Sequences
 
 ```bash
-# Create file
+# Create the species directory (only some species ship one) and the file
+$ mkdir -p sources/custom/human
 $ cat > sources/custom/human/IGHV.fasta << 'EOF'
 >IGHV1-NOVEL*01
 CAGGTGCAGCTGGTGCAGTCTGGGGCTGAGGTGAAGAAGCCT...
 EOF
 ```
 
-### 2. Add IMGT Data
+### 2. Download Provider Data
 
-See `sources/imgt/IMGT_DATA.md` for instructions on downloading IMGT data.
+```bash
+$ sadie germlines populate -p imgt -s human    # also: -p ogrdb, -p vdjbase, -p all
+$ sadie germlines populate --dry-run           # show what would be downloaded
+```
 
-### 3. Add OGRDB Data (Optional)
+`populate` exits non-zero when a requested download fails.
 
-See `sources/ogrdb/OGRDB_DATA.md` for instructions.
+### 3. Rebuild the Databases
+
+`populate` and edits under `sources/` do not rebuild `igblast/database/`, which `sadie airr` reads.
+Always run the rebuild for each species whose sources changed:
+
+```bash
+$ sadie germlines rebuild -s human
+$ sadie germlines status                       # provider versions and allele counts per stage
+```
 
 ### 4. Run Sadie
 
 ```python
 from sadie.germlines import get_germline_genes
 
-# Get genes (automatically processes if changed)
+# Get genes (read from sources/, merged by priority)
 genes = get_germline_genes("human", "V", "H")
 
 print(f"Found {len(genes)} genes:")
@@ -176,7 +186,7 @@ for gene in genes[:5]:
 
 ### 5. Use with IgBLAST
 
-The module automatically builds IgBLAST databases. Update your Sadie config:
+`sadie germlines rebuild` builds the IgBLAST databases under `igblast/`:
 
 ```python
 # See INTEGRATION_GUIDE.md for details
@@ -226,22 +236,28 @@ species = manager.get_available_species()
 print(f"Available species: {species}")
 ```
 
-## Change Detection
+## Rebuilding After a Change
 
-The pipeline automatically detects when files change:
+Nothing rebuilds the databases automatically; `sadie airr` reads what is already in `igblast/`.
+After changing `sources/`, rebuild by hand:
 
 ```bash
 # Add new custom sequence
 $ echo ">IGHV1-NEW*01" >> sources/custom/human/IGHV.fasta
 $ echo "CAGGTGCAG..." >> sources/custom/human/IGHV.fasta
 
-# Next run automatically rebuilds
-$ sadie airr -i sequences.fasta -o results.tsv
-# INFO: Sources changed, rebuilding normalized...
-# INFO: Normalized changed, rebuilding IgBLAST...
+# Forced rebuild of sources/ -> normalized/ -> igblast/
+$ sadie germlines rebuild -s human
 ```
 
-No manual rebuild needed!
+From Python, `update_databases` rebuilds only the stages whose inputs changed:
+
+```python
+from sadie.germlines import update_databases
+
+update_databases("human")              # incremental
+update_databases("human", force=True)  # same as `sadie germlines rebuild -s human`
+```
 
 ## Data Model
 
@@ -295,20 +311,19 @@ genes = get_germline_genes("mouse", "V", "H")
 
 ```bash
 # Run tests
-pytest tests/
+pytest tests/unit/germlines
 
 # Validate installation
 python -c "from sadie.germlines import get_germline_genes; print('OK')"
 
 # Check data
-python scripts/validate.py
+python -m sadie.germlines.scripts.validate
 ```
 
 ## Performance
 
-- **First run**: Downloads/processes data (~1-2 minutes for human)
-- **Subsequent runs**: Uses cached data (instant)
-- **Change detection**: Only rebuilds what changed
+- **Runs**: Use the committed databases; nothing is downloaded or rebuilt
+- **Change detection**: `update_databases(species)` only rebuilds what changed
 - **Offline**: Works completely offline after initial setup
 
 ## Troubleshooting
@@ -318,7 +333,7 @@ python scripts/validate.py
 **Check**:
 1. Are source files present? `ls sources/*/human/`
 2. Are they named correctly? `IG{H|K|L}{V|D|J}.fasta`
-3. Try force rebuild: `pipeline.force_rebuild("human")`
+3. Try force rebuild: `sadie germlines rebuild -s human`
 
 ### Custom sequences not loading
 
@@ -333,7 +348,7 @@ python scripts/validate.py
 **Check**:
 1. BLAST databases built? `ls igblast/database/human/*.nhr`
 2. Auxiliary file exists? `ls igblast/aux_db/human_gl.aux`
-3. Run pipeline: `pipeline.update("human")`
+3. Rebuild: `sadie germlines rebuild -s human`
 
 ## Contributing
 
