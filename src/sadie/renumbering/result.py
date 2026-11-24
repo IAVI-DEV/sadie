@@ -43,7 +43,8 @@ class NumberingResults(pd.DataFrame):
         # all_dataframes = all_dataframes.sort_index(axis=1)
         # all_dataframes = all_dataframes.replace(nan, "-")
         all_dataframes.columns = list(map(lambda x: str(x[0]) + x[1], all_dataframes.columns.values))
-        all_dataframes = all_dataframes.reset_index()
+        # copy() merges the per-column blocks so reset_index does not warn about fragmentation on pandas 3
+        all_dataframes = all_dataframes.copy().reset_index()
 
         return self[["Id", "chain_type", "scheme"]].merge(all_dataframes, on="Id").copy()
 
