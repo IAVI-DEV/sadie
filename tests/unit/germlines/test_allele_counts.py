@@ -233,12 +233,19 @@ def test_extract_insert_blocks_warns_on_unterminated_statement(caplog):
     assert "Unterminated INSERT INTO gene_description" in caplog.text
 
 
-def gene_description_dump(name, locus, sequence, coding_seq_imgt, gene_start, gene_end):
+def gene_description_dump(
+    name, locus, sequence, coding_seq_imgt, gene_start, gene_end, row_id=1, set_status="published"
+):
     values = ["NULL"] * 46
-    values[1], values[8], values[9] = f"'{name}'", f"'{locus}'", f"'{name[3]}'"
+    values[0], values[1], values[8], values[9] = str(row_id), f"'{name}'", f"'{locus}'", f"'{name[3]}'"
     values[16], values[17], values[41] = f"'{sequence}'", f"'{coding_seq_imgt}'", "'Homo sapiens'"
     values[44], values[45] = gene_start, gene_end
-    return f"INSERT INTO `gene_description` VALUES ({','.join(values)});"
+    dump = f"INSERT INTO `gene_description` VALUES ({','.join(values)});"
+    if set_status:
+        germline_set = [str(row_id), *["NULL"] * 6, f"'{set_status}'"]
+        dump += f"\nINSERT INTO `germline_set` VALUES ({','.join(germline_set)});"
+        dump += f"\nINSERT INTO `gene_descriptions_germline_sets` VALUES ({row_id},{row_id});"
+    return dump
 
 
 def parse_dump_to_fasta(tmp_path, dump):
@@ -272,13 +279,66 @@ def test_process_sql_dump_skips_t_cell_receptor_loci(tmp_path):
     assert parse_dump_to_fasta(tmp_path, dump) == {}
 
 
-def test_process_sql_dump_keeps_latest_release_of_an_allele(tmp_path):
-    superseded = gene_description_dump("IGHV1-1*01", "IGH", "CAGGT", "CAG...GT", "1", "5")
-    current = gene_description_dump("IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10")
+@pytest.mark.parametrize(
+    "older_set, current_set, expected",
+    [
+        ("superceded", "published", ">IGHV1-1*01\nCAGGTG\n"),
+        ("superceded", "superceded", None),
+        (None, None, None),
+    ],
+    ids=["superseded_release_then_published_set_member", "member_of_superseded_sets_only", "in_no_germline_set"],
+)
+def test_process_sql_dump_keeps_only_members_of_a_published_germline_set(tmp_path, older_set, current_set, expected):
+    older = gene_description_dump("IGHV1-1*01", "IGH", "CAGGT", "CAG...GT", "1", "5", 1, older_set)
+    current = gene_description_dump("IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10", 2, current_set)
 
-    fastas = parse_dump_to_fasta(tmp_path, superseded + "\n" + current)
+    fastas = parse_dump_to_fasta(tmp_path, older + "\n" + current)
 
-    assert fastas["IGHV.fasta"] == ">IGHV1-1*01\nCAGGTG\n"
+    assert fastas.get("IGHV.fasta") == expected
+
+
+@pytest.mark.parametrize(
+    "archive, api_sets, expected",
+    [
+        ({"IGKV-AAAA": "ACGT"}, [{"IGKV0-AAAA*00": "ACGT"}], [("IGKV0-AAAA*00", "ACGT", "ACGT")]),
+        ({"IGKV1-1*01": "ACGT"}, [{"IGKV1-1*01": "ACGTA"}], [("IGKV1-1*01", "ACGTA", "ACGTA")]),
+        (
+            {"IGKV1-1*01": "ACGT"},
+            [{"IGKV1-2*01": "GGGG"}],
+            [("IGKV1-1*01", "ACGT", "ACGT."), ("IGKV1-2*01", "GGGG", "GGGG")],
+        ),
+        (
+            {},
+            [{"IGKV0-AAAA*00": "ACGT"}, {"IGKV0-BBBB*00": "ACGT", "IGKV0-AAAA*00": "TTTT"}],
+            [("IGKV0-AAAA*00", "ACGT", "ACGT"), ("IGKV0-BBBB*00", "ACGT", "ACGT")],
+        ),
+    ],
+    ids=[
+        "archive_label_replaced_by_api_name_with_same_sequence",
+        "archive_record_replaced_by_api_record_with_same_name",
+        "archive_record_absent_from_api_kept",
+        "earlier_api_set_record_kept",
+    ],
+)
+def test_supplement_from_api_ships_each_allele_once_under_its_api_name(
+    tmp_path, monkeypatch, archive, api_sets, expected
+):
+    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
+    write_fasta(tmp_path / "out" / "human" / "IGKV.fasta", archive)
+    write_fasta(tmp_path / "out" / "human" / "IGKV_gapped.fasta", {n: s + "." for n, s in archive.items()})
+    sets = [{"germline_set_id": str(i), "locus": "IGK"} for i in range(len(api_sets))]
+    monkeypatch.setattr(downloader, "get_germline_sets", lambda _: sets)
+    monkeypatch.setattr(
+        downloader,
+        "get_germline_set_fasta",
+        lambda set_id, gapped=False: "".join(f">{n}\n{s}\n" for n, s in api_sets[int(set_id)].items()),
+    )
+
+    downloader.supplement_from_api(["human"])
+
+    out = tmp_path / "out" / "human"
+    gapped = dict(downloader.parse_fasta((out / "IGKV_gapped.fasta").read_text()))
+    assert [(n, s, gapped[n]) for n, s in downloader.parse_fasta((out / "IGKV.fasta").read_text())] == expected
 
 
 @pytest.mark.parametrize(
