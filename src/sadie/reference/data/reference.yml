@@ -1408,7 +1408,6 @@ human:
     - IGHA1*06_c527g_g817a_t1013c_SC
     - IGHA1*06_c567t
     - IGHA1*06_c567t_SC
-    - IGHA1*06_t1042c_c1046t
     - IGHA1*06_t1042c_c1046t_SC
     - IGHA1*06_t758c
     - IGHA1*06_t758c_c1252g
@@ -1425,7 +1424,6 @@ human:
     - IGHA2*01_g1213c
     - IGHA2*01_g147a
     - IGHA2*01_g147a_SC
-    - IGHA2*01_g998a
     - IGHA2*01_g998a_SC
     - IGHA2*01_t719c
     - IGHA2*01_t719c_SC
@@ -1633,7 +1631,6 @@ human:
     - IGHG4*01_c1018t
     - IGHG4*01_c20g
     - IGHG4*01_c20g_SC
-    - IGHG4*01_c20g_c56t_c188t_a314g_g338a
     - IGHG4*01_c20g_c56t_c188t_a314g_g338a_SC
     - IGHG4*01_c20g_g338a_a1180c
     - IGHG4*01_c20g_g338a_a1180c_SC
