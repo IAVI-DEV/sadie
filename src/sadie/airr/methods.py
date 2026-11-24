@@ -352,6 +352,11 @@ def run_mutational_analysis(
     common_results = set.intersection(*sets_of_lists)
 
     logger.info(f"Can run mutational analysis on {len(common_results)} out of {len(airrtable)} results")
+    if len(common_results) < len(airrtable):
+        logger.warning(
+            f"Mutational analysis dropped {len(airrtable) - len(common_results)} of {len(airrtable)} rows: "
+            "Renumbering could not number their alignments"
+        )
     germline_results_renumbering = germline_results_renumbering.loc[
         germline_results_renumbering["Id"].isin(common_results), :  # type: ignore
     ]
