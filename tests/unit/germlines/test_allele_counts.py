@@ -250,8 +250,13 @@ def parse_dump_to_fasta(tmp_path, dump):
 
 @pytest.mark.parametrize(
     "name, gene_start, gene_end",
-    [("IGHV1-1*01", "5", "10"), ("IGHV1-1*01", "NULL", "NULL"), ("IGHD1-1*01", "5", "10")],
-    ids=["gene_start_and_gene_end", "degapped_coding_seq_imgt_when_coordinates_missing", "d_segment"],
+    [("IGHV1-1*01", "5", "10"), ("IGHV1-1*01", "NULL", "NULL"), ("IGHD1-1*01", "5", "10"), ("IGHC*01", "1", "14")],
+    ids=[
+        "gene_start_and_gene_end",
+        "degapped_coding_seq_imgt_when_coordinates_missing",
+        "d_segment",
+        "c_segment_spliced_coding_when_coordinates_span_introns",
+    ],
 )
 def test_process_sql_dump_writes_coding_region_not_full_genomic_sequence(tmp_path, name, gene_start, gene_end):
     dump = gene_description_dump(name, "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", gene_start, gene_end)

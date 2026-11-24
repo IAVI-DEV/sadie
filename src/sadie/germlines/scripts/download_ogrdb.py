@@ -825,10 +825,12 @@ class OGRDBDownloader(OGRDBApiClient):
 
         # Column 16 is the full genomic record (leader, intron, RSS). Keep only the
         # coding region: gene_start..gene_end (1-based, columns 44/45), else the
-        # de-gapped coding_seq_imgt.
+        # de-gapped coding_seq_imgt. C rows span gene_start..gene_end over all exons
+        # and introns, so their spliced coding sequence is coding_seq_imgt only.
         gene_start = self._clean_sql_string(values[44]) if len(values) > 45 else None
         gene_end = self._clean_sql_string(values[45]) if len(values) > 45 else None
-        if ungapped and gene_start and gene_end and gene_start.isdigit() and gene_end.isdigit():
+        spliced_only = seq_type == "C" and gapped
+        if not spliced_only and ungapped and gene_start and gene_end and gene_start.isdigit() and gene_end.isdigit():
             ungapped = ungapped[int(gene_start) - 1 : int(gene_end)]
         elif gapped:
             ungapped = gapped.replace(".", "")
