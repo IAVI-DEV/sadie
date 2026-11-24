@@ -7,6 +7,7 @@ These tests verify that:
 4. GermlineData paths point to the correct locations
 """
 
+import functools
 from pathlib import Path
 
 import pytest
@@ -202,3 +203,37 @@ class TestBuildInternalDataScript:
         BlastDBBuilder()._run_makeblastdb(tmp_path / "mouse_D.fasta", "D")
 
         assert [cmd[cmd.index("-title") + 1] for cmd in commands] == ["human_V", "mouse_D"]
+
+
+@functools.lru_cache(maxsize=None)
+def built_ndm_rows(species: str) -> dict:
+    from sadie.germlines.scripts.build_internal_data import build_ndm_file
+
+    return {row.split("\t")[0]: row.split("\t", 1)[1] for row in build_ndm_file(species, get_germlines_base_dir())}
+
+
+@pytest.mark.parametrize(
+    "species, allele, expected_bounds",
+    [
+        pytest.param("rat", "IGHV5-50*01", "1\t75\t76\t99\t100\t150\t151\t174\t175\t288\tVH", id="extra-gap-columns"),
+        pytest.param("dog", "IGLV1-100*01", "1\t75\t76\t99\t100\t150\t151\t159\t160\t267\tVL", id="gap-column-in-fwr2"),
+        pytest.param("rat", "IGHV1-10*01", "1\t75\t76\t99\t100\t150\t151\t174\t175\t288\tVH", id="missing-trp41"),
+        pytest.param("rat", "IGHV1-20*01", "1\t75\t76\t99\t100\t150\t151\t174\t175\t288\tVH", id="missing-cys104"),
+        pytest.param("rat", "IGKV2S21*01", "1\t75\t76\t108\t109\t159\t160\t168\t169\t261\tVK", id="cys-after-104"),
+        pytest.param("rat", "IGHV10-12*01", "1\t75\t76\t99\t100\t150\t151\t180\t181\t294\tVH", id="y-c-c"),
+        pytest.param("macaque", "IGHV10-4V64*01", "1\t75\t76\t99\t100\t150\t151\t177\t178\t291\tVH", id="fwr1-insert"),
+        pytest.param(
+            "cynomolgus", "IGHV4-117*01_S8168", "1\t72\t73\t99\t100\t150\t151\t171\t172\t285\tVH", id="trp39-not-trp41"
+        ),
+        pytest.param(
+            "macaque", "IGKV0-J3H5*01", "1\t78\t79\t96\t97\t147\t148\t156\t157\t261\tVK", id="cys-without-y-x-c"
+        ),
+        pytest.param(
+            "macaque", "IGLV0-4ZZC*01", "1\t78\t79\t96\t97\t147\t148\t156\t157\t261\tVL", id="no-borrowed-shift"
+        ),
+    ],
+)
+def test_build_ndm_file_bounds_follow_the_gap_layout_of_the_alignment(
+    species: str, allele: str, expected_bounds: str
+) -> None:
+    assert built_ndm_rows(species)[allele] == f"{expected_bounds}\t0"
