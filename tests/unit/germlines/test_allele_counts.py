@@ -143,37 +143,79 @@ def test_check_allele_counts_on_committed_ogrdb_species_reports_every_file():
     assert [f["species"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == []
 
 
-@pytest.mark.parametrize("fwr3_end, flagged", [(6, []), (9, [["IGHV1-1*01"]])])
-def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(two_stage_germlines, fwr3_end, flagged):
-    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHV.fasta", {"IGHV1-1*01 source=ogrdb": "AAATGTAAA"})
+LONG_V_NAMES = [
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119a",
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119c",
+]
+LONG_V_DATABASE_IDS = [
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g",
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_1",
+]
+
+
+@pytest.mark.parametrize(
+    "alleles, ndm_row_names, fwr3_end, flagged",
+    [
+        (["IGHV1-1*01"], ["IGHV1-1*01"], 6, []),
+        (["IGHV1-1*01"], ["IGHV1-1*01"], 9, [["IGHV1-1*01"]]),
+        (LONG_V_NAMES, LONG_V_DATABASE_IDS, 9, [LONG_V_DATABASE_IDS]),
+    ],
+    ids=["fwr3-ends-on-cys", "fwr3-ends-off-cys", "rows-named-by-truncated-and-suffixed-database-ids"],
+)
+def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(
+    two_stage_germlines, alleles, ndm_row_names, fwr3_end, flagged
+):
+    ungapped = {f"{allele} source=ogrdb": "AAATGTAAA" for allele in alleles}
+    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHV.fasta", ungapped)
     ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
     ndm.parent.mkdir(parents=True)
-    ndm.write_text(f"IGHV1-1*01\t1\t1\t1\t1\t1\t1\t1\t1\t1\t{fwr3_end}\tVH\t0\n")
+    ndm.write_text("".join(f"{name}\t1\t1\t1\t1\t1\t1\t1\t1\t1\t{fwr3_end}\tVH\t0\n" for name in ndm_row_names))
 
     _, findings = run_check(two_stage_germlines)
 
     assert [f["names"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == flagged
 
 
+FULL_V, PARTIAL_5_PRIME_V, PARTIAL_3_PRIME_V = "CAG" * 104, "." * 78 + "CAG" * 78, "CAG" * 60
+PARTIAL_EXPECTED = [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]
+BOTH_UNEXPLAINED = [("UNEXPLAINED", ["IGHV1-1*01", "IGHV1-2*01"])]
+
+
 @pytest.mark.parametrize(
-    "gapped_v, database_v, expected_findings",
+    "imgt_partial, imgt_gapped_v, gapped_v, database_v, expected_findings",
     [
-        ("." * 78 + "CAG" * 78, "CAG" * 78, [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]),
-        ("CAG" * 60, "CAG" * 60, [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]),
-        ("." * 78 + "CAG" * 78, "CAG" * 104, [("UNEXPLAINED", ["IGHV1-1*01", "IGHV1-2*01"])]),
+        ("partial in 5'", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, "CAG" * 78, PARTIAL_EXPECTED),
+        ("partial in 3'", PARTIAL_3_PRIME_V, PARTIAL_3_PRIME_V, "CAG" * 60, PARTIAL_EXPECTED),
+        (" ", FULL_V, "." * 78 + FULL_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 5'", PARTIAL_5_PRIME_V, "." * 78 + FULL_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 5'", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 3'", "CAG" * 100, "CAG" * 100, "CAG" * 100, BOTH_UNEXPLAINED),
+        (" ", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, "CAG" * 78, BOTH_UNEXPLAINED),
+        ("partial in 3'", "CAG" * 100, "." * 78 + "CAG" * 100, "CAG" * 100, BOTH_UNEXPLAINED),
     ],
-    ids=["fwr1-all-gaps", "ends-in-cdr2", "gapped-record-lost-bases-the-database-has"],
+    ids=[
+        "imgt-partial-in-5-prime",
+        "imgt-partial-in-3-prime",
+        "full-length-shifted-78-columns",
+        "full-length-on-a-partial-imgt-template",
+        "gapped-record-lost-bases-the-database-has",
+        "imgt-partial-with-every-region-covered",
+        "imgt-record-without-partial-flag",
+        "imgt-partial-shifted-78-columns",
+    ],
 )
 def test_check_allele_counts_expects_no_ndm_row_only_for_partial_v_allele(
-    two_stage_germlines, gapped_v, database_v, expected_findings
+    two_stage_germlines, imgt_partial, imgt_gapped_v, gapped_v, database_v, expected_findings
 ):
-    gapped = {"IGHV1-1*01 source=ogrdb": gapped_v, "IGHV1-2*01 source=vdjbase": "CAG" * 104}
+    header = f"X1|IGHV1-1*01|Fake|F|V-REGION|1..9|9 nt|1| | | | |9+0=9|{imgt_partial}| |"
+    write_fasta(two_stage_germlines / "sources/imgt/fake/IGHV_gapped.fasta", {header: imgt_gapped_v})
+    write_fasta(two_stage_germlines / "sources/imgt/fake/IGHV.fasta", {header: imgt_gapped_v.replace(".", "")})
+    gapped = {"IGHV1-1*01 source=ogrdb": gapped_v, "IGHV1-2*01 source=vdjbase": FULL_V}
     write_fasta(two_stage_germlines / "normalized/fake/gapped/IGHV.fasta", gapped)
-    database = {"IGHV1-1*01": database_v, "IGHV1-2*01": "CAG" * 104}
+    database = {"IGHV1-1*01": database_v, "IGHV1-2*01": FULL_V}
     write_fasta(two_stage_germlines / "igblast/database/fake/fake_V.fasta", database)
-    ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
-    ndm.parent.mkdir(parents=True)
-    ndm.write_text("")
+    (two_stage_germlines / "igblast/Ig/internal_data/fake").mkdir(parents=True)
+    (two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt").write_text("")
 
     _, findings = run_check(two_stage_germlines)
 
@@ -194,12 +236,14 @@ BOTH_REPEATED_NAMES = ["IGKV0-KA5D*00", "IGKV0-YKPT*00"]
             [("EXPECTED", BOTH_REPEATED_NAMES), ("UNEXPLAINED", ["1 records"])],
         ),
         ("release-23947887", ["IGKV0-YKPT*00"], 3, [("EXPECTED", ["IGKV0-YKPT*00"]), ("UNEXPLAINED", ["1 records"])]),
+        ("release-23947887", BOTH_REPEATED_NAMES, 3, [("UNEXPLAINED", ["1 records"])]),
         ("release-1", BOTH_REPEATED_NAMES, 4, [("UNEXPLAINED", ["2 records"])]),
     ],
     ids=[
         "listed-names-cover-the-shortfall",
         "shortfall-beyond-listed-names",
         "listed-name-absent-from-sources",
+        "shortfall-below-listed-names",
         "another-release-guard",
     ],
 )

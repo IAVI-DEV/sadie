@@ -199,6 +199,26 @@ def _fasta(path: Path) -> list[dict]:
     return records
 
 
+def _imgt_partial_v(imgt_dir: Path) -> dict[str, tuple[str, str]]:
+    """IMGT V alleles whose header flags "partial in 5'" or "partial in 3'": name -> (bases, IMGT-gapped record)."""
+    from Bio import SeqIO
+
+    def flagged(path: Path) -> dict[str, str]:
+        records = {}
+        if path.exists():
+            for rec in SeqIO.parse(path, "fasta"):
+                fields = rec.description.split("|")
+                if len(fields) > 13 and "partial in" in fields[13]:
+                    records[fields[1]] = str(rec.seq).upper()
+        return records
+
+    partial = {}
+    for c in CHAINS:
+        bases, gapped = flagged(imgt_dir / f"IG{c}V.fasta"), flagged(imgt_dir / f"IG{c}V_gapped.fasta")
+        partial |= {name: (bases[name], gapped[name]) for name in bases.keys() & gapped.keys()}
+    return partial
+
+
 def _segment(name: str) -> str:
     """Segment the downloader routes a name to (download_ogrdb.supplement_from_api)."""
     if re.match(r"IG[HKL]V", name):
@@ -302,14 +322,17 @@ def _check_species(
     gapped_v = {r["name"]: r for c in CHAINS for r in normg[(c, "V")]}
     no_gap = {i for _, n, i in expected_ids["V"] if n not in gapped_v}
     truncated_v = {i for _, n, i in expected_ids["V"] if n != i}
-    # build_ndm_file writes no row for a partial V allele: one of FWR1-FWR3 holds no base in the IMGT columns.
-    # Its gapped bases must equal its database sequence, else the gapped record lost bases the allele has.
+    # build_ndm_file writes no row for a partial V allele. IMGT decides "partial", not the gapped record: the gapper can
+    # move a full-length allele out of a region. The allele must ship the bases and gapped record of an IMGT entry
+    # flagged "partial in 5'" or "partial in 3'", and that record must have no base in one IMGT region.
+    imgt_partial = _imgt_partial_v(base / "sources" / "imgt" / species)
     db_v_seqs = {r["name"]: r["seq"] for r in db["V"]}
     partial_ids = {
         i
         for _, n, i in expected_ids["V"]
-        if n in gapped_v
-        and gapped_v[n]["seq"] == db_v_seqs.get(i)
+        if n in imgt_partial
+        and n in gapped_v
+        and imgt_partial[n] == (db_v_seqs.get(i), gapped_v[n]["raw"])
         and any(not gapped_v[n]["raw"][start - 1 : end].strip(".-") for start, end in IMGT_V_REGIONS.values())
     }
     # Check ndm.imgt whenever the ndm file exists (even if it's empty).
@@ -319,7 +342,7 @@ def _check_species(
         partial, full = sorted(unannotated & partial_ids), unannotated - partial_ids
         gapless, truncated = sorted(missing & no_gap), sorted(full & truncated_v)
         flag(stage, where, "EXPECTED", gapless, "V alleles with no gapped sequence, so no annotation row")
-        flag(stage, where, "EXPECTED", partial, "partial V alleles: an IMGT region has no base, so no annotation row")
+        flag(stage, where, "EXPECTED", partial, "IMGT partial V alleles: an IMGT region has no base, so no row")
         flag(stage, where, "UNEXPLAINED", truncated, "database id truncated, ndm keeps the full name", "V")
         flag(stage, where, "UNEXPLAINED", sorted(full - truncated_v), "V alleles with no annotation row", "V")
         flag(stage, where, "UNEXPLAINED", sorted(ndm - db_v), "annotation rows naming no database V allele", "V")
@@ -428,11 +451,11 @@ def _check_fwr3_cys(base: Path, species: str, findings: list) -> None:
     ndm_path = base / "igblast" / "Ig" / "internal_data" / species / f"{species}.ndm.imgt"
     if not ndm_path.exists():
         return
-    seqs = {
-        r["name"]: r["seq"]
-        for c in CHAINS
-        for r in _fasta(base / "normalized" / species / "ungapped" / f"IG{c}V.fasta")
-    }
+    from sadie.germlines.builders.blast import BlastDBBuilder
+
+    records = [r for c in CHAINS for r in _fasta(base / "normalized" / species / "ungapped" / f"IG{c}V.fasta")]
+    # ndm rows carry the BLAST database id of the allele (build_ndm_file), not its normalized name
+    seqs = dict(zip(BlastDBBuilder().database_ids(r["name"] for r in records), (r["seq"] for r in records)))
     ends = {f[0]: int(f[10]) for f in (line.split("\t") for line in ndm_path.read_text().splitlines()) if f[0] in seqs}
     no_cys = sorted(name for name, end in ends.items() if seqs[name][end - 3 : end] not in ("TGT", "TGC"))
     if len(ends) - len(no_cys) < MIN_FWR3_CYS_SHARE * len(ends):
