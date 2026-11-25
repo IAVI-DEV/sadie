@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -152,6 +153,42 @@ def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(two_s
     _, findings = run_check(two_stage_germlines)
 
     assert [f["names"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == flagged
+
+
+@pytest.mark.parametrize("partial_gapped_v", ["." * 78 + "CAG" * 78, "CAG" * 60], ids=["fwr1-all-gaps", "ends-in-cdr2"])
+def test_check_allele_counts_expects_no_ndm_row_only_for_partial_v_allele(two_stage_germlines, partial_gapped_v):
+    gapped_v = {"IGHV1-1*01 source=ogrdb": partial_gapped_v, "IGHV1-2*01 source=vdjbase": "CAG" * 104}
+    write_fasta(two_stage_germlines / "normalized/fake/gapped/IGHV.fasta", gapped_v)
+    write_fasta(two_stage_germlines / "igblast/database/fake/fake_V.fasta", {"IGHV1-1*01": "CAG", "IGHV1-2*01": "CAG"})
+    ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
+    ndm.parent.mkdir(parents=True)
+    ndm.write_text("")
+
+    _, findings = run_check(two_stage_germlines)
+
+    ndm_findings = [(f["kind"], f["names"]) for f in findings if f["stage"] == "database V->ndm.imgt"]
+    assert ndm_findings == [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]
+
+
+@pytest.mark.parametrize(
+    "release, api_count, expected_findings",
+    [
+        ("release-23947887", 4, [("EXPECTED", ["IGKV0-KA5D*00", "IGKV0-YKPT*00"])]),
+        ("release-23947887", 5, [("EXPECTED", ["IGKV0-KA5D*00", "IGKV0-YKPT*00"]), ("UNEXPLAINED", ["1 records"])]),
+        ("release-1", 4, [("UNEXPLAINED", ["2 records"])]),
+    ],
+    ids=["listed-names-cover-the-shortfall", "shortfall-beyond-listed-names", "another-release-guard"],
+)
+def test_check_allele_counts_expects_api_shortfall_only_from_listed_repeated_names(
+    tmp_path, release, api_count, expected_findings
+):
+    write_fasta(tmp_path / "sources/ogrdb/mouse/IGKV.fasta", {"IGKV0-KA5D*00": "ACGT", "IGKV0-YKPT*00": "GGCC"})
+    version = {"version": release, "allele_counts": {"mouse": {"IGKV": {"api": api_count}}}}
+    (tmp_path / "sources/ogrdb/VERSION.json").write_text(json.dumps(version))
+
+    _, findings = run_check(tmp_path)
+
+    assert [(f["kind"], f["names"]) for f in findings if f["stage"] == "provider->sources"] == expected_findings
 
 
 # --- issue #19 "Done when" fixture tests ---
