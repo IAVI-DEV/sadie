@@ -97,6 +97,16 @@ class BlastDBBuilder:
 
         return seq_id
 
+    def database_ids(self, seq_ids) -> list[str]:
+        """Database ids for seq_ids in file order: sanitized, a repeated id suffixed _1, _2, ..."""
+        seen: dict[str, int] = {}
+        database_ids = []
+        for seq_id in seq_ids:
+            sanitized_id = self._sanitize_seq_id(seq_id)
+            seen[sanitized_id] = seen.get(sanitized_id, -1) + 1
+            database_ids.append(f"{sanitized_id}_{seen[sanitized_id]}" if seen[sanitized_id] else sanitized_id)
+        return database_ids
+
     def build_for_species(self, species: str, source_dir: Path, output_dir: Path) -> None:
         """
         Build all BLAST databases for a species.
@@ -137,7 +147,6 @@ class BlastDBBuilder:
         """
         # Collect sequences from all chains
         combined_sequences = []
-        seen_ids: dict[str, int] = {}  # Track duplicate IDs
 
         for chain in CHAINS:
             fasta_path = source_dir / f"IG{chain}{segment}.fasta"
@@ -148,17 +157,6 @@ class BlastDBBuilder:
 
             try:
                 records = list(SeqIO.parse(fasta_path, "fasta"))
-                # Sanitize sequence IDs for BLAST (max 50 chars)
-                for record in records:
-                    sanitized_id = self._sanitize_seq_id(record.id)
-                    # Handle duplicates by appending counter
-                    if sanitized_id in seen_ids:
-                        seen_ids[sanitized_id] += 1
-                        sanitized_id = f"{sanitized_id}_{seen_ids[sanitized_id]}"
-                    else:
-                        seen_ids[sanitized_id] = 0
-                    record.id = sanitized_id
-                    record.description = ""  # Clear description to avoid issues
                 combined_sequences.extend(records)
                 logger.info(f"Added {len(records)} sequences from {fasta_path.name}")
             except Exception as e:
@@ -168,6 +166,10 @@ class BlastDBBuilder:
         if not combined_sequences:
             logger.warning(f"No sequences for {species} {segment}")
             return
+
+        # BLAST ids hold at most 50 chars (-parse_seqids); the description is cleared to avoid issues
+        for record, seq_id in zip(combined_sequences, self.database_ids(r.id for r in combined_sequences)):
+            record.id, record.description = seq_id, ""
 
         # Write combined FASTA
         combined_fasta = output_dir / f"{species}_{segment}.fasta"

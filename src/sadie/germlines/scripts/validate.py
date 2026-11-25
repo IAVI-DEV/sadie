@@ -179,6 +179,11 @@ D_REGION = re.compile(r"IGHD\d")  # providers/imgt.py D filter; IgD constants ar
 # Share of ndm rows whose FWR3 must end on the 2nd-CYS codon. Pseudogenes and truncated alleles miss it:
 # the lowest share shipped on main is mouse 457/554 (82%); shifted region bounds gave 0-72%.
 MIN_FWR3_CYS_SHARE = 0.8
+# OGRDB API names that two published sets give to different sequences. A file holds one record per name and the
+# first set's record ships, so each name is one API record never written. Measured 2026-11-25 on the mouse API:
+# 18 IGKV sets, 1582 records, 1580 names.
+# shortcut: pinned to the release because VERSION.json keeps only counts; drop it once the download records repeats.
+API_NAMES_IN_TWO_SETS = {("release-23947887", "mouse"): {"IGKV": {"IGKV0-KA5D*00", "IGKV0-YKPT*00"}}}
 
 
 def _fasta(path: Path) -> list[dict]:
@@ -189,8 +194,29 @@ def _fasta(path: Path) -> list[dict]:
         for rec in SeqIO.parse(path, "fasta"):
             source = re.search(r"source=(\w+)", rec.description)
             seq = str(rec.seq).upper().replace(".", "").replace("-", "")
-            records.append({"name": rec.id, "source": source.group(1) if source else None, "seq": seq})
+            source = source.group(1) if source else None
+            records.append({"name": rec.id, "source": source, "seq": seq, "raw": str(rec.seq).upper()})
     return records
+
+
+def _imgt_partial_v(imgt_dir: Path) -> dict[str, tuple[str, str]]:
+    """IMGT V alleles whose header flags "partial in 5'" or "partial in 3'": name -> (bases, IMGT-gapped record)."""
+    from Bio import SeqIO
+
+    def flagged(path: Path) -> dict[str, str]:
+        records = {}
+        if path.exists():
+            for rec in SeqIO.parse(path, "fasta"):
+                fields = rec.description.split("|")
+                if len(fields) > 13 and "partial in" in fields[13]:
+                    records[fields[1]] = str(rec.seq).upper()
+        return records
+
+    partial = {}
+    for c in CHAINS:
+        bases, gapped = flagged(imgt_dir / f"IG{c}V.fasta"), flagged(imgt_dir / f"IG{c}V_gapped.fasta")
+        partial |= {name: (bases[name], gapped[name]) for name in bases.keys() & gapped.keys()}
+    return partial
 
 
 def _segment(name: str) -> str:
@@ -222,9 +248,10 @@ def _blast_ids(prefix: Path) -> Optional[list[str]]:
 
 
 def _check_species(
-    base: Path, species: str, ogrdb_dir: Path, counts: dict, listed: list, rows: list, findings: list
+    base: Path, species: str, ogrdb_dir: Path, counts: dict, listed: list, rows: list, findings: list, api_repeats: dict
 ) -> None:
     from sadie.germlines.builders.blast import BlastDBBuilder
+    from sadie.germlines.builders.imgt_positions import IMGT_V_REGIONS
 
     sanitize = BlastDBBuilder()._sanitize_seq_id
     unexplained_stages: dict[str, set] = collections.defaultdict(set)
@@ -292,17 +319,32 @@ def _check_species(
         for s in SEGMENTS:
             diff = sorted(i for i in db_v ^ internal if _segment(i) == s)
             flag(stage, where, "UNEXPLAINED", diff, "ids differ from database V", s)
-    gapped_v = {r["name"] for c in CHAINS for r in normg[(c, "V")]}
+    gapped_v = {r["name"]: r for c in CHAINS for r in normg[(c, "V")]}
     no_gap = {i for _, n, i in expected_ids["V"] if n not in gapped_v}
     truncated_v = {i for _, n, i in expected_ids["V"] if n != i}
+    # build_ndm_file writes no row for a partial V allele. IMGT decides "partial", not the gapped record: the gapper can
+    # move a full-length allele out of a region. The allele must ship the bases and gapped record of an IMGT entry
+    # flagged "partial in 5'" or "partial in 3'", and that record must have no base in one IMGT region.
+    imgt_partial = _imgt_partial_v(base / "sources" / "imgt" / species)
+    db_v_seqs = {r["name"]: r["seq"] for r in db["V"]}
+    partial_ids = {
+        i
+        for _, n, i in expected_ids["V"]
+        if n in imgt_partial
+        and n in gapped_v
+        and imgt_partial[n] == (db_v_seqs.get(i), gapped_v[n]["raw"])
+        and any(not gapped_v[n]["raw"][start - 1 : end].strip(".-") for start, end in IMGT_V_REGIONS.values())
+    }
     # Check ndm.imgt whenever the ndm file exists (even if it's empty).
     if ndm_path.exists():
         stage, where, missing = "database V->ndm.imgt", ndm_path.name, db_v - ndm
         unannotated = missing - no_gap
-        gapless, truncated = sorted(missing & no_gap), sorted(unannotated & truncated_v)
+        partial, full = sorted(unannotated & partial_ids), unannotated - partial_ids
+        gapless, truncated = sorted(missing & no_gap), sorted(full & truncated_v)
         flag(stage, where, "EXPECTED", gapless, "V alleles with no gapped sequence, so no annotation row")
+        flag(stage, where, "EXPECTED", partial, "IMGT partial V alleles: an IMGT region has no base, so no row")
         flag(stage, where, "UNEXPLAINED", truncated, "database id truncated, ndm keeps the full name", "V")
-        flag(stage, where, "UNEXPLAINED", sorted(unannotated - truncated_v), "V alleles with no annotation row", "V")
+        flag(stage, where, "UNEXPLAINED", sorted(full - truncated_v), "V alleles with no annotation row", "V")
         flag(stage, where, "UNEXPLAINED", sorted(ndm - db_v), "annotation rows naming no database V allele", "V")
     # Check aux whenever the aux file exists (even if it's empty).
     if aux_path.exists():
@@ -322,8 +364,13 @@ def _check_species(
             n_src, stage = len(src_recs), "provider->sources"
             if api is not None and n_src > api:
                 flag(stage, fname, "UNEXPLAINED", [f"{n_src - api} records"], "not in the published API set")
-            if api is not None and n_src < api:
-                flag(stage, fname, "UNEXPLAINED", [f"{api - n_src} records"], "published API records missing")
+            shortfall = api - n_src if api is not None else 0
+            repeated = sorted(api_repeats.get(fname, set()) & src_names)
+            repeated = repeated if len(repeated) <= shortfall else []
+            flag(stage, fname, "EXPECTED", repeated, "names two published API sets give to different sequences")
+            if shortfall > len(repeated):
+                unexplained = [f"{shortfall - len(repeated)} records"]
+                flag(stage, fname, "UNEXPLAINED", unexplained, "published API records missing")
             if written is not None and written != n_src:
                 flag(
                     stage, fname, "UNEXPLAINED", [f"{n_src} now, {written} at download"], "file changed since download"
@@ -404,11 +451,11 @@ def _check_fwr3_cys(base: Path, species: str, findings: list) -> None:
     ndm_path = base / "igblast" / "Ig" / "internal_data" / species / f"{species}.ndm.imgt"
     if not ndm_path.exists():
         return
-    seqs = {
-        r["name"]: r["seq"]
-        for c in CHAINS
-        for r in _fasta(base / "normalized" / species / "ungapped" / f"IG{c}V.fasta")
-    }
+    from sadie.germlines.builders.blast import BlastDBBuilder
+
+    records = [r for c in CHAINS for r in _fasta(base / "normalized" / species / "ungapped" / f"IG{c}V.fasta")]
+    # ndm rows carry the BLAST database id of the allele (build_ndm_file), not its normalized name
+    seqs = dict(zip(BlastDBBuilder().database_ids(r["name"] for r in records), (r["seq"] for r in records)))
     ends = {f[0]: int(f[10]) for f in (line.split("\t") for line in ndm_path.read_text().splitlines()) if f[0] in seqs}
     no_cys = sorted(name for name, end in ends.items() if seqs[name][end - 3 : end] not in ("TGT", "TGC"))
     if len(ends) - len(no_cys) < MIN_FWR3_CYS_SHARE * len(ends):
@@ -427,7 +474,8 @@ def check_allele_counts(
     ref = Path(reference_yml) if reference_yml else Path(__file__).parents[2] / "reference" / "data" / "reference.yml"
     yml = yaml.safe_load(ref.read_text()) if ref.exists() else {}
     version_path = base / "sources" / "ogrdb" / "VERSION.json"
-    counts = (json.loads(version_path.read_text()) if version_path.exists() else {}).get("allele_counts", {})
+    version = json.loads(version_path.read_text()) if version_path.exists() else {}
+    counts = version.get("allele_counts", {})
     rows: list[dict] = []
     findings: list[dict] = []
 
@@ -449,7 +497,8 @@ def check_allele_counts(
         ogrdb_dir = ogrdb_sources / sp_name
         if ogrdb_dir.is_dir():
             listed = [g for names in ((yml.get(sp_name) or {}).get("ogrdb") or {}).values() for g in names or []]
-            _check_species(base, sp_name, ogrdb_dir, counts.get(sp_name, {}), listed, rows, findings)
+            repeats = API_NAMES_IN_TWO_SETS.get((version.get("version"), sp_name), {})
+            _check_species(base, sp_name, ogrdb_dir, counts.get(sp_name, {}), listed, rows, findings, repeats)
         _check_fwr3_cys(base, sp_name, findings)
     return rows, findings
 

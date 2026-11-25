@@ -237,3 +237,34 @@ def test_build_ndm_file_bounds_follow_the_gap_layout_of_the_alignment(
     species: str, allele: str, expected_bounds: str
 ) -> None:
     assert built_ndm_rows(species)[allele] == f"{expected_bounds}\t0"
+
+
+LONG_V_NAME = "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119a"
+LONG_V_DATABASE_ID = "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g"
+
+
+@pytest.mark.parametrize(
+    "ungapped_names, gapped_names, expected_row_names",
+    [
+        pytest.param([LONG_V_NAME], [LONG_V_NAME], [LONG_V_DATABASE_ID], id="name-over-50-chars"),
+        pytest.param(
+            [f"{LONG_V_NAME}_a190g", LONG_V_NAME],
+            [LONG_V_NAME, f"{LONG_V_NAME}_a190g"],
+            [f"{LONG_V_DATABASE_ID}_1", LONG_V_DATABASE_ID],
+            id="repeat-suffixed-in-ungapped-order",
+        ),
+    ],
+)
+def test_build_ndm_file_names_each_row_by_its_blast_database_id(
+    tmp_path: Path, ungapped_names: list, gapped_names: list, expected_row_names: list
+) -> None:
+    from sadie.germlines.scripts.build_internal_data import build_ndm_file
+
+    gapped_v = "CAG" * 33 + "..." + "CAG" * 70
+    fastas = {"ungapped": (ungapped_names, gapped_v.replace(".", "")), "gapped": (gapped_names, gapped_v)}
+    for layout, (names, seq) in fastas.items():
+        fasta = tmp_path / "normalized" / "fake" / layout / "IGHV.fasta"
+        fasta.parent.mkdir(parents=True)
+        fasta.write_text("".join(f">{name}\n{seq}\n" for name in names))
+
+    assert [row.split("\t")[0] for row in build_ndm_file("fake", tmp_path)] == expected_row_names

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -142,16 +143,120 @@ def test_check_allele_counts_on_committed_ogrdb_species_reports_every_file():
     assert [f["species"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == []
 
 
-@pytest.mark.parametrize("fwr3_end, flagged", [(6, []), (9, [["IGHV1-1*01"]])])
-def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(two_stage_germlines, fwr3_end, flagged):
-    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHV.fasta", {"IGHV1-1*01 source=ogrdb": "AAATGTAAA"})
+LONG_V_NAMES = [
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119a",
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119c",
+]
+LONG_V_DATABASE_IDS = [
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g",
+    "IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_1",
+]
+
+
+@pytest.mark.parametrize(
+    "alleles, ndm_row_names, fwr3_end, flagged",
+    [
+        (["IGHV1-1*01"], ["IGHV1-1*01"], 6, []),
+        (["IGHV1-1*01"], ["IGHV1-1*01"], 9, [["IGHV1-1*01"]]),
+        (LONG_V_NAMES, LONG_V_DATABASE_IDS, 9, [LONG_V_DATABASE_IDS]),
+    ],
+    ids=["fwr3-ends-on-cys", "fwr3-ends-off-cys", "rows-named-by-truncated-and-suffixed-database-ids"],
+)
+def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(
+    two_stage_germlines, alleles, ndm_row_names, fwr3_end, flagged
+):
+    ungapped = {f"{allele} source=ogrdb": "AAATGTAAA" for allele in alleles}
+    write_fasta(two_stage_germlines / "normalized/fake/ungapped/IGHV.fasta", ungapped)
     ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
     ndm.parent.mkdir(parents=True)
-    ndm.write_text(f"IGHV1-1*01\t1\t1\t1\t1\t1\t1\t1\t1\t1\t{fwr3_end}\tVH\t0\n")
+    ndm.write_text("".join(f"{name}\t1\t1\t1\t1\t1\t1\t1\t1\t1\t{fwr3_end}\tVH\t0\n" for name in ndm_row_names))
 
     _, findings = run_check(two_stage_germlines)
 
     assert [f["names"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == flagged
+
+
+FULL_V, PARTIAL_5_PRIME_V, PARTIAL_3_PRIME_V = "CAG" * 104, "." * 78 + "CAG" * 78, "CAG" * 60
+PARTIAL_EXPECTED = [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]
+BOTH_UNEXPLAINED = [("UNEXPLAINED", ["IGHV1-1*01", "IGHV1-2*01"])]
+
+
+@pytest.mark.parametrize(
+    "imgt_partial, imgt_gapped_v, gapped_v, database_v, expected_findings",
+    [
+        ("partial in 5'", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, "CAG" * 78, PARTIAL_EXPECTED),
+        ("partial in 3'", PARTIAL_3_PRIME_V, PARTIAL_3_PRIME_V, "CAG" * 60, PARTIAL_EXPECTED),
+        (" ", FULL_V, "." * 78 + FULL_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 5'", PARTIAL_5_PRIME_V, "." * 78 + FULL_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 5'", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, FULL_V, BOTH_UNEXPLAINED),
+        ("partial in 3'", "CAG" * 100, "CAG" * 100, "CAG" * 100, BOTH_UNEXPLAINED),
+        (" ", PARTIAL_5_PRIME_V, PARTIAL_5_PRIME_V, "CAG" * 78, BOTH_UNEXPLAINED),
+        ("partial in 3'", "CAG" * 100, "." * 78 + "CAG" * 100, "CAG" * 100, BOTH_UNEXPLAINED),
+    ],
+    ids=[
+        "imgt-partial-in-5-prime",
+        "imgt-partial-in-3-prime",
+        "full-length-shifted-78-columns",
+        "full-length-on-a-partial-imgt-template",
+        "gapped-record-lost-bases-the-database-has",
+        "imgt-partial-with-every-region-covered",
+        "imgt-record-without-partial-flag",
+        "imgt-partial-shifted-78-columns",
+    ],
+)
+def test_check_allele_counts_expects_no_ndm_row_only_for_partial_v_allele(
+    two_stage_germlines, imgt_partial, imgt_gapped_v, gapped_v, database_v, expected_findings
+):
+    header = f"X1|IGHV1-1*01|Fake|F|V-REGION|1..9|9 nt|1| | | | |9+0=9|{imgt_partial}| |"
+    write_fasta(two_stage_germlines / "sources/imgt/fake/IGHV_gapped.fasta", {header: imgt_gapped_v})
+    write_fasta(two_stage_germlines / "sources/imgt/fake/IGHV.fasta", {header: imgt_gapped_v.replace(".", "")})
+    gapped = {"IGHV1-1*01 source=ogrdb": gapped_v, "IGHV1-2*01 source=vdjbase": FULL_V}
+    write_fasta(two_stage_germlines / "normalized/fake/gapped/IGHV.fasta", gapped)
+    database = {"IGHV1-1*01": database_v, "IGHV1-2*01": FULL_V}
+    write_fasta(two_stage_germlines / "igblast/database/fake/fake_V.fasta", database)
+    (two_stage_germlines / "igblast/Ig/internal_data/fake").mkdir(parents=True)
+    (two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt").write_text("")
+
+    _, findings = run_check(two_stage_germlines)
+
+    assert [(f["kind"], f["names"]) for f in findings if f["stage"] == "database V->ndm.imgt"] == expected_findings
+
+
+BOTH_REPEATED_NAMES = ["IGKV0-KA5D*00", "IGKV0-YKPT*00"]
+
+
+@pytest.mark.parametrize(
+    "release, source_names, api_count, expected_findings",
+    [
+        ("release-23947887", BOTH_REPEATED_NAMES, 4, [("EXPECTED", BOTH_REPEATED_NAMES)]),
+        (
+            "release-23947887",
+            BOTH_REPEATED_NAMES,
+            5,
+            [("EXPECTED", BOTH_REPEATED_NAMES), ("UNEXPLAINED", ["1 records"])],
+        ),
+        ("release-23947887", ["IGKV0-YKPT*00"], 3, [("EXPECTED", ["IGKV0-YKPT*00"]), ("UNEXPLAINED", ["1 records"])]),
+        ("release-23947887", BOTH_REPEATED_NAMES, 3, [("UNEXPLAINED", ["1 records"])]),
+        ("release-1", BOTH_REPEATED_NAMES, 4, [("UNEXPLAINED", ["2 records"])]),
+    ],
+    ids=[
+        "listed-names-cover-the-shortfall",
+        "shortfall-beyond-listed-names",
+        "listed-name-absent-from-sources",
+        "shortfall-below-listed-names",
+        "another-release-guard",
+    ],
+)
+def test_check_allele_counts_expects_api_shortfall_only_from_listed_repeated_names(
+    tmp_path, release, source_names, api_count, expected_findings
+):
+    write_fasta(tmp_path / "sources/ogrdb/mouse/IGKV.fasta", {name: "ACGT" for name in source_names})
+    version = {"version": release, "allele_counts": {"mouse": {"IGKV": {"api": api_count}}}}
+    (tmp_path / "sources/ogrdb/VERSION.json").write_text(json.dumps(version))
+
+    _, findings = run_check(tmp_path)
+
+    assert [(f["kind"], f["names"]) for f in findings if f["stage"] == "provider->sources"] == expected_findings
 
 
 # --- issue #19 "Done when" fixture tests ---
