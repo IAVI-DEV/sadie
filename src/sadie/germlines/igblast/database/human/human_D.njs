@@ -6,7 +6,7 @@
   "description": "human_D",
   "number-of-letters": 1035,
   "number-of-sequences": 41,
-  "last-updated": "2026-11-13T16:06:00",
+  "last-updated": "2026-11-24T14:39:00",
   "number-of-volumes": 1,
   "bytes-total": 201861,
   "bytes-to-cache": 865,
