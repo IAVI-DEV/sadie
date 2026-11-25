@@ -1460,15 +1460,24 @@ human:
     - IGHA2*05_t543c_a805g_a835t_a842g
     - IGHA2*05_t543c_a805g_a835t_a842g_SC
     - IGHD*02
+    - IGHD*02_SC
     - IGHD*02_a987g
+    - IGHD*02_a987g_SC
     - IGHD*02_g485a_a987g
+    - IGHD*02_g485a_a987g_SC
     - IGHD*02_g738a_a987g
+    - IGHD*02_g738a_a987g_SC
     - IGHD*02_g806a
+    - IGHD*02_g806a_SC
     - IGHD*02_t620c
+    - IGHD*02_t620c_SC
     - IGHD*04_c620t
     - IGHD*05
+    - IGHD*05_SC
     - IGHD*05_a606t
+    - IGHD*05_a606t_SC
     - IGHD*05_g816a
+    - IGHD*05_g816a_SC
     - IGHD1-1*01
     - IGHD1-14*01
     - IGHD1-20*01
@@ -1631,6 +1640,7 @@ human:
     - IGHG4*01_c1018t
     - IGHG4*01_c20g
     - IGHG4*01_c20g_SC
+    - IGHG4*01_c20g_c56t_c188t_a314g_g338a
     - IGHG4*01_c20g_c56t_c188t_a314g_g338a_SC
     - IGHG4*01_c20g_g338a_a1180c
     - IGHG4*01_c20g_g338a_a1180c_SC
@@ -1671,7 +1681,6 @@ human:
     - IGHG4D*01_a314g_g950a_SC
     - IGHG4D*01_a314g_g958a
     - IGHG4D*01_a314g_g958a_SC
-    - IGHG4D*01_d171
     - IGHJ1*01
     - IGHJ2*01
     - IGHJ3*02
@@ -1715,13 +1724,11 @@ human:
     - IGHV1-2*05
     - IGHV1-2*06
     - IGHV1-2*07
-    - IGHV1-2*i01
     - IGHV1-24*01
     - IGHV1-3*01
     - IGHV1-3*02
     - IGHV1-3*04
     - IGHV1-3*05
-    - IGHV1-3*i01
     - IGHV1-38-4*01
     - IGHV1-45*02
     - IGHV1-45*03
@@ -1730,7 +1737,7 @@ human:
     - IGHV1-46*04
     - IGHV1-58*01
     - IGHV1-58*02
-    - IGHV1-58*i01
+    - IGHV1-58*03
     - IGHV1-69*01
     - IGHV1-69*02
     - IGHV1-69*04
@@ -1743,10 +1750,9 @@ human:
     - IGHV1-69*14
     - IGHV1-69*15
     - IGHV1-69*17
+    - IGHV1-69*18
     - IGHV1-69*19
     - IGHV1-69*20
-    - IGHV1-69*i01
-    - IGHV1-69*i02
     - IGHV1-69*i04
     - IGHV1-69-2*01
     - IGHV1-8*01
@@ -1763,8 +1769,6 @@ human:
     - IGHV2-70*05
     - IGHV2-70*15
     - IGHV2-70*20
-    - IGHV2-70*i01
-    - IGHV2-70*i02
     - IGHV2-70D*14
     - IGHV3-11*01
     - IGHV3-11*04
@@ -1786,9 +1790,9 @@ human:
     - IGHV3-20*05
     - IGHV3-21*01
     - IGHV3-21*03
+    - IGHV3-21*05
     - IGHV3-21*06
     - IGHV3-21*07
-    - IGHV3-21*i01
     - IGHV3-23*01
     - IGHV3-23*03
     - IGHV3-23*04
@@ -1818,7 +1822,6 @@ human:
     - IGHV3-43D*03
     - IGHV3-43D*04
     - IGHV3-43D*05
-    - IGHV3-43D*i01
     - IGHV3-47*01
     - IGHV3-47*02
     - IGHV3-48*01
@@ -1831,7 +1834,7 @@ human:
     - IGHV3-53*01
     - IGHV3-53*02
     - IGHV3-53*04
-    - IGHV3-53*i01
+    - IGHV3-53*05
     - IGHV3-62*03
     - IGHV3-64*01
     - IGHV3-64*02
@@ -1846,8 +1849,8 @@ human:
     - IGHV3-69-1*02
     - IGHV3-7*01
     - IGHV3-7*03
+    - IGHV3-7*04
     - IGHV3-7*05
-    - IGHV3-7*i01
     - IGHV3-72*01
     - IGHV3-73*01
     - IGHV3-73*02
@@ -1869,10 +1872,9 @@ human:
     - IGHV4-30-4*07
     - IGHV4-30-4*08
     - IGHV4-30-4*09
-    - IGHV4-30-4*i01
     - IGHV4-30-4*i02
     - IGHV4-31*01
-    - IGHV4-31*i01
+    - IGHV4-31*11
     - IGHV4-34*01
     - IGHV4-38-2*01
     - IGHV4-38-2*02
@@ -1886,26 +1888,24 @@ human:
     - IGHV4-4*03
     - IGHV4-4*07
     - IGHV4-4*08
+    - IGHV4-4*09
     - IGHV4-4*10
-    - IGHV4-4*i01
-    - IGHV4-4*i02
     - IGHV4-59*01
-    - IGHV4-59*i01
-    - IGHV4-59*i02
+    - IGHV4-59*11
+    - IGHV4-59*12
     - IGHV4-59*i03
     - IGHV4-61*01
     - IGHV4-61*02
+    - IGHV4-61*10
     - IGHV4-61*11
-    - IGHV4-61*i01
-    - IGHV4-61*i02
     - IGHV4-61*i04
     - IGHV4-NL1*01
     - IGHV5-10-1*01
     - IGHV5-10-1*03
     - IGHV5-51*01
     - IGHV5-51*03
+    - IGHV5-51*06
     - IGHV5-51*07
-    - IGHV5-51*i01
     - IGHV6-1*01
     - IGHV6-1*03
     - IGHV7-4-1*01
@@ -1984,7 +1984,6 @@ human:
     - IGKV3-11*01
     - IGKV3-15*01
     - IGKV3-15*02
-    - IGKV3-15*i01
     - IGKV3-20*01
     - IGKV3-7*04
     - IGKV3-7*05
@@ -3969,1167 +3968,1165 @@ mouse:
     - IGKV6-D*01
   ogrdb:
     mouse:
-    - IGHD-2LU5
-    - IGHD-7EZJ
-    - IGHD-AMU5
-    - IGHD-BCLQ
-    - IGHD-EI4K
-    - IGHD-FQOA
-    - IGHD-G7BZ
-    - IGHD-IQWG
-    - IGHD-JK26
-    - IGHD-K7CQ
-    - IGHD-L36M
-    - IGHD-OODI
-    - IGHD-PKVJ
-    - IGHD-U5U7
-    - IGHD-U6K7
-    - IGHD-UXMZ
-    - IGHD-WGD3
-    - IGHD-XMSU
-    - IGHD-XRGU
-    - IGHJ-2FQV
-    - IGHJ-EGQA
-    - IGHJ-G76U
-    - IGHJ-K6AI
-    - IGHJ-O6GC
-    - IGHJ-UP34
-    - IGHV-22ZX
-    - IGHV-23CQ
-    - IGHV-25EB
-    - IGHV-2DBF
-    - IGHV-2ETO
-    - IGHV-2F6T
-    - IGHV-2JMR
-    - IGHV-2L5T
-    - IGHV-2LUL
-    - IGHV-2O3V
-    - IGHV-2RKB
-    - IGHV-2SWB
-    - IGHV-2TS3
-    - IGHV-2VGF
-    - IGHV-2XKZ
-    - IGHV-2ZNU
-    - IGHV-2ZSK
-    - IGHV-33YF
-    - IGHV-35YX
-    - IGHV-37TR
-    - IGHV-3AP5
-    - IGHV-3BWA
-    - IGHV-3D4C
-    - IGHV-3D4L
-    - IGHV-3DJB
-    - IGHV-3FA4
-    - IGHV-3JO6
-    - IGHV-3JRA
-    - IGHV-3KZH
-    - IGHV-3SZZ
-    - IGHV-3U4N
-    - IGHV-3UD7
-    - IGHV-3W4V
-    - IGHV-42PJ
-    - IGHV-44A6
-    - IGHV-4FMN
-    - IGHV-4GSR
-    - IGHV-4JDX
-    - IGHV-4K6F
-    - IGHV-4Q76
-    - IGHV-4QXK
-    - IGHV-4XGB
-    - IGHV-56TM
-    - IGHV-57QL
-    - IGHV-5CPP
-    - IGHV-5DJX
-    - IGHV-5ETG
-    - IGHV-5HIY
-    - IGHV-5LEV
-    - IGHV-5MIJ
-    - IGHV-5QIY
-    - IGHV-5RMF
-    - IGHV-5RPF
-    - IGHV-5S7P
-    - IGHV-5UGX
-    - IGHV-5VGK
-    - IGHV-5YZ7
-    - IGHV-5ZAK
-    - IGHV-67UK
-    - IGHV-6EQK
-    - IGHV-6HGI
-    - IGHV-6HLN
-    - IGHV-6JXW
-    - IGHV-6MYZ
-    - IGHV-6OTV
-    - IGHV-6SEN
-    - IGHV-6XKZ
-    - IGHV-724F
-    - IGHV-72ON
-    - IGHV-73MF
-    - IGHV-766P
-    - IGHV-7EWH
-    - IGHV-7KFN
-    - IGHV-7MXA
-    - IGHV-7TNO
-    - IGHV-7YGK
-    - IGHV-A2QL
-    - IGHV-A4JN
-    - IGHV-A4OO
-    - IGHV-AAHA
-    - IGHV-ABAI
-    - IGHV-ACCO
-    - IGHV-ACUE
-    - IGHV-AFC4
-    - IGHV-AGKP
-    - IGHV-AH6Q
-    - IGHV-AHDQ
-    - IGHV-AS2P
-    - IGHV-ATR7
-    - IGHV-AWHJ
-    - IGHV-B5AR
-    - IGHV-BBJT
-    - IGHV-BCDK
-    - IGHV-BGWX
-    - IGHV-BHDA
-    - IGHV-BHTL
-    - IGHV-BQ3L
-    - IGHV-BRO6
-    - IGHV-BRPO
-    - IGHV-BSFJ
-    - IGHV-BT4P
-    - IGHV-BVKM
-    - IGHV-BVYW
-    - IGHV-BWAR
-    - IGHV-BWXT
-    - IGHV-BXDJ
-    - IGHV-C53X
-    - IGHV-CAUP
-    - IGHV-CDKQ
-    - IGHV-CE5S
-    - IGHV-CIDE
-    - IGHV-CJFW
-    - IGHV-CMAO
-    - IGHV-CMND
-    - IGHV-CNE7
-    - IGHV-COUF
-    - IGHV-CPHS
-    - IGHV-CW44
-    - IGHV-CXK4
-    - IGHV-D7IW
-    - IGHV-D7P6
-    - IGHV-DDST
-    - IGHV-DDX4
-    - IGHV-DFGG
-    - IGHV-DSCL
-    - IGHV-DSEM
-    - IGHV-DTV7
-    - IGHV-DVNZ
-    - IGHV-DWTN
-    - IGHV-DYDA
-    - IGHV-E4PT
-    - IGHV-E5EW
-    - IGHV-E7Q2
-    - IGHV-EBSY
-    - IGHV-ECGZ
-    - IGHV-ED7H
-    - IGHV-EFJY
-    - IGHV-EH6M
-    - IGHV-EM76
-    - IGHV-EPJ3
-    - IGHV-ETE7
-    - IGHV-F3ON
-    - IGHV-F5CV
-    - IGHV-F6YN
-    - IGHV-F77Z
-    - IGHV-FAVL
-    - IGHV-FBNY
-    - IGHV-FCI2
-    - IGHV-FFB3
-    - IGHV-FGSI
-    - IGHV-FKCP
-    - IGHV-FN67
-    - IGHV-FNOE
-    - IGHV-FNXX
-    - IGHV-FPG7
-    - IGHV-FROE
-    - IGHV-FRUS
-    - IGHV-FTGA
-    - IGHV-FTLS
-    - IGHV-G2GM
-    - IGHV-G6NA
-    - IGHV-GDIS
-    - IGHV-GDPO
-    - IGHV-GDWR
-    - IGHV-GHCM
-    - IGHV-GNJT
-    - IGHV-GNOX
-    - IGHV-GOR4
-    - IGHV-GRQT
-    - IGHV-GRZR
-    - IGHV-GVF5
-    - IGHV-GX2P
-    - IGHV-GXHA
-    - IGHV-H6VA
-    - IGHV-HAGV
-    - IGHV-HD6C
-    - IGHV-HFF6
-    - IGHV-HGG2
-    - IGHV-HGHG
-    - IGHV-HH7J
-    - IGHV-HKNQ
-    - IGHV-HQ4S
-    - IGHV-HQQK
-    - IGHV-HRAJ
-    - IGHV-HUUQ
-    - IGHV-HWYE
-    - IGHV-I35M
-    - IGHV-IAHS
-    - IGHV-IG7Z
-    - IGHV-IM3C
-    - IGHV-IT4O
-    - IGHV-ITQ5
-    - IGHV-IXUZ
-    - IGHV-IZIY
-    - IGHV-JAWA
-    - IGHV-JC43
-    - IGHV-JC5L
-    - IGHV-JCQC
-    - IGHV-JEOG
-    - IGHV-JL75
-    - IGHV-JPJZ
-    - IGHV-JQQ7
-    - IGHV-JXHT
-    - IGHV-KAOG
-    - IGHV-KCB3
-    - IGHV-KD4A
-    - IGHV-KDFG
-    - IGHV-KI3H
-    - IGHV-KXC4
-    - IGHV-KXNU
-    - IGHV-KZN5
-    - IGHV-KZTT
-    - IGHV-L2XC
-    - IGHV-L5FH
-    - IGHV-L7TC
-    - IGHV-LDXW
-    - IGHV-LEBH
-    - IGHV-LFNP
-    - IGHV-LGZV
-    - IGHV-LHW4
-    - IGHV-LLIN
-    - IGHV-LOR6
-    - IGHV-LPGR
-    - IGHV-LR6W
-    - IGHV-LS7B
-    - IGHV-LUAR
-    - IGHV-LWU7
-    - IGHV-LXLP
-    - IGHV-LZ4V
-    - IGHV-LZPN
-    - IGHV-M2M2
-    - IGHV-M2WG
-    - IGHV-ME3W
-    - IGHV-MGVJ
-    - IGHV-MH5Z
-    - IGHV-MJAE
-    - IGHV-MJHC
-    - IGHV-MJS4
-    - IGHV-MJU4
-    - IGHV-MLJ2
-    - IGHV-MM42
-    - IGHV-MM6D
-    - IGHV-MND7
-    - IGHV-MQ2W
-    - IGHV-MQQF
-    - IGHV-MQX7
-    - IGHV-MYOQ
-    - IGHV-MZLP
-    - IGHV-N2YY
-    - IGHV-N46H
-    - IGHV-N4LP
-    - IGHV-N64F
-    - IGHV-N7SW
-    - IGHV-NDA5
-    - IGHV-NDG3
-    - IGHV-NFTL
-    - IGHV-NFUY
-    - IGHV-NJKQ
-    - IGHV-NJZ4
-    - IGHV-NLDH
-    - IGHV-NRA6
-    - IGHV-NROV
-    - IGHV-NROW
-    - IGHV-NSFI
-    - IGHV-NTLL
-    - IGHV-NVD7
-    - IGHV-NVKX
-    - IGHV-NYJ5
-    - IGHV-NZDB
-    - IGHV-O54O
-    - IGHV-O7TX
-    - IGHV-OAN5
-    - IGHV-OJQ5
-    - IGHV-OV7N
-    - IGHV-OXE6
-    - IGHV-OYF6
-    - IGHV-P2SD
-    - IGHV-PCMZ
-    - IGHV-PSQP
-    - IGHV-PTGV
-    - IGHV-PUSX
-    - IGHV-PWKC
-    - IGHV-PYRH
-    - IGHV-PZT4
-    - IGHV-Q4FB
-    - IGHV-Q55D
-    - IGHV-QCJW
-    - IGHV-QECB
-    - IGHV-QELY
-    - IGHV-QEOB
-    - IGHV-QFNR
-    - IGHV-QLDU
-    - IGHV-QLQO
-    - IGHV-QLUS
-    - IGHV-QP6K
-    - IGHV-QRAR
-    - IGHV-QU7Q
-    - IGHV-QZEY
-    - IGHV-QZGM
-    - IGHV-R262
-    - IGHV-R5FY
-    - IGHV-R5V2
-    - IGHV-R76P
-    - IGHV-RAAJ
-    - IGHV-RCX7
-    - IGHV-RG5I
-    - IGHV-RM7V
-    - IGHV-RMID
-    - IGHV-RO7L
-    - IGHV-ROLQ
-    - IGHV-RR3Z
-    - IGHV-RRWL
-    - IGHV-RSWU
-    - IGHV-RXKT
-    - IGHV-S2UL
-    - IGHV-S2VX
-    - IGHV-S4M5
-    - IGHV-S6NR
-    - IGHV-SAXO
-    - IGHV-SEGR
-    - IGHV-SHHV
-    - IGHV-SHLW
-    - IGHV-SJLD
-    - IGHV-SLAG
-    - IGHV-SPOH
-    - IGHV-SPXV
-    - IGHV-SVML
-    - IGHV-SVRH
-    - IGHV-T7RS
-    - IGHV-TCPT
-    - IGHV-TKIN
-    - IGHV-TOZB
-    - IGHV-TRDF
-    - IGHV-TTLL
-    - IGHV-TTOW
-    - IGHV-TW2E
-    - IGHV-U6BF
-    - IGHV-U6RV
-    - IGHV-U7SL
-    - IGHV-UBKV
-    - IGHV-UD3M
-    - IGHV-UDU2
-    - IGHV-UFPS
-    - IGHV-UIIH
-    - IGHV-ULSZ
-    - IGHV-UNUS
-    - IGHV-UTEO
-    - IGHV-UTKV
-    - IGHV-UULO
-    - IGHV-UXPY
-    - IGHV-V2J3
-    - IGHV-V2PN
-    - IGHV-V7DR
-    - IGHV-VB4F
-    - IGHV-VDQ4
-    - IGHV-VE3A
-    - IGHV-VEZX
-    - IGHV-VL52
-    - IGHV-VPE2
-    - IGHV-VPTU
-    - IGHV-VRBM
-    - IGHV-VRCT
-    - IGHV-VTEX
-    - IGHV-VUEY
-    - IGHV-VUQE
-    - IGHV-VX3J
-    - IGHV-WQ2B
-    - IGHV-WR2L
-    - IGHV-WTC5
-    - IGHV-WVEQ
-    - IGHV-WVZG
-    - IGHV-WXSZ
-    - IGHV-XFJ6
-    - IGHV-XJRP
-    - IGHV-XRD4
-    - IGHV-XRM4
-    - IGHV-XUAL
-    - IGHV-XWKM
-    - IGHV-XYBY
-    - IGHV-Y3TL
-    - IGHV-Y4VK
-    - IGHV-Y5MV
-    - IGHV-YH3T
-    - IGHV-YJ7Z
-    - IGHV-YJAL
-    - IGHV-YU7L
-    - IGHV-YUES
-    - IGHV-YUW4
-    - IGHV-YW25
-    - IGHV-YWSQ
-    - IGHV-Z2FG
-    - IGHV-Z2MU
-    - IGHV-Z54E
-    - IGHV-ZCV3
-    - IGHV-ZCVZ
-    - IGHV-ZKN6
-    - IGHV-ZPB3
-    - IGHV-ZQBW
-    - IGHV-ZU34
-    - IGHV-ZV4X
-    - IGHV-ZWCI
+    - IGHD0-25TR*00
+    - IGHD0-2LU5*00
+    - IGHD0-2ZLC*00
+    - IGHD0-BCLQ*00
+    - IGHD0-D5PR*00
+    - IGHD0-FBFM*00
+    - IGHD0-JH5Q*00
+    - IGHD0-JK26*00
+    - IGHD0-K7CQ*00
+    - IGHD0-NFS3*00
+    - IGHD0-PF6D*00
+    - IGHD0-PKVJ*00
+    - IGHD0-QORP*00
+    - IGHD0-TDIN*00
+    - IGHD0-U6K7*00
+    - IGHD0-UXMZ*00
+    - IGHD0-WGD3*00
+    - IGHD0-XMSU*00
+    - IGHD0-XRGU*00
+    - IGHJ0-2NLR*00
+    - IGHJ0-AJMV*00
+    - IGHJ0-G76U*00
+    - IGHJ0-KMFY*00
+    - IGHJ0-O6GC*00
+    - IGHJ0-SES2*00
     - IGHV0-22XF*00
+    - IGHV0-22ZX*00
+    - IGHV0-23CQ*00
     - IGHV0-24BS*00
+    - IGHV0-25EB*00
     - IGHV0-2CAX*00
+    - IGHV0-2DBF*00
     - IGHV0-2DFB*00
     - IGHV0-2DN6*00
     - IGHV0-2DPF*00
+    - IGHV0-2ETO*00
+    - IGHV0-2F6T*00
+    - IGHV0-2JMR*00
     - IGHV0-2KUO*00
+    - IGHV0-2L5T*00
+    - IGHV0-2LUL*00
+    - IGHV0-2O3V*00
+    - IGHV0-2RKB*00
+    - IGHV0-2SWB*00
+    - IGHV0-2TS3*00
     - IGHV0-2UIT*00
     - IGHV0-2UQD*00
+    - IGHV0-2VGF*00
+    - IGHV0-2XKZ*00
+    - IGHV0-2ZNU*00
+    - IGHV0-2ZSK*00
     - IGHV0-32WJ*00
+    - IGHV0-33YF*00
+    - IGHV0-35YX*00
     - IGHV0-37IE*00
+    - IGHV0-37TR*00
     - IGHV0-3AN3*00
+    - IGHV0-3AP5*00
+    - IGHV0-3BWA*00
+    - IGHV0-3D4C*00
+    - IGHV0-3D4L*00
+    - IGHV0-3DJB*00
     - IGHV0-3F5C*00
+    - IGHV0-3FA4*00
     - IGHV0-3GCO*00
     - IGHV0-3GZS*00
+    - IGHV0-3JO6*00
+    - IGHV0-3JRA*00
+    - IGHV0-3KZH*00
     - IGHV0-3QFD*00
     - IGHV0-3QLH*00
     - IGHV0-3RNM*00
+    - IGHV0-3SZZ*00
+    - IGHV0-3U4N*00
+    - IGHV0-3UD7*00
+    - IGHV0-3W4V*00
     - IGHV0-3XVE*00
+    - IGHV0-42PJ*00
+    - IGHV0-44A6*00
     - IGHV0-45GV*00
     - IGHV0-47EU*00
+    - IGHV0-4FMN*00
     - IGHV0-4FMT*00
     - IGHV0-4G7D*00
     - IGHV0-4GK4*00
+    - IGHV0-4JDX*00
+    - IGHV0-4K6F*00
     - IGHV0-4L6T*00
+    - IGHV0-4Q76*00
+    - IGHV0-4QXK*00
     - IGHV0-4T4X*00
     - IGHV0-4TP6*00
     - IGHV0-4X2I*00
+    - IGHV0-4XGB*00
     - IGHV0-4YZL*00
     - IGHV0-53MT*00
+    - IGHV0-56TM*00
     - IGHV0-56YB*00
+    - IGHV0-57QL*00
     - IGHV0-5CCQ*00
+    - IGHV0-5CPP*00
+    - IGHV0-5DJX*00
+    - IGHV0-5ETG*00
     - IGHV0-5F5R*00
+    - IGHV0-5HIY*00
     - IGHV0-5ISV*00
+    - IGHV0-5LEV*00
     - IGHV0-5LN7*00
     - IGHV0-5LWB*00
+    - IGHV0-5MIJ*00
     - IGHV0-5O75*00
+    - IGHV0-5QIY*00
+    - IGHV0-5RMF*00
+    - IGHV0-5RPF*00
+    - IGHV0-5S7P*00
+    - IGHV0-5UGX*00
     - IGHV0-5UNX*00
     - IGHV0-5UXG*00
+    - IGHV0-5VGK*00
     - IGHV0-5VOM*00
+    - IGHV0-5YZ7*00
+    - IGHV0-5ZAK*00
+    - IGHV0-67UK*00
     - IGHV0-6CYM*00
     - IGHV0-6D76*00
+    - IGHV0-6EQK*00
+    - IGHV0-6HGI*00
+    - IGHV0-6HLN*00
     - IGHV0-6IP5*00
+    - IGHV0-6JXW*00
+    - IGHV0-6MYZ*00
     - IGHV0-6NFG*00
+    - IGHV0-6OTV*00
+    - IGHV0-6SEN*00
+    - IGHV0-6XKZ*00
     - IGHV0-6YTP*00
+    - IGHV0-724F*00
+    - IGHV0-72ON*00
     - IGHV0-72VE*00
+    - IGHV0-73MF*00
+    - IGHV0-766P*00
     - IGHV0-7BBU*00
+    - IGHV0-7EWH*00
     - IGHV0-7J6E*00
+    - IGHV0-7KFN*00
     - IGHV0-7MCI*00
     - IGHV0-7MDE*00
     - IGHV0-7MU3*00
+    - IGHV0-7MXA*00
     - IGHV0-7PG3*00
     - IGHV0-7QHR*00
     - IGHV0-7SN4*00
     - IGHV0-7TJA*00
+    - IGHV0-7TNO*00
+    - IGHV0-7YGK*00
+    - IGHV0-A2QL*00
     - IGHV0-A3LZ*00
+    - IGHV0-A4JN*00
+    - IGHV0-A4OO*00
     - IGHV0-A6UB*00
+    - IGHV0-AAHA*00
+    - IGHV0-ABAI*00
+    - IGHV0-ACCO*00
+    - IGHV0-ACUE*00
     - IGHV0-AE2O*00
     - IGHV0-AEY5*00
+    - IGHV0-AFC4*00
+    - IGHV0-AGKP*00
+    - IGHV0-AH6Q*00
+    - IGHV0-AHDQ*00
     - IGHV0-AICW*00
     - IGHV0-AK3H*00
     - IGHV0-AKVZ*00
     - IGHV0-APC4*00
     - IGHV0-APOU*00
+    - IGHV0-AS2P*00
+    - IGHV0-ATR7*00
+    - IGHV0-AWHJ*00
     - IGHV0-AX4R*00
     - IGHV0-AX4W*00
     - IGHV0-AXRQ*00
+    - IGHV0-B5AR*00
+    - IGHV0-BBJT*00
+    - IGHV0-BCDK*00
     - IGHV0-BDLN*00
+    - IGHV0-BGWX*00
+    - IGHV0-BHDA*00
+    - IGHV0-BHTL*00
     - IGHV0-BIQU*00
     - IGHV0-BISP*00
+    - IGHV0-BQ3L*00
     - IGHV0-BQCW*00
+    - IGHV0-BRO6*00
+    - IGHV0-BRPO*00
+    - IGHV0-BSFJ*00
     - IGHV0-BT4I*00
+    - IGHV0-BT4P*00
+    - IGHV0-BVKM*00
+    - IGHV0-BVYW*00
+    - IGHV0-BWAR*00
+    - IGHV0-BWXT*00
+    - IGHV0-BXDJ*00
     - IGHV0-C2DF*00
+    - IGHV0-C53X*00
+    - IGHV0-CAUP*00
+    - IGHV0-CDKQ*00
+    - IGHV0-CE5S*00
     - IGHV0-CFNH*00
     - IGHV0-CHUZ*00
+    - IGHV0-CIDE*00
+    - IGHV0-CJFW*00
+    - IGHV0-CMAO*00
+    - IGHV0-CMND*00
     - IGHV0-COSL*00
+    - IGHV0-COUF*00
+    - IGHV0-CPHS*00
     - IGHV0-CSIM*00
     - IGHV0-CU5J*00
+    - IGHV0-CW44*00
     - IGHV0-CWNQ*00
+    - IGHV0-CXK4*00
     - IGHV0-CZGQ*00
     - IGHV0-D4D7*00
     - IGHV0-D6VQ*00
+    - IGHV0-D7IW*00
+    - IGHV0-D7P6*00
     - IGHV0-DCMD*00
+    - IGHV0-DDST*00
+    - IGHV0-DDX4*00
+    - IGHV0-DFGG*00
     - IGHV0-DMIT*00
     - IGHV0-DRA4*00
+    - IGHV0-DSCL*00
+    - IGHV0-DSEM*00
+    - IGHV0-DTV7*00
     - IGHV0-DUV7*00
+    - IGHV0-DVNZ*00
+    - IGHV0-DWTN*00
+    - IGHV0-DYDA*00
+    - IGHV0-E4PT*00
+    - IGHV0-E5EW*00
+    - IGHV0-E7Q2*00
+    - IGHV0-EBSY*00
     - IGHV0-EBWE*00
+    - IGHV0-ECGZ*00
+    - IGHV0-ED7H*00
     - IGHV0-EF74*00
+    - IGHV0-EFJY*00
+    - IGHV0-EH6M*00
     - IGHV0-EK3O*00
     - IGHV0-EM72*00
+    - IGHV0-EM76*00
     - IGHV0-ES4V*00
+    - IGHV0-ETE7*00
+    - IGHV0-F3ON*00
     - IGHV0-F3Z6*00
+    - IGHV0-F5CV*00
     - IGHV0-F5K7*00
+    - IGHV0-F6YN*00
+    - IGHV0-F77Z*00
+    - IGHV0-FAVL*00
+    - IGHV0-FBNY*00
+    - IGHV0-FCI2*00
+    - IGHV0-FFB3*00
+    - IGHV0-FGSI*00
+    - IGHV0-FKCP*00
     - IGHV0-FM2S*00
     - IGHV0-FMN7*00
+    - IGHV0-FN67*00
     - IGHV0-FNCD*00
+    - IGHV0-FNOE*00
+    - IGHV0-FNXX*00
     - IGHV0-FOTI*00
+    - IGHV0-FPG7*00
+    - IGHV0-FROE*00
+    - IGHV0-FRUS*00
+    - IGHV0-FTGA*00
+    - IGHV0-FTLS*00
     - IGHV0-FVAY*00
+    - IGHV0-G2GM*00
+    - IGHV0-G6NA*00
     - IGHV0-G6P5*00
     - IGHV0-GC2L*00
+    - IGHV0-GDIS*00
+    - IGHV0-GDPO*00
+    - IGHV0-GDWR*00
     - IGHV0-GFFP*00
+    - IGHV0-GHCM*00
     - IGHV0-GHLB*00
     - IGHV0-GLIW*00
+    - IGHV0-GNJT*00
+    - IGHV0-GNOX*00
     - IGHV0-GNPX*00
+    - IGHV0-GOR4*00
     - IGHV0-GPEO*00
+    - IGHV0-GRQT*00
     - IGHV0-GRWZ*00
+    - IGHV0-GRZR*00
     - IGHV0-GSBQ*00
     - IGHV0-GSYR*00
+    - IGHV0-GUKT*00
+    - IGHV0-GVF5*00
+    - IGHV0-GX2P*00
+    - IGHV0-GXHA*00
     - IGHV0-H2OA*00
+    - IGHV0-H6VA*00
+    - IGHV0-HAGV*00
     - IGHV0-HCH3*00
+    - IGHV0-HD6C*00
+    - IGHV0-HFF6*00
+    - IGHV0-HGG2*00
+    - IGHV0-HGHG*00
+    - IGHV0-HH7J*00
     - IGHV0-HHVI*00
+    - IGHV0-HK55*00
+    - IGHV0-HKNQ*00
     - IGHV0-HL64*00
     - IGHV0-HLLK*00
     - IGHV0-HOWM*00
+    - IGHV0-HQ4S*00
+    - IGHV0-HQQK*00
+    - IGHV0-HRAJ*00
+    - IGHV0-HUUQ*00
+    - IGHV0-HWYE*00
     - IGHV0-HZPW*00
+    - IGHV0-I35M*00
     - IGHV0-I463*00
     - IGHV0-IAEK*00
+    - IGHV0-IAHS*00
     - IGHV0-ID7Q*00
+    - IGHV0-IG7Z*00
+    - IGHV0-IM3C*00
     - IGHV0-IMJE*00
     - IGHV0-IQE5*00
+    - IGHV0-IT4O*00
+    - IGHV0-ITQ5*00
     - IGHV0-IWLP*00
+    - IGHV0-IXUZ*00
+    - IGHV0-IZIY*00
     - IGHV0-IZSN*00
     - IGHV0-J564*00
     - IGHV0-JACH*00
     - IGHV0-JAPR*00
+    - IGHV0-JAWA*00
+    - IGHV0-JC43*00
+    - IGHV0-JC5L*00
+    - IGHV0-JCQC*00
     - IGHV0-JDDE*00
     - IGHV0-JDYC*00
     - IGHV0-JEF2*00
+    - IGHV0-JEOG*00
     - IGHV0-JHQJ*00
     - IGHV0-JHWS*00
+    - IGHV0-JL75*00
     - IGHV0-JP5X*00
+    - IGHV0-JPJZ*00
+    - IGHV0-JQQ7*00
     - IGHV0-JRQS*00
+    - IGHV0-JXHT*00
     - IGHV0-K6AT*00
+    - IGHV0-KAOG*00
+    - IGHV0-KCB3*00
+    - IGHV0-KD4A*00
+    - IGHV0-KDFG*00
+    - IGHV0-KI3H*00
     - IGHV0-KO4L*00
     - IGHV0-KPEP*00
     - IGHV0-KQPM*00
     - IGHV0-KRG4*00
     - IGHV0-KRVC*00
+    - IGHV0-KXC4*00
     - IGHV0-KXID*00
+    - IGHV0-KXNU*00
     - IGHV0-KXVP*00
     - IGHV0-KYSD*00
+    - IGHV0-KZN5*00
+    - IGHV0-KZTT*00
+    - IGHV0-L2XC*00
+    - IGHV0-L5FH*00
+    - IGHV0-L7TC*00
     - IGHV0-LAH4*00
     - IGHV0-LALY*00
     - IGHV0-LBE2*00
+    - IGHV0-LDXW*00
+    - IGHV0-LEBH*00
+    - IGHV0-LFNP*00
+    - IGHV0-LGZV*00
+    - IGHV0-LHW4*00
+    - IGHV0-LLIN*00
     - IGHV0-LLOE*00
     - IGHV0-LNOF*00
+    - IGHV0-LOR6*00
     - IGHV0-LP2Z*00
+    - IGHV0-LPGR*00
     - IGHV0-LPGY*00
     - IGHV0-LQC3*00
+    - IGHV0-LR6W*00
+    - IGHV0-LS7B*00
+    - IGHV0-LUAR*00
     - IGHV0-LUL4*00
+    - IGHV0-LWU7*00
+    - IGHV0-LXLP*00
     - IGHV0-LYE5*00
+    - IGHV0-LZ4V*00
+    - IGHV0-LZPN*00
+    - IGHV0-M2M2*00
+    - IGHV0-M2WG*00
     - IGHV0-MCP4*00
+    - IGHV0-ME3W*00
     - IGHV0-MG5V*00
     - IGHV0-MGBE*00
+    - IGHV0-MGVJ*00
+    - IGHV0-MH5Z*00
+    - IGHV0-MJAE*00
+    - IGHV0-MJHC*00
+    - IGHV0-MJS4*00
+    - IGHV0-MJU4*00
     - IGHV0-ML5T*00
+    - IGHV0-MLJ2*00
+    - IGHV0-MM42*00
+    - IGHV0-MM6D*00
+    - IGHV0-MND7*00
+    - IGHV0-MQ2W*00
+    - IGHV0-MQQF*00
+    - IGHV0-MQX7*00
     - IGHV0-MSJQ*00
     - IGHV0-MUFD*00
+    - IGHV0-MYOQ*00
+    - IGHV0-MZLP*00
+    - IGHV0-N2YY*00
+    - IGHV0-N46H*00
     - IGHV0-N4AL*00
+    - IGHV0-N4LP*00
+    - IGHV0-N64F*00
     - IGHV0-N7DC*00
+    - IGHV0-N7SW*00
+    - IGHV0-NDA5*00
+    - IGHV0-NDG3*00
     - IGHV0-NFFP*00
+    - IGHV0-NFTL*00
+    - IGHV0-NFUY*00
+    - IGHV0-NJKQ*00
+    - IGHV0-NJZ4*00
+    - IGHV0-NLDH*00
     - IGHV0-NNFU*00
     - IGHV0-NPBL*00
+    - IGHV0-NRA6*00
+    - IGHV0-NROV*00
+    - IGHV0-NROW*00
+    - IGHV0-NSFI*00
+    - IGHV0-NTLL*00
     - IGHV0-NUDM*00
+    - IGHV0-NVD7*00
+    - IGHV0-NVKX*00
     - IGHV0-NY4F*00
+    - IGHV0-NYJ5*00
+    - IGHV0-NZDB*00
     - IGHV0-O4YA*00
+    - IGHV0-O54O*00
+    - IGHV0-O7TX*00
+    - IGHV0-OAN5*00
     - IGHV0-OBLP*00
     - IGHV0-OCOS*00
+    - IGHV0-OJQ5*00
     - IGHV0-OK63*00
     - IGHV0-ONGD*00
     - IGHV0-ORJY*00
     - IGHV0-OSZZ*00
+    - IGHV0-OV7N*00
     - IGHV0-OW3E*00
+    - IGHV0-OXE6*00
+    - IGHV0-OYF6*00
     - IGHV0-P2CQ*00
+    - IGHV0-P2SD*00
     - IGHV0-P5SS*00
     - IGHV0-P7AN*00
     - IGHV0-PACA*00
     - IGHV0-PCIZ*00
+    - IGHV0-PCMZ*00
     - IGHV0-PEXG*00
     - IGHV0-PRC5*00
     - IGHV0-PRJX*00
+    - IGHV0-PSQP*00
+    - IGHV0-PTGV*00
+    - IGHV0-PUSX*00
+    - IGHV0-PWKC*00
+    - IGHV0-PYRH*00
+    - IGHV0-PZT4*00
+    - IGHV0-Q4FB*00
+    - IGHV0-Q55D*00
     - IGHV0-QC3C*00
+    - IGHV0-QCJW*00
+    - IGHV0-QECB*00
+    - IGHV0-QELY*00
+    - IGHV0-QEOB*00
     - IGHV0-QFGX*00
+    - IGHV0-QFNR*00
     - IGHV0-QG3Z*00
     - IGHV0-QK6G*00
     - IGHV0-QL4G*00
+    - IGHV0-QLDU*00
+    - IGHV0-QLQO*00
+    - IGHV0-QLUS*00
     - IGHV0-QODY*00
+    - IGHV0-QP6K*00
     - IGHV0-QQ46*00
+    - IGHV0-QRAR*00
     - IGHV0-QSRD*00
+    - IGHV0-QU7Q*00
     - IGHV0-QUNY*00
+    - IGHV0-QZEY*00
+    - IGHV0-QZGM*00
+    - IGHV0-R262*00
     - IGHV0-R4HE*00
+    - IGHV0-R5FY*00
+    - IGHV0-R5V2*00
+    - IGHV0-R76P*00
     - IGHV0-R7KA*00
+    - IGHV0-RAAJ*00
+    - IGHV0-RCX7*00
+    - IGHV0-RG5I*00
     - IGHV0-RKXL*00
     - IGHV0-RLDP*00
+    - IGHV0-RMID*00
+    - IGHV0-RN4F*00
     - IGHV0-RNDH*00
     - IGHV0-RNSW*00
+    - IGHV0-RO7L*00
+    - IGHV0-ROLQ*00
     - IGHV0-ROYG*00
+    - IGHV0-RR3Z*00
     - IGHV0-RRLD*00
+    - IGHV0-RRWL*00
+    - IGHV0-RSWU*00
+    - IGHV0-RXKT*00
     - IGHV0-RYF3*00
     - IGHV0-S27U*00
+    - IGHV0-S2VX*00
+    - IGHV0-S4M5*00
+    - IGHV0-S6NR*00
+    - IGHV0-SAXO*00
     - IGHV0-SCRF*00
     - IGHV0-SDOY*00
+    - IGHV0-SEGR*00
     - IGHV0-SF4U*00
     - IGHV0-SFTO*00
+    - IGHV0-SHHV*00
+    - IGHV0-SHLW*00
+    - IGHV0-SJLD*00
+    - IGHV0-SLAG*00
+    - IGHV0-SPOH*00
+    - IGHV0-SPXV*00
     - IGHV0-SR2I*00
     - IGHV0-SS5A*00
     - IGHV0-STIW*00
     - IGHV0-SUJW*00
+    - IGHV0-SVML*00
+    - IGHV0-SVRH*00
     - IGHV0-SX5D*00
     - IGHV0-T2W5*00
     - IGHV0-T3DL*00
+    - IGHV0-T7RS*00
     - IGHV0-TC2W*00
+    - IGHV0-TCPT*00
     - IGHV0-THXW*00
     - IGHV0-TI7Q*00
+    - IGHV0-TKIN*00
     - IGHV0-TOCH*00
+    - IGHV0-TOZB*00
     - IGHV0-TQES*00
+    - IGHV0-TRDF*00
+    - IGHV0-TTLL*00
+    - IGHV0-TTOW*00
     - IGHV0-TUT5*00
+    - IGHV0-TW2E*00
+    - IGHV0-U6BF*00
+    - IGHV0-U6RV*00
+    - IGHV0-U7BS*00
+    - IGHV0-U7SL*00
+    - IGHV0-UBKV*00
+    - IGHV0-UD3M*00
     - IGHV0-UDF7*00
+    - IGHV0-UDU2*00
     - IGHV0-UFPJ*00
+    - IGHV0-UFPS*00
+    - IGHV0-UIIH*00
     - IGHV0-UJTO*00
+    - IGHV0-ULSZ*00
+    - IGHV0-UNUS*00
     - IGHV0-UONK*00
     - IGHV0-UOVB*00
     - IGHV0-UR5G*00
+    - IGHV0-UTEO*00
+    - IGHV0-UTKV*00
     - IGHV0-UTQI*00
+    - IGHV0-UULO*00
+    - IGHV0-UXPY*00
+    - IGHV0-UYAZ*00
     - IGHV0-V26Z*00
+    - IGHV0-V2J3*00
+    - IGHV0-V2PN*00
     - IGHV0-V6Q4*00
+    - IGHV0-V7DR*00
+    - IGHV0-VB4F*00
     - IGHV0-VCP7*00
     - IGHV0-VD6C*00
+    - IGHV0-VDQ4*00
+    - IGHV0-VE3A*00
+    - IGHV0-VEZX*00
+    - IGHV0-VL52*00
+    - IGHV0-VPE2*00
+    - IGHV0-VPTU*00
+    - IGHV0-VRBM*00
+    - IGHV0-VRCT*00
+    - IGHV0-VTEX*00
+    - IGHV0-VUEY*00
+    - IGHV0-VUQE*00
+    - IGHV0-VX3J*00
     - IGHV0-W27J*00
     - IGHV0-W2MI*00
     - IGHV0-W52N*00
     - IGHV0-WECQ*00
     - IGHV0-WN4M*00
     - IGHV0-WO3N*00
+    - IGHV0-WQ2B*00
+    - IGHV0-WR2L*00
+    - IGHV0-WTC5*00
+    - IGHV0-WVEQ*00
+    - IGHV0-WVZG*00
+    - IGHV0-WXSZ*00
     - IGHV0-WZ7P*00
     - IGHV0-X4X2*00
     - IGHV0-X7V4*00
+    - IGHV0-XFJ6*00
     - IGHV0-XGYI*00
+    - IGHV0-XJRP*00
     - IGHV0-XN3Q*00
+    - IGHV0-XRD4*00
+    - IGHV0-XRM4*00
+    - IGHV0-XUAL*00
     - IGHV0-XUCW*00
+    - IGHV0-XWKM*00
+    - IGHV0-XYBY*00
     - IGHV0-XYWF*00
+    - IGHV0-Y3TL*00
+    - IGHV0-Y4VK*00
+    - IGHV0-Y5MV*00
     - IGHV0-YEPS*00
+    - IGHV0-YH3T*00
+    - IGHV0-YJ7Z*00
+    - IGHV0-YJAL*00
+    - IGHV0-YU7L*00
+    - IGHV0-YUES*00
+    - IGHV0-YUW4*00
+    - IGHV0-YW25*00
+    - IGHV0-YWSQ*00
+    - IGHV0-Z2FG*00
+    - IGHV0-Z2MU*00
+    - IGHV0-Z54E*00
     - IGHV0-Z6OV*00
     - IGHV0-ZCGF*00
+    - IGHV0-ZCV3*00
+    - IGHV0-ZCVZ*00
     - IGHV0-ZD3D*00
     - IGHV0-ZGQJ*00
     - IGHV0-ZHOA*00
     - IGHV0-ZI2X*00
     - IGHV0-ZIT7*00
+    - IGHV0-ZKN6*00
     - IGHV0-ZL77*00
     - IGHV0-ZOKF*00
     - IGHV0-ZOZI*00
     - IGHV0-ZP6P*00
+    - IGHV0-ZPB3*00
     - IGHV0-ZPQB*00
+    - IGHV0-ZQBW*00
+    - IGHV0-ZU34*00
     - IGHV0-ZUDH*00
+    - IGHV0-ZV4X*00
     - IGHV0-ZVAP*00
-    - IGKJ-4JXG
-    - IGKJ-5NUZ
-    - IGKJ-ABRI
-    - IGKJ-AR7L
-    - IGKJ-HVOR
-    - IGKJ-IIHF
-    - IGKJ-LUDL
-    - IGKJ-MXRV
-    - IGKJ-O4CL
-    - IGKJ-WRAP
-    - IGKJ-Z5J4
-    - IGKV-2DA2
-    - IGKV-2DEQ
-    - IGKV-2FEW
-    - IGKV-2GER
-    - IGKV-2ITU
-    - IGKV-2JWU
-    - IGKV-2MMF
-    - IGKV-2N6Y
-    - IGKV-2NZ7
-    - IGKV-2PPF
-    - IGKV-2Q6D
-    - IGKV-2RTY
-    - IGKV-2TUW
-    - IGKV-2W3X
-    - IGKV-2XAX
-    - IGKV-2Y25
-    - IGKV-2ZLJ
-    - IGKV-2ZR5
-    - IGKV-37ZR
-    - IGKV-3ACB
-    - IGKV-3AK2
-    - IGKV-3CSV
-    - IGKV-3DPE
-    - IGKV-3DQK
-    - IGKV-3FVS
-    - IGKV-3GZF
-    - IGKV-3K4F
-    - IGKV-3KCS
-    - IGKV-3UF3
-    - IGKV-3WTU
-    - IGKV-3YSR
-    - IGKV-43CA
-    - IGKV-47ZO
-    - IGKV-4AWT
-    - IGKV-4HMC
-    - IGKV-4JCS
-    - IGKV-4JOZ
-    - IGKV-4JWA
-    - IGKV-4NKI
-    - IGKV-4RFT
-    - IGKV-4SD7
-    - IGKV-4TYA
-    - IGKV-4UCG
-    - IGKV-4UCK
-    - IGKV-55GN
-    - IGKV-5CGH
-    - IGKV-5J4G
-    - IGKV-5JSW
-    - IGKV-5KBY
-    - IGKV-5KQU
-    - IGKV-5ME7
-    - IGKV-5MSO
-    - IGKV-5R5X
-    - IGKV-5R7L
-    - IGKV-5RMF
-    - IGKV-5RRN
-    - IGKV-5RYF
-    - IGKV-5UQR
-    - IGKV-63TY
-    - IGKV-6CS3
-    - IGKV-6FGW
-    - IGKV-6GIS
-    - IGKV-6HTW
-    - IGKV-6IAW
-    - IGKV-6JTL
-    - IGKV-6ND3
-    - IGKV-6RXV
-    - IGKV-6THT
-    - IGKV-6W7P
-    - IGKV-6WRM
-    - IGKV-74AA
-    - IGKV-75EL
-    - IGKV-7CED
-    - IGKV-7EV4
-    - IGKV-7GAK
-    - IGKV-7IVJ
-    - IGKV-7KR3
-    - IGKV-7NXP
-    - IGKV-7OTU
-    - IGKV-7S4I
-    - IGKV-7XXX
-    - IGKV-A2AD
-    - IGKV-AFHR
-    - IGKV-AFVG
-    - IGKV-ALXX
-    - IGKV-ANIM
-    - IGKV-ANLN
-    - IGKV-APPT
-    - IGKV-APZY
-    - IGKV-ASTG
-    - IGKV-ATF5
-    - IGKV-B2OA
-    - IGKV-B3PF
-    - IGKV-B4KL
-    - IGKV-B4U6
-    - IGKV-BAPX
-    - IGKV-BCYB
-    - IGKV-BFM7
-    - IGKV-BMNF
-    - IGKV-BNIU
-    - IGKV-BO57
-    - IGKV-BOV6
-    - IGKV-BQCT
-    - IGKV-BQKY
-    - IGKV-BS6K
-    - IGKV-BYPD
-    - IGKV-BYSK
-    - IGKV-BZVC
-    - IGKV-CANL
-    - IGKV-CDKC
-    - IGKV-CHK4
-    - IGKV-CLYB
-    - IGKV-CMSA
-    - IGKV-CNAG
-    - IGKV-CNCY
-    - IGKV-CNF2
-    - IGKV-CNQG
-    - IGKV-CUC3
-    - IGKV-CXDG
-    - IGKV-D23N
-    - IGKV-D2CI
-    - IGKV-D2UU
-    - IGKV-D3OW
-    - IGKV-DAAS
-    - IGKV-DDHC
-    - IGKV-DGEF
-    - IGKV-DIOU
-    - IGKV-DMF4
-    - IGKV-DMQA
-    - IGKV-DMR6
-    - IGKV-DOPS
-    - IGKV-DQAT
-    - IGKV-DRUF
-    - IGKV-DRVK
-    - IGKV-DUTV
-    - IGKV-DWOY
-    - IGKV-E7FA
-    - IGKV-EAXP
-    - IGKV-EFJR
-    - IGKV-EJBF
-    - IGKV-EOYK
-    - IGKV-ERHN
-    - IGKV-EWZV
-    - IGKV-F352
-    - IGKV-F3GM
-    - IGKV-FEL2
-    - IGKV-FFNO
-    - IGKV-FIB3
-    - IGKV-FLCD
-    - IGKV-FPZM
-    - IGKV-FSGA
-    - IGKV-FWFX
-    - IGKV-FXCK
-    - IGKV-FXQ2
-    - IGKV-FXSL
-    - IGKV-G4YX
-    - IGKV-G5KS
-    - IGKV-G64Q
-    - IGKV-G73R
-    - IGKV-GAZ3
-    - IGKV-GIFH
-    - IGKV-GQ6P
-    - IGKV-GX7B
-    - IGKV-GYAZ
-    - IGKV-HAHA
-    - IGKV-HLCZ
-    - IGKV-HMPO
-    - IGKV-HSDZ
-    - IGKV-HTDP
-    - IGKV-HVH3
-    - IGKV-HWEW
-    - IGKV-HYPM
-    - IGKV-HZT6
-    - IGKV-I4G3
-    - IGKV-I752
-    - IGKV-ICLL
-    - IGKV-IISL
-    - IGKV-IJOQ
-    - IGKV-IJSU
-    - IGKV-IL5X
-    - IGKV-IM3N
-    - IGKV-IMZ6
-    - IGKV-INEU
-    - IGKV-ISHO
-    - IGKV-IUU5
-    - IGKV-J3T7
-    - IGKV-J4JP
-    - IGKV-J6OF
-    - IGKV-JA3G
-    - IGKV-JBOJ
-    - IGKV-JDZC
-    - IGKV-JLRM
-    - IGKV-JPMP
-    - IGKV-JR7I
-    - IGKV-JST4
-    - IGKV-K3BH
-    - IGKV-K3K7
-    - IGKV-K44R
-    - IGKV-K5M7
-    - IGKV-K7CZ
-    - IGKV-K7KW
-    - IGKV-KC5X
-    - IGKV-KHNG
-    - IGKV-KJ26
-    - IGKV-KJUE
-    - IGKV-KOOX
-    - IGKV-KRVL
-    - IGKV-KVL3
-    - IGKV-L2T4
-    - IGKV-L6SK
-    - IGKV-LDQ4
-    - IGKV-LEU5
-    - IGKV-LKON
-    - IGKV-LTEF
-    - IGKV-LWMH
-    - IGKV-LYWY
-    - IGKV-M2A5
-    - IGKV-M2AF
-    - IGKV-M7WB
-    - IGKV-MIHJ
-    - IGKV-MKWO
-    - IGKV-MRJG
-    - IGKV-MRJH
-    - IGKV-MRMS
-    - IGKV-MTWG
-    - IGKV-MVOD
-    - IGKV-MWZU
-    - IGKV-N4A4
-    - IGKV-N7YB
-    - IGKV-NBUM
-    - IGKV-ND3J
-    - IGKV-NEMM
-    - IGKV-NP3Z
-    - IGKV-NPIN
-    - IGKV-NQB4
-    - IGKV-NQKM
-    - IGKV-NSG3
-    - IGKV-NTRS
-    - IGKV-NTVK
-    - IGKV-NWRO
-    - IGKV-NZE5
-    - IGKV-O6P7
-    - IGKV-O6WO
-    - IGKV-OAJ7
-    - IGKV-OAL7
-    - IGKV-OCVA
-    - IGKV-OEUG
-    - IGKV-OGOZ
-    - IGKV-OMFU
-    - IGKV-OMJF
-    - IGKV-OPFI
-    - IGKV-OUIT
-    - IGKV-OV52
-    - IGKV-OX7U
-    - IGKV-OYEQ
-    - IGKV-PCUX
-    - IGKV-PDTS
-    - IGKV-PFBX
-    - IGKV-PIUZ
-    - IGKV-PKHG
-    - IGKV-PKHS
-    - IGKV-PLMW
-    - IGKV-POXT
-    - IGKV-PQ74
-    - IGKV-PVBH
-    - IGKV-PVME
-    - IGKV-PXHR
-    - IGKV-PZ4P
-    - IGKV-PZRJ
-    - IGKV-Q3AT
-    - IGKV-Q44H
-    - IGKV-Q5L6
-    - IGKV-QDLH
-    - IGKV-QFUU
-    - IGKV-QHSD
-    - IGKV-QKVE
-    - IGKV-QRNR
-    - IGKV-QTEC
-    - IGKV-QURL
-    - IGKV-R3N6
-    - IGKV-R7PJ
-    - IGKV-R7WA
-    - IGKV-RBYO
-    - IGKV-REYU
-    - IGKV-RFV4
-    - IGKV-RIKC
-    - IGKV-RJR4
-    - IGKV-RKIS
-    - IGKV-RKTJ
-    - IGKV-RLEP
-    - IGKV-RMIR
-    - IGKV-RNCB
-    - IGKV-RNNU
-    - IGKV-RQER
-    - IGKV-RT4X
-    - IGKV-RVJ4
-    - IGKV-S4J5
-    - IGKV-S65I
-    - IGKV-S7UW
-    - IGKV-SARW
-    - IGKV-SEKD
-    - IGKV-SFG3
-    - IGKV-SHUP
-    - IGKV-SL2F
-    - IGKV-SLZK
-    - IGKV-SMFR
-    - IGKV-SMPB
-    - IGKV-SPOW
-    - IGKV-SQU3
-    - IGKV-SRXC
-    - IGKV-SVGB
-    - IGKV-SX6A
-    - IGKV-SXK5
-    - IGKV-SYBQ
-    - IGKV-T44G
-    - IGKV-T4TJ
-    - IGKV-T53K
-    - IGKV-T7JL
-    - IGKV-TG73
-    - IGKV-THOP
-    - IGKV-TI2G
-    - IGKV-TLBK
-    - IGKV-TM5V
-    - IGKV-TOVR
-    - IGKV-TP6C
-    - IGKV-TQLS
-    - IGKV-TTVX
-    - IGKV-TYIK
-    - IGKV-TYUT
-    - IGKV-TZMW
-    - IGKV-TZSN
-    - IGKV-U4FM
-    - IGKV-U6BY
-    - IGKV-UD2O
-    - IGKV-UDHA
-    - IGKV-UE2R
-    - IGKV-UGF5
-    - IGKV-UH45
-    - IGKV-UJUV
-    - IGKV-ULAR
-    - IGKV-UMHS
-    - IGKV-UPEZ
-    - IGKV-UPVR
-    - IGKV-URC6
-    - IGKV-UXGH
-    - IGKV-VAIB
-    - IGKV-VAYS
-    - IGKV-VCBJ
-    - IGKV-VCOM
-    - IGKV-VCSZ
-    - IGKV-VGOQ
-    - IGKV-VHIT
-    - IGKV-VLFT
-    - IGKV-VPDW
-    - IGKV-VQ2D
-    - IGKV-VQT4
-    - IGKV-VVEK
-    - IGKV-W3W4
-    - IGKV-W4ML
-    - IGKV-W6WN
-    - IGKV-WEX5
-    - IGKV-WH7U
-    - IGKV-WL4N
-    - IGKV-WRKH
-    - IGKV-WUFM
-    - IGKV-WYGT
-    - IGKV-X3GU
-    - IGKV-X4AX
-    - IGKV-XI6B
-    - IGKV-XK3A
-    - IGKV-XLXE
-    - IGKV-XQ62
-    - IGKV-YAGY
-    - IGKV-YJ3U
-    - IGKV-YK33
-    - IGKV-YNNY
-    - IGKV-YRTC
-    - IGKV-YRXE
-    - IGKV-YU4J
-    - IGKV-YY66
-    - IGKV-YYIF
-    - IGKV-Z4M5
-    - IGKV-ZD2S
-    - IGKV-ZDBL
-    - IGKV-ZHS7
-    - IGKV-ZK34
-    - IGKV-ZKAL
-    - IGKV-ZOPJ
-    - IGKV-ZPKW
-    - IGKV-ZR6P
-    - IGKV-ZTTC
-    - IGKV-ZY7G
-    - IGKV-ZZNL
+    - IGHV0-ZWCI*00
+    - IGKJ0-4JXG*00
+    - IGKJ0-5NUZ*00
+    - IGKJ0-ABRI*00
+    - IGKJ0-AR7L*00
+    - IGKJ0-HVOR*00
+    - IGKJ0-IIHF*00
+    - IGKJ0-LUDL*00
+    - IGKJ0-MXRV*00
+    - IGKJ0-O4CL*00
+    - IGKJ0-WRAP*00
+    - IGKJ0-Z5J4*00
+    - IGKV0-25LJ*00
+    - IGKV0-25S6*00
+    - IGKV0-27KA*00
+    - IGKV0-2DA2*00
+    - IGKV0-2ITU*00
+    - IGKV0-2N6Y*00
+    - IGKV0-2NZ7*00
+    - IGKV0-2PPF*00
+    - IGKV0-2Q6D*00
+    - IGKV0-2QEB*00
+    - IGKV0-2RTY*00
+    - IGKV0-2TUW*00
     - IGKV0-2VXU*00
+    - IGKV0-2W3X*00
+    - IGKV0-2Y25*00
+    - IGKV0-2ZLJ*00
+    - IGKV0-2ZR5*00
     - IGKV0-354Q*00
+    - IGKV0-3AZJ*00
     - IGKV0-3BKL*00
+    - IGKV0-3DPE*00
+    - IGKV0-3DQK*00
+    - IGKV0-3FVS*00
     - IGKV0-3FWG*00
+    - IGKV0-3K4F*00
+    - IGKV0-3UF3*00
+    - IGKV0-3WTU*00
+    - IGKV0-3X3Y*00
+    - IGKV0-3ZYL*00
+    - IGKV0-43CA*00
+    - IGKV0-46A6*00
+    - IGKV0-47ZO*00
+    - IGKV0-4AWT*00
+    - IGKV0-4EYW*00
+    - IGKV0-4HAP*00
+    - IGKV0-4HMC*00
+    - IGKV0-4HZA*00
+    - IGKV0-4JCS*00
+    - IGKV0-4JWA*00
+    - IGKV0-4KVQ*00
+    - IGKV0-4NKI*00
+    - IGKV0-4QYM*00
+    - IGKV0-4TDQ*00
+    - IGKV0-4TYA*00
     - IGKV0-4XAX*00
     - IGKV0-52W3*00
+    - IGKV0-54IL*00
+    - IGKV0-55GN*00
+    - IGKV0-565F*00
     - IGKV0-57WX*00
+    - IGKV0-5CGH*00
+    - IGKV0-5I4F*00
+    - IGKV0-5JSW*00
+    - IGKV0-5KBY*00
+    - IGKV0-5KJT*00
+    - IGKV0-5LR4*00
+    - IGKV0-5MSO*00
+    - IGKV0-5R5X*00
+    - IGKV0-5RMF*00
     - IGKV0-5SOO*00
+    - IGKV0-63BQ*00
+    - IGKV0-63TY*00
+    - IGKV0-6AZV*00
     - IGKV0-6AZW*00
+    - IGKV0-6CS3*00
+    - IGKV0-6HTW*00
+    - IGKV0-6IAW*00
+    - IGKV0-6JTL*00
     - IGKV0-6MBV*00
+    - IGKV0-6MSI*00
+    - IGKV0-6ND3*00
+    - IGKV0-6RXV*00
     - IGKV0-6SUV*00
+    - IGKV0-74AA*00
+    - IGKV0-75EL*00
+    - IGKV0-75SV*00
+    - IGKV0-77PF*00
+    - IGKV0-7CED*00
+    - IGKV0-7CP5*00
+    - IGKV0-7EV4*00
+    - IGKV0-7GAK*00
+    - IGKV0-7MHY*00
+    - IGKV0-7NXP*00
+    - IGKV0-7OTU*00
+    - IGKV0-7RT5*00
+    - IGKV0-7S4I*00
+    - IGKV0-7UGN*00
+    - IGKV0-7WFL*00
+    - IGKV0-7XXX*00
+    - IGKV0-7ZOU*00
+    - IGKV0-A2AD*00
     - IGKV0-ABYH*00
     - IGKV0-ACJS*00
+    - IGKV0-AFHR*00
+    - IGKV0-ALXX*00
     - IGKV0-AMJP*00
+    - IGKV0-AMVN*00
+    - IGKV0-ANIM*00
+    - IGKV0-ANNE*00
+    - IGKV0-AR2X*00
+    - IGKV0-ATF5*00
+    - IGKV0-AUFH*00
     - IGKV0-B2LR*00
+    - IGKV0-B2OA*00
+    - IGKV0-B3PF*00
+    - IGKV0-B4U6*00
+    - IGKV0-BAPX*00
+    - IGKV0-BDYK*00
+    - IGKV0-BFM7*00
+    - IGKV0-BFUQ*00
     - IGKV0-BIOC*00
+    - IGKV0-BLCV*00
+    - IGKV0-BMNF*00
+    - IGKV0-BO57*00
+    - IGKV0-BOV6*00
+    - IGKV0-BQKY*00
+    - IGKV0-BS6K*00
+    - IGKV0-BSKW*00
+    - IGKV0-BSWW*00
     - IGKV0-BVB4*00
+    - IGKV0-BZCX*00
+    - IGKV0-C4HI*00
+    - IGKV0-C4RM*00
+    - IGKV0-CAIY*00
+    - IGKV0-CANL*00
+    - IGKV0-CBFT*00
+    - IGKV0-CDKC*00
+    - IGKV0-CEL4*00
+    - IGKV0-CHK4*00
+    - IGKV0-CJKN*00
+    - IGKV0-CLYB*00
+    - IGKV0-CMCC*00
+    - IGKV0-CNAG*00
+    - IGKV0-CNCY*00
+    - IGKV0-COD2*00
     - IGKV0-COLL*00
+    - IGKV0-CRV3*00
+    - IGKV0-CUC3*00
+    - IGKV0-CYRO*00
+    - IGKV0-D2UU*00
+    - IGKV0-D3OW*00
+    - IGKV0-DBG3*00
+    - IGKV0-DBGO*00
+    - IGKV0-DEEC*00
+    - IGKV0-DIOU*00
     - IGKV0-DMBM*00
+    - IGKV0-DQAT*00
+    - IGKV0-DRM6*00
+    - IGKV0-DRUF*00
+    - IGKV0-DW3X*00
+    - IGKV0-DWOY*00
+    - IGKV0-DX3G*00
+    - IGKV0-E7FA*00
     - IGKV0-EDPO*00
     - IGKV0-EDRD*00
+    - IGKV0-EDU7*00
     - IGKV0-EFZA*00
+    - IGKV0-EGEN*00
+    - IGKV0-EGHW*00
+    - IGKV0-EGPO*00
+    - IGKV0-EJ7T*00
+    - IGKV0-EJQ5*00
+    - IGKV0-EKSH*00
+    - IGKV0-EN2O*00
+    - IGKV0-EQV2*00
+    - IGKV0-ERQ2*00
+    - IGKV0-ESNY*00
+    - IGKV0-EVIF*00
+    - IGKV0-EWZV*00
+    - IGKV0-F352*00
+    - IGKV0-FDVH*00
+    - IGKV0-FEL2*00
+    - IGKV0-FEP6*00
+    - IGKV0-FF67*00
+    - IGKV0-FMIF*00
+    - IGKV0-FPZM*00
     - IGKV0-FQZV*00
+    - IGKV0-FSGA*00
     - IGKV0-FTR2*00
+    - IGKV0-FUMI*00
+    - IGKV0-FXCK*00
+    - IGKV0-FXSL*00
+    - IGKV0-G4YX*00
+    - IGKV0-G5KS*00
+    - IGKV0-G64Q*00
+    - IGKV0-G73R*00
+    - IGKV0-GAZ3*00
+    - IGKV0-GFUI*00
+    - IGKV0-GIAJ*00
+    - IGKV0-GIFH*00
+    - IGKV0-GQ6P*00
+    - IGKV0-GTW5*00
+    - IGKV0-GX7B*00
+    - IGKV0-GYAZ*00
+    - IGKV0-HA63*00
+    - IGKV0-HLCZ*00
+    - IGKV0-HMPO*00
     - IGKV0-HOKR*00
+    - IGKV0-HT6W*00
+    - IGKV0-HVH3*00
+    - IGKV0-HWCO*00
+    - IGKV0-HWEW*00
     - IGKV0-HXEG*00
     - IGKV0-HZES*00
+    - IGKV0-HZT6*00
+    - IGKV0-I3AX*00
+    - IGKV0-I4G3*00
     - IGKV0-I7AW*00
     - IGKV0-I7TB*00
     - IGKV0-IC23*00
+    - IGKV0-IDLD*00
+    - IGKV0-IFJX*00
+    - IGKV0-IFYI*00
+    - IGKV0-IISL*00
+    - IGKV0-IJOQ*00
+    - IGKV0-IL5X*00
+    - IGKV0-IM3N*00
+    - IGKV0-IMZ6*00
     - IGKV0-IQQM*00
+    - IGKV0-ISHO*00
+    - IGKV0-IU2Z*00
+    - IGKV0-IUU5*00
+    - IGKV0-IV2C*00
+    - IGKV0-IVZT*00
+    - IGKV0-J2R2*00
+    - IGKV0-J3T7*00
+    - IGKV0-J3XP*00
+    - IGKV0-J4JP*00
+    - IGKV0-J5UD*00
+    - IGKV0-JCV5*00
+    - IGKV0-JDJH*00
+    - IGKV0-JDZC*00
+    - IGKV0-JR7I*00
+    - IGKV0-JST4*00
     - IGKV0-JTFF*00
+    - IGKV0-K3BH*00
+    - IGKV0-K3K7*00
+    - IGKV0-K44R*00
+    - IGKV0-K7CZ*00
+    - IGKV0-K7I5*00
+    - IGKV0-K7KW*00
+    - IGKV0-KCFZ*00
+    - IGKV0-KGKZ*00
+    - IGKV0-KJUE*00
+    - IGKV0-KM2V*00
+    - IGKV0-KOOX*00
+    - IGKV0-KRVL*00
+    - IGKV0-L2T4*00
+    - IGKV0-L4JY*00
+    - IGKV0-L6SK*00
     - IGKV0-LBME*00
+    - IGKV0-LD2X*00
+    - IGKV0-LEU5*00
+    - IGKV0-LG3C*00
     - IGKV0-LHFI*00
+    - IGKV0-LIEE*00
+    - IGKV0-LJPZ*00
     - IGKV0-LSHL*00
     - IGKV0-LUTU*00
+    - IGKV0-LWMH*00
+    - IGKV0-LYWY*00
     - IGKV0-LZEG*00
+    - IGKV0-M24V*00
+    - IGKV0-M3QM*00
     - IGKV0-M7OG*00
     - IGKV0-MB4J*00
     - IGKV0-MCL7*00
+    - IGKV0-MDXL*00
     - IGKV0-MFEO*00
     - IGKV0-MJPP*00
+    - IGKV0-MKM6*00
+    - IGKV0-MKWO*00
+    - IGKV0-MMCX*00
+    - IGKV0-MRMS*00
+    - IGKV0-MTWG*00
+    - IGKV0-MXBA*00
     - IGKV0-MYB4*00
+    - IGKV0-N6SE*00
+    - IGKV0-ND3J*00
     - IGKV0-NDZ3*00
+    - IGKV0-NEUC*00
+    - IGKV0-NJ2T*00
+    - IGKV0-NKG7*00
+    - IGKV0-NO3E*00
+    - IGKV0-NQPT*00
+    - IGKV0-NTRS*00
+    - IGKV0-NWRO*00
+    - IGKV0-O366*00
+    - IGKV0-O6WO*00
     - IGKV0-O76X*00
+    - IGKV0-OAJ7*00
+    - IGKV0-OC5U*00
+    - IGKV0-OCVA*00
+    - IGKV0-OD7S*00
+    - IGKV0-OEUG*00
+    - IGKV0-OGOZ*00
+    - IGKV0-OHY6*00
     - IGKV0-OKHV*00
+    - IGKV0-OMJF*00
+    - IGKV0-OPFI*00
     - IGKV0-OQKN*00
+    - IGKV0-PCUX*00
+    - IGKV0-PDTS*00
+    - IGKV0-PFBX*00
+    - IGKV0-PHCR*00
+    - IGKV0-PIPH*00
+    - IGKV0-PIUZ*00
+    - IGKV0-PKHS*00
+    - IGKV0-PKZX*00
+    - IGKV0-PLMW*00
+    - IGKV0-POXT*00
+    - IGKV0-PTVN*00
+    - IGKV0-PVBH*00
+    - IGKV0-PVR6*00
+    - IGKV0-PXHR*00
+    - IGKV0-PZ4P*00
+    - IGKV0-PZRJ*00
+    - IGKV0-Q44H*00
+    - IGKV0-Q4TS*00
+    - IGKV0-Q5L6*00
+    - IGKV0-Q6O7*00
+    - IGKV0-QDBO*00
+    - IGKV0-QDLH*00
+    - IGKV0-QFUU*00
+    - IGKV0-QHSD*00
+    - IGKV0-QKVE*00
+    - IGKV0-QLMA*00
     - IGKV0-QOHV*00
+    - IGKV0-QURL*00
+    - IGKV0-R2WP*00
+    - IGKV0-R3FW*00
+    - IGKV0-R3N6*00
+    - IGKV0-R62Z*00
+    - IGKV0-RDPY*00
+    - IGKV0-RFV4*00
+    - IGKV0-RHVC*00
+    - IGKV0-RING*00
+    - IGKV0-RKTJ*00
+    - IGKV0-RLEP*00
+    - IGKV0-RMIR*00
+    - IGKV0-RNSU*00
+    - IGKV0-ROLX*00
+    - IGKV0-RPJ7*00
+    - IGKV0-RQER*00
+    - IGKV0-RUQU*00
+    - IGKV0-RVJ4*00
+    - IGKV0-RXCT*00
     - IGKV0-RXD5*00
+    - IGKV0-RYSO*00
+    - IGKV0-S4J5*00
+    - IGKV0-S65I*00
+    - IGKV0-SARW*00
+    - IGKV0-SAZU*00
+    - IGKV0-SEKD*00
+    - IGKV0-SFG3*00
+    - IGKV0-SG5Q*00
+    - IGKV0-SHUP*00
+    - IGKV0-SI5O*00
+    - IGKV0-SIXC*00
+    - IGKV0-SKM3*00
+    - IGKV0-SL2F*00
+    - IGKV0-SLZK*00
+    - IGKV0-SNXE*00
+    - IGKV0-SPOW*00
     - IGKV0-SR4R*00
+    - IGKV0-SRXC*00
+    - IGKV0-SYBQ*00
+    - IGKV0-T44G*00
+    - IGKV0-T4TJ*00
+    - IGKV0-TGAG*00
+    - IGKV0-TLBK*00
+    - IGKV0-TM5V*00
     - IGKV0-TNT7*00
+    - IGKV0-TP6C*00
+    - IGKV0-TQLS*00
+    - IGKV0-TTVX*00
+    - IGKV0-TWDY*00
+    - IGKV0-TYUT*00
+    - IGKV0-TYZI*00
+    - IGKV0-TZSN*00
     - IGKV0-U43H*00
     - IGKV0-U47S*00
+    - IGKV0-U4FM*00
     - IGKV0-U535*00
+    - IGKV0-U65W*00
+    - IGKV0-U7PS*00
+    - IGKV0-UE2R*00
+    - IGKV0-UEPZ*00
+    - IGKV0-UGF5*00
+    - IGKV0-UH45*00
+    - IGKV0-UJUV*00
+    - IGKV0-UL5N*00
+    - IGKV0-ULAR*00
+    - IGKV0-ULOI*00
+    - IGKV0-UMHS*00
     - IGKV0-UP77*00
+    - IGKV0-UPEZ*00
+    - IGKV0-UPVR*00
+    - IGKV0-UTLD*00
     - IGKV0-V4H6*00
+    - IGKV0-V52Q*00
+    - IGKV0-V7SH*00
+    - IGKV0-VCOM*00
+    - IGKV0-VCSZ*00
+    - IGKV0-VEYK*00
+    - IGKV0-VGOQ*00
+    - IGKV0-VHCW*00
+    - IGKV0-VHIT*00
     - IGKV0-VMI2*00
+    - IGKV0-VOLG*00
+    - IGKV0-VPDW*00
     - IGKV0-VPTG*00
+    - IGKV0-VQ2D*00
+    - IGKV0-VSWF*00
+    - IGKV0-VUEV*00
+    - IGKV0-VX7D*00
     - IGKV0-W3SG*00
+    - IGKV0-W3W4*00
+    - IGKV0-W4ML*00
     - IGKV0-W5RI*00
+    - IGKV0-W67N*00
     - IGKV0-W6T2*00
+    - IGKV0-W6WN*00
     - IGKV0-WBXE*00
+    - IGKV0-WEX5*00
+    - IGKV0-WH7U*00
     - IGKV0-WLST*00
     - IGKV0-WQFG*00
+    - IGKV0-WTAN*00
+    - IGKV0-WWXM*00
+    - IGKV0-WX7U*00
+    - IGKV0-X7JW*00
+    - IGKV0-XCG7*00
+    - IGKV0-XLXE*00
+    - IGKV0-XMA6*00
+    - IGKV0-XNUU*00
+    - IGKV0-XQT4*00
     - IGKV0-XT3A*00
-    - IGLJ-2ERU
-    - IGLJ-ACBW
-    - IGLJ-FMEA
-    - IGLJ-KL6B
-    - IGLJ-PG3G
-    - IGLJ-UWMQ
-    - IGLJ-XVAO
-    - IGLV-DOAL
-    - IGLV-XX4M
-    - IGLV-YE36
+    - IGKV0-XTKB*00
+    - IGKV0-YAGY*00
+    - IGKV0-YAUA*00
+    - IGKV0-YGL2*00
+    - IGKV0-YJ3U*00
+    - IGKV0-YKPT*00
+    - IGKV0-YNNY*00
+    - IGKV0-YXVU*00
+    - IGKV0-YY66*00
+    - IGKV0-YYIF*00
+    - IGKV0-Z4M5*00
+    - IGKV0-Z76V*00
+    - IGKV0-ZD2S*00
+    - IGKV0-ZDBL*00
+    - IGKV0-ZF6M*00
+    - IGKV0-ZJHN*00
+    - IGKV0-ZM2S*00
+    - IGKV0-ZOPJ*00
+    - IGKV0-ZPKW*00
+    - IGKV0-ZZNL*00
+    - IGLJ0-2ERU*00
+    - IGLJ0-ACBW*00
+    - IGLJ0-FMEA*00
+    - IGLJ0-KL6B*00
+    - IGLJ0-PG3G*00
+    - IGLJ0-UWMQ*00
+    - IGLJ0-XVAO*00
     - IGLV0-37NY*00
+    - IGLV0-53OK*00
     - IGLV0-63CY*00
     - IGLV0-C4ZJ*00
     - IGLV0-CMGQ*00
@@ -5140,7 +5137,9 @@ mouse:
     - IGLV0-G5I2*00
     - IGLV0-JEYS*00
     - IGLV0-NR57*00
+    - IGLV0-OC5B*00
     - IGLV0-PQZL*00
+    - IGLV0-QG74*00
     - IGLV0-RQWY*00
     - IGLV0-RRBE*00
     - IGLV0-YMD5*00
@@ -12015,11 +12014,6 @@ macaque:
     - IGHJ4-XD6S*03
     - IGHJ6-GAIV*01
     - IGHJ6-GAIV*02
-    - IGHV4-EITI*02
-    - IGHV4-EITI*03
-    - IGHV4-EITI*04
-    - IGHV4-EITI*05
-    - IGHV4-EITI*06
     - IGHV0-7776*01
     - IGHV0-7776*02
     - IGHV0-7776*03
@@ -12747,6 +12741,11 @@ macaque:
     - IGHV4-EAIX*41
     - IGHV4-EAIX*42
     - IGHV4-EITI*01
+    - IGHV4-EITI*02
+    - IGHV4-EITI*03
+    - IGHV4-EITI*04
+    - IGHV4-EITI*05
+    - IGHV4-EITI*06
     - IGHV4-FAZN*01
     - IGHV4-FAZN*02
     - IGHV4-FAZN*03
@@ -13244,25 +13243,6 @@ macaque:
     - IGKJ3-6HXQ*01
     - IGKJ3-6HXQ*02
     - IGKJ3-6HXQ*03
-    - IGKV1-7OW5*04
-    - IGKV1-7OW5*05
-    - IGKV1-7OW5*06
-    - IGKV1-7OW5*07
-    - IGKV1-7OW5*09
-    - IGKV1-7OW5*10
-    - IGKV1-ZYRW*09
-    - IGKV1-ZYRW*10
-    - IGKV1-ZYRW*02
-    - IGKV1-ZYRW*01
-    - IGKV1-6B4R*01
-    - IGKV1-6B4R*03
-    - IGKV1-6B4R*04
-    - IGKV1-6MJ2*01
-    - IGKV1-6MJ2*02
-    - IGKV1-6MJ2*03
-    - IGKV1-ZLLK*04
-    - IGKV1-ZLLK*07
-    - IGKV1-ZLLK*03
     - IGKV0-34XO*01
     - IGKV0-3QEK*01
     - IGKV0-3QEK*02
@@ -13349,6 +13329,9 @@ macaque:
     - IGKV1-4YW5*02
     - IGKV1-4YW5*03
     - IGKV1-4YW5*04
+    - IGKV1-6B4R*01
+    - IGKV1-6B4R*03
+    - IGKV1-6B4R*04
     - IGKV1-6BJK*02
     - IGKV1-6BJK*05
     - IGKV1-6BJK*06
@@ -13364,6 +13347,9 @@ macaque:
     - IGKV1-6LII*06
     - IGKV1-6LII*07
     - IGKV1-6LII*08
+    - IGKV1-6MJ2*01
+    - IGKV1-6MJ2*02
+    - IGKV1-6MJ2*03
     - IGKV1-7CWE*04
     - IGKV1-7CWE*08
     - IGKV1-7CWE*09
@@ -13376,6 +13362,12 @@ macaque:
     - IGKV1-7OW5*01
     - IGKV1-7OW5*02
     - IGKV1-7OW5*03
+    - IGKV1-7OW5*04
+    - IGKV1-7OW5*05
+    - IGKV1-7OW5*06
+    - IGKV1-7OW5*07
+    - IGKV1-7OW5*09
+    - IGKV1-7OW5*10
     - IGKV1-ACWK*02
     - IGKV1-ACWK*03
     - IGKV1-ACWK*04
@@ -13561,16 +13553,23 @@ macaque:
     - IGKV1-ZIOR*05
     - IGKV1-ZLLK*01
     - IGKV1-ZLLK*02
+    - IGKV1-ZLLK*03
+    - IGKV1-ZLLK*04
     - IGKV1-ZLLK*05
     - IGKV1-ZLLK*06
+    - IGKV1-ZLLK*07
     - IGKV1-ZLLK*08
     - IGKV1-ZLLK*09
     - IGKV1-ZLLK*10
     - IGKV1-ZLLK*11
     - IGKV1-ZLLK*12
+    - IGKV1-ZYRW*01
+    - IGKV1-ZYRW*02
     - IGKV1-ZYRW*04
     - IGKV1-ZYRW*05
     - IGKV1-ZYRW*08
+    - IGKV1-ZYRW*09
+    - IGKV1-ZYRW*10
     - IGKV10-2SZ4*01
     - IGKV10-EG5C*01
     - IGKV10-EG5C*02
@@ -13907,18 +13906,6 @@ macaque:
     - IGLJ3-3R4H*02
     - IGLJ3-3R4H*03
     - IGLJ3-JLWC*01
-    - IGLV2-JOO7*03
-    - IGLV2-UWKA*14
-    - IGLV2-UWKA*01
-    - IGLV13-PG6A*13
-    - IGLV13-PG6A*14
-    - IGLV13-7QAJ*10
-    - IGLV13-RLBV*05
-    - IGLV13-RLBV*06
-    - IGLV13-RLBV*07
-    - IGLV13-7QAJ*03
-    - IGLV13-PG6A*15
-    - IGLV13-7QAJ*02
     - IGLV0-5QRY*02
     - IGLV0-5QRY*03
     - IGLV0-5QRY*04
@@ -14012,7 +13999,10 @@ macaque:
     - IGLV13-4CAZ*06
     - IGLV13-4CAZ*07
     - IGLV13-4CAZ*40
+    - IGLV13-7QAJ*02
+    - IGLV13-7QAJ*03
     - IGLV13-7QAJ*06
+    - IGLV13-7QAJ*10
     - IGLV13-7QAJ*11
     - IGLV13-PG6A*01
     - IGLV13-PG6A*04
@@ -14023,8 +14013,14 @@ macaque:
     - IGLV13-PG6A*10
     - IGLV13-PG6A*11
     - IGLV13-PG6A*12
+    - IGLV13-PG6A*13
+    - IGLV13-PG6A*14
+    - IGLV13-PG6A*15
     - IGLV13-RLBV*02
     - IGLV13-RLBV*03
+    - IGLV13-RLBV*05
+    - IGLV13-RLBV*06
+    - IGLV13-RLBV*07
     - IGLV13-RM6H*01
     - IGLV13-RM6H*02
     - IGLV13-RM6H*03
@@ -14138,6 +14134,7 @@ macaque:
     - IGLV2-FL67*09
     - IGLV2-JOO7*01
     - IGLV2-JOO7*02
+    - IGLV2-JOO7*03
     - IGLV2-LMLE*01
     - IGLV2-M5CD*01
     - IGLV2-M5CD*02
@@ -14155,6 +14152,8 @@ macaque:
     - IGLV2-UE2U*07
     - IGLV2-UE2U*08
     - IGLV2-UE2U*09
+    - IGLV2-UWKA*01
+    - IGLV2-UWKA*14
     - IGLV20-ETZW*01
     - IGLV20-R2TL*01
     - IGLV20-R2TL*02
