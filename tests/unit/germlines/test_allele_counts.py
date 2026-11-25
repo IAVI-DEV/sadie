@@ -155,34 +155,58 @@ def test_check_allele_counts_flags_species_whose_fwr3_ends_miss_second_cys(two_s
     assert [f["names"] for f in findings if f["stage"] == "ndm.imgt FWR3 end"] == flagged
 
 
-@pytest.mark.parametrize("partial_gapped_v", ["." * 78 + "CAG" * 78, "CAG" * 60], ids=["fwr1-all-gaps", "ends-in-cdr2"])
-def test_check_allele_counts_expects_no_ndm_row_only_for_partial_v_allele(two_stage_germlines, partial_gapped_v):
-    gapped_v = {"IGHV1-1*01 source=ogrdb": partial_gapped_v, "IGHV1-2*01 source=vdjbase": "CAG" * 104}
-    write_fasta(two_stage_germlines / "normalized/fake/gapped/IGHV.fasta", gapped_v)
-    write_fasta(two_stage_germlines / "igblast/database/fake/fake_V.fasta", {"IGHV1-1*01": "CAG", "IGHV1-2*01": "CAG"})
+@pytest.mark.parametrize(
+    "gapped_v, database_v, expected_findings",
+    [
+        ("." * 78 + "CAG" * 78, "CAG" * 78, [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]),
+        ("CAG" * 60, "CAG" * 60, [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]),
+        ("." * 78 + "CAG" * 78, "CAG" * 104, [("UNEXPLAINED", ["IGHV1-1*01", "IGHV1-2*01"])]),
+    ],
+    ids=["fwr1-all-gaps", "ends-in-cdr2", "gapped-record-lost-bases-the-database-has"],
+)
+def test_check_allele_counts_expects_no_ndm_row_only_for_partial_v_allele(
+    two_stage_germlines, gapped_v, database_v, expected_findings
+):
+    gapped = {"IGHV1-1*01 source=ogrdb": gapped_v, "IGHV1-2*01 source=vdjbase": "CAG" * 104}
+    write_fasta(two_stage_germlines / "normalized/fake/gapped/IGHV.fasta", gapped)
+    database = {"IGHV1-1*01": database_v, "IGHV1-2*01": "CAG" * 104}
+    write_fasta(two_stage_germlines / "igblast/database/fake/fake_V.fasta", database)
     ndm = two_stage_germlines / "igblast/Ig/internal_data/fake/fake.ndm.imgt"
     ndm.parent.mkdir(parents=True)
     ndm.write_text("")
 
     _, findings = run_check(two_stage_germlines)
 
-    ndm_findings = [(f["kind"], f["names"]) for f in findings if f["stage"] == "database V->ndm.imgt"]
-    assert ndm_findings == [("EXPECTED", ["IGHV1-1*01"]), ("UNEXPLAINED", ["IGHV1-2*01"])]
+    assert [(f["kind"], f["names"]) for f in findings if f["stage"] == "database V->ndm.imgt"] == expected_findings
+
+
+BOTH_REPEATED_NAMES = ["IGKV0-KA5D*00", "IGKV0-YKPT*00"]
 
 
 @pytest.mark.parametrize(
-    "release, api_count, expected_findings",
+    "release, source_names, api_count, expected_findings",
     [
-        ("release-23947887", 4, [("EXPECTED", ["IGKV0-KA5D*00", "IGKV0-YKPT*00"])]),
-        ("release-23947887", 5, [("EXPECTED", ["IGKV0-KA5D*00", "IGKV0-YKPT*00"]), ("UNEXPLAINED", ["1 records"])]),
-        ("release-1", 4, [("UNEXPLAINED", ["2 records"])]),
+        ("release-23947887", BOTH_REPEATED_NAMES, 4, [("EXPECTED", BOTH_REPEATED_NAMES)]),
+        (
+            "release-23947887",
+            BOTH_REPEATED_NAMES,
+            5,
+            [("EXPECTED", BOTH_REPEATED_NAMES), ("UNEXPLAINED", ["1 records"])],
+        ),
+        ("release-23947887", ["IGKV0-YKPT*00"], 3, [("EXPECTED", ["IGKV0-YKPT*00"]), ("UNEXPLAINED", ["1 records"])]),
+        ("release-1", BOTH_REPEATED_NAMES, 4, [("UNEXPLAINED", ["2 records"])]),
     ],
-    ids=["listed-names-cover-the-shortfall", "shortfall-beyond-listed-names", "another-release-guard"],
+    ids=[
+        "listed-names-cover-the-shortfall",
+        "shortfall-beyond-listed-names",
+        "listed-name-absent-from-sources",
+        "another-release-guard",
+    ],
 )
 def test_check_allele_counts_expects_api_shortfall_only_from_listed_repeated_names(
-    tmp_path, release, api_count, expected_findings
+    tmp_path, release, source_names, api_count, expected_findings
 ):
-    write_fasta(tmp_path / "sources/ogrdb/mouse/IGKV.fasta", {"IGKV0-KA5D*00": "ACGT", "IGKV0-YKPT*00": "GGCC"})
+    write_fasta(tmp_path / "sources/ogrdb/mouse/IGKV.fasta", {name: "ACGT" for name in source_names})
     version = {"version": release, "allele_counts": {"mouse": {"IGKV": {"api": api_count}}}}
     (tmp_path / "sources/ogrdb/VERSION.json").write_text(json.dumps(version))
 

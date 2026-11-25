@@ -299,17 +299,19 @@ def _check_species(
         for s in SEGMENTS:
             diff = sorted(i for i in db_v ^ internal if _segment(i) == s)
             flag(stage, where, "UNEXPLAINED", diff, "ids differ from database V", s)
-    gapped_v = {r["name"] for c in CHAINS for r in normg[(c, "V")]}
+    gapped_v = {r["name"]: r for c in CHAINS for r in normg[(c, "V")]}
     no_gap = {i for _, n, i in expected_ids["V"] if n not in gapped_v}
     truncated_v = {i for _, n, i in expected_ids["V"] if n != i}
-    # build_ndm_file writes no row for a partial V allele: one of FWR1-FWR3 holds no base in the IMGT columns
-    partial_v = {
-        r["name"]
-        for c in CHAINS
-        for r in normg[(c, "V")]
-        if any(not r["raw"][start - 1 : end].strip(".-") for start, end in IMGT_V_REGIONS.values())
+    # build_ndm_file writes no row for a partial V allele: one of FWR1-FWR3 holds no base in the IMGT columns.
+    # Its gapped bases must equal its database sequence, else the gapped record lost bases the allele has.
+    db_v_seqs = {r["name"]: r["seq"] for r in db["V"]}
+    partial_ids = {
+        i
+        for _, n, i in expected_ids["V"]
+        if n in gapped_v
+        and gapped_v[n]["seq"] == db_v_seqs.get(i)
+        and any(not gapped_v[n]["raw"][start - 1 : end].strip(".-") for start, end in IMGT_V_REGIONS.values())
     }
-    partial_ids = {i for _, n, i in expected_ids["V"] if n in partial_v}
     # Check ndm.imgt whenever the ndm file exists (even if it's empty).
     if ndm_path.exists():
         stage, where, missing = "database V->ndm.imgt", ndm_path.name, db_v - ndm
@@ -340,7 +342,7 @@ def _check_species(
             if api is not None and n_src > api:
                 flag(stage, fname, "UNEXPLAINED", [f"{n_src - api} records"], "not in the published API set")
             shortfall = api - n_src if api is not None else 0
-            repeated = sorted(api_repeats.get(fname, ()))
+            repeated = sorted(api_repeats.get(fname, set()) & src_names)
             repeated = repeated if len(repeated) <= shortfall else []
             flag(stage, fname, "EXPECTED", repeated, "names two published API sets give to different sequences")
             if shortfall > len(repeated):
