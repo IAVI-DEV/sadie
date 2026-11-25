@@ -6,14 +6,15 @@ and data integrity for the MOTIF_LOOKUP registry.
 """
 
 import json
+import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import logging
+from typing import Any, Dict, List, Optional, Union
 
 try:
     import jsonschema
     from jsonschema import Draft7Validator, ValidationError
+
     JSONSCHEMA_AVAILABLE = True
 except ImportError:
     JSONSCHEMA_AVAILABLE = False
@@ -23,11 +24,13 @@ logger = logging.getLogger(__name__)
 
 class MotifValidationError(Exception):
     """Custom exception for motif validation errors."""
+
     pass
 
 
 class JSONValidationError(Exception):
     """Custom exception for JSON schema validation errors."""
+
     pass
 
 
@@ -64,11 +67,9 @@ def validate_species_name(species: str) -> bool:
     Raises:
         MotifValidationError: If species name format is invalid
     """
-    pattern = r'^[a-z0-9_]+$'
+    pattern = r"^[a-z0-9_]+$"
     if not re.match(pattern, species):
-        raise MotifValidationError(
-            f"Invalid species name '{species}'. Must match pattern: {pattern}"
-        )
+        raise MotifValidationError(f"Invalid species name '{species}'. Must match pattern: {pattern}")
     return True
 
 
@@ -85,11 +86,9 @@ def validate_locus_name(locus: str) -> bool:
     Raises:
         MotifValidationError: If locus name format is invalid
     """
-    pattern = r'^(IGH|IGK|IGL|TRA|TRB|TRD|TRG)[JV]$'
+    pattern = r"^(IGH|IGK|IGL|TRA|TRB|TRD|TRG)[JV]$"
     if not re.match(pattern, locus):
-        raise MotifValidationError(
-            f"Invalid locus name '{locus}'. Must match pattern: {pattern}"
-        )
+        raise MotifValidationError(f"Invalid locus name '{locus}'. Must match pattern: {pattern}")
     return True
 
 
@@ -123,16 +122,12 @@ def validate_motif_data_structure(data: Dict[str, Any]) -> bool:
             elif locus == "ignore":
                 # Validate ignore list
                 if not isinstance(pattern, list):
-                    raise MotifValidationError(
-                        f"Ignore list for '{species}' must be a list, got {type(pattern)}"
-                    )
+                    raise MotifValidationError(f"Ignore list for '{species}' must be a list, got {type(pattern)}")
             else:
                 # Validate locus and pattern
                 validate_locus_name(locus)
                 if not isinstance(pattern, str):
-                    raise MotifValidationError(
-                        f"Pattern for '{species}.{locus}' must be a string, got {type(pattern)}"
-                    )
+                    raise MotifValidationError(f"Pattern for '{species}.{locus}' must be a string, got {type(pattern)}")
                 validate_motif_pattern(pattern)
 
     return True
@@ -170,11 +165,10 @@ def validate_provenance_metadata(provenance: Dict[str, Any]) -> bool:
         raise MotifValidationError("Provenance 'imgt_validated' must be a boolean")
 
     # Validate date format (YYYY-MM-DD)
-    date_pattern = r'^\d{4}-\d{2}-\d{2}$'
+    date_pattern = r"^\d{4}-\d{2}-\d{2}$"
     if not re.match(date_pattern, provenance["last_reviewed"]):
         raise MotifValidationError(
-            f"Provenance 'last_reviewed' must be in YYYY-MM-DD format, "
-            f"got '{provenance['last_reviewed']}'"
+            f"Provenance 'last_reviewed' must be in YYYY-MM-DD format, " f"got '{provenance['last_reviewed']}'"
         )
 
     # Validate optional fields if present
@@ -204,7 +198,7 @@ def load_json_schema(schema_path: Union[str, Path]) -> Dict[str, Any]:
         JSONValidationError: If schema cannot be loaded
     """
     try:
-        with open(schema_path, 'r', encoding='utf-8') as f:
+        with open(schema_path, "r", encoding="utf-8") as f:
             schema = json.load(f)
         return schema
     except (FileNotFoundError, PermissionError) as e:
@@ -228,9 +222,7 @@ def validate_against_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> boo
         JSONValidationError: If validation fails or jsonschema not available
     """
     if not JSONSCHEMA_AVAILABLE:
-        raise JSONValidationError(
-            "jsonschema package not available. Install with: pip install jsonschema"
-        )
+        raise JSONValidationError("jsonschema package not available. Install with: pip install jsonschema")
 
     try:
         validator = Draft7Validator(schema)
@@ -242,19 +234,14 @@ def validate_against_schema(data: Dict[str, Any], schema: Dict[str, Any]) -> boo
                 path = ".".join(str(p) for p in error.path)
                 error_messages.append(f"Path '{path}': {error.message}")
 
-            raise JSONValidationError(
-                f"Schema validation failed:\n" + "\n".join(error_messages)
-            )
+            raise JSONValidationError(f"Schema validation failed:\n" + "\n".join(error_messages))
 
         return True
     except ValidationError as e:
         raise JSONValidationError(f"Schema validation error: {e}")
 
 
-def comprehensive_motif_validation(
-    data: Dict[str, Any],
-    schema_path: Optional[Union[str, Path]] = None
-) -> bool:
+def comprehensive_motif_validation(data: Dict[str, Any], schema_path: Optional[Union[str, Path]] = None) -> bool:
     """
     Perform comprehensive validation of motif data.
 
@@ -309,7 +296,7 @@ def quick_validation_summary(data: Dict[str, Any]) -> Dict[str, Any]:
         "imgt_validated_species": 0,
         "legacy_species": 0,
         "total_patterns": 0,
-        "validation_errors": []
+        "validation_errors": [],
     }
 
     for species, species_data in data.items():

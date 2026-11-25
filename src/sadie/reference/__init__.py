@@ -7,7 +7,6 @@ from sadie.reference.settings import (
     IMGT_LOOKUP,
     J_SEGMENTS,
     MOTIF_LOOKUP,
-    get_motif_provenance,
     RECEPTORS,
     RENAME_DICT,
     RENAME_DICT_TRANSLATE,
@@ -15,6 +14,7 @@ from sadie.reference.settings import (
     SEGMENTS,
     SEGMENTS_INTERNAL_DATA,
     IMGT_DEF_nt,
+    get_motif_provenance,
 )
 
 # Create MOTIF_PROVENANCE alias for the public API

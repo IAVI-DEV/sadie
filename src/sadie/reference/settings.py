@@ -1,8 +1,8 @@
 import json
 import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
 from collections.abc import Mapping
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 # Module-level logger
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def _load_motif_registry() -> Dict[str, Any]:
     json_path = _get_motif_json_path()
 
     try:
-        with open(json_path, 'r', encoding='utf-8') as f:
+        with open(json_path, "r", encoding="utf-8") as f:
             registry = json.load(f)
 
         # Validate loaded data structure
@@ -151,12 +151,13 @@ def _load_motif_registry() -> Dict[str, Any]:
             if not isinstance(species_data, dict):
                 raise ValueError(f"Species data for '{species}' must be a dictionary, got {type(species_data)}")
 
-            if '_provenance' not in species_data:
+            if "_provenance" not in species_data:
                 raise ValueError(f"Species '{species}' missing required _provenance metadata")
 
             # Check for at least one pattern
-            pattern_count = sum(1 for k, v in species_data.items()
-                              if k not in ('_provenance', 'ignore') and isinstance(v, str))
+            pattern_count = sum(
+                1 for k, v in species_data.items() if k not in ("_provenance", "ignore") and isinstance(v, str)
+            )
             if pattern_count == 0:
                 logger.warning(f"Species '{species}' has no motif patterns")
 
@@ -165,8 +166,11 @@ def _load_motif_registry() -> Dict[str, Any]:
 
         # Log validation counts
         try:
-            imgt_validated = sum(1 for species_data in registry.values()
-                                if species_data.get('_provenance', {}).get('imgt_validated', False))
+            imgt_validated = sum(
+                1
+                for species_data in registry.values()
+                if species_data.get("_provenance", {}).get("imgt_validated", False)
+            )
             legacy_count = len(registry) - imgt_validated
             logger.info(f"Motif registry: {imgt_validated} IMGT-validated, {legacy_count} legacy species")
         except Exception as e:
@@ -182,10 +186,7 @@ def _load_motif_registry() -> Dict[str, Any]:
         )
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON in motif registry: {e}")
-        raise json.JSONDecodeError(
-            f"Malformed JSON in motif registry {json_path}: {e}",
-            e.doc, e.pos
-        )
+        raise json.JSONDecodeError(f"Malformed JSON in motif registry {json_path}: {e}", e.doc, e.pos)
     except (ValueError, TypeError) as e:
         logger.error(f"Invalid data structure in motif registry: {e}")
         raise ValueError(
@@ -194,10 +195,7 @@ def _load_motif_registry() -> Dict[str, Any]:
         )
     except PermissionError as e:
         logger.error(f"Permission denied reading motif registry: {json_path}")
-        raise PermissionError(
-            f"Cannot read motif registry file {json_path}: {e}. "
-            f"Check file permissions."
-        )
+        raise PermissionError(f"Cannot read motif registry file {json_path}: {e}. " f"Check file permissions.")
     except Exception as e:
         logger.error(f"Unexpected error loading motif registry: {e}")
         raise RuntimeError(
@@ -220,10 +218,7 @@ def _filter_provenance_metadata(data: Dict[str, Any]) -> Dict[str, Dict[str, Any
 
     for species, species_data in data.items():
         # Create copy without _provenance
-        filtered_species = {
-            key: value for key, value in species_data.items()
-            if key != "_provenance"
-        }
+        filtered_species = {key: value for key, value in species_data.items() if key != "_provenance"}
         filtered[species] = filtered_species
 
     return filtered
@@ -307,8 +302,7 @@ class _MotifLookupProxy(Mapping):
         except Exception as e:
             logger.error(f"Error accessing MOTIF_LOOKUP['{key}']: {e}")
             raise RuntimeError(
-                f"Failed to access motif data for species '{key}': {e}. "
-                f"This may indicate a data loading issue."
+                f"Failed to access motif data for species '{key}': {e}. " f"This may indicate a data loading issue."
             )
 
     def __iter__(self):

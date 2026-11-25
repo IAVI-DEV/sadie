@@ -394,6 +394,7 @@ class TestMultiSpeciesBatch:
 # from the species BLAST database — no network access required.
 def _load_fasta(path: Path) -> dict:
     from Bio import SeqIO
+
     return {r.id: str(r.seq) for r in SeqIO.parse(path, "fasta")}
 
 
@@ -410,9 +411,7 @@ def test_cat_ighm_c_call_after_ighc_source_added() -> None:
 
     query = cat_v["IGHV1-21*01"] + cat_j["IGHJ1*01"] + cat_c["IGHM*01"]
     result = Airr("cat").run_single("cat_IgM", query)
-    assert result["c_call"].iloc[0] == "IGHM*01", (
-        f"Expected c_call=IGHM*01, got {result['c_call'].iloc[0]}"
-    )
+    assert result["c_call"].iloc[0] == "IGHM*01", f"Expected c_call=IGHM*01, got {result['c_call'].iloc[0]}"
 
 
 def test_orangutan_bornean_ighd_c_call_after_ighd_records_added() -> None:
@@ -428,9 +427,7 @@ def test_orangutan_bornean_ighd_c_call_after_ighd_records_added() -> None:
 
     query = ob_v["IGHV3-23*01"] + ob_j["IGHJ4*01"] + ob_c["IGHD*01"]
     result = Airr("orangutan_bornean").run_single("orangutan_IgD", query)
-    assert result["c_call"].iloc[0] == "IGHD*01", (
-        f"Expected c_call=IGHD*01, got {result['c_call'].iloc[0]}"
-    )
+    assert result["c_call"].iloc[0] == "IGHD*01", f"Expected c_call=IGHD*01, got {result['c_call'].iloc[0]}"
 
 
 def test_germlines_data_ships_no_rhesus_macaque_path():

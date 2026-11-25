@@ -201,7 +201,11 @@ class HMMER:
                 # Priority 3: Build G3 HMMs (final fallback)
                 # g3.jordanrwillis.com may be unreachable; degrade gracefully.
                 try:
-                    if chain not in self.g3.chains or single_species not in self.g3.species or use_numbering_hmms is True:
+                    if (
+                        chain not in self.g3.chains
+                        or single_species not in self.g3.species
+                        or use_numbering_hmms is True
+                    ):
                         continue  # No HMM available for this pair
                     hmm = self.g3.get_hmm(
                         source=source,
@@ -213,6 +217,7 @@ class HMMER:
                     self._loaded_pairs.add((canonical_species, chain))
                 except Exception as e:
                     import logging
+
                     logging.warning(f"G3 fallback unavailable for {single_species} {chain}: {e}")
 
         # Guard rail: when both species and chains were explicitly provided

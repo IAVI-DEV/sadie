@@ -99,7 +99,6 @@ def test_disk_guard_no_aliases_in_germlines_paths():
         if stem in _ALIASES and stem not in DISK_GUARD_DEFERRED:
             offenders.add(stem)
 
-    assert not offenders, (
-        "Alias names found in germlines disk paths (rename to canonical slug):\n  "
-        + "\n  ".join(sorted(offenders))
+    assert not offenders, "Alias names found in germlines disk paths (rename to canonical slug):\n  " + "\n  ".join(
+        sorted(offenders)
     )
