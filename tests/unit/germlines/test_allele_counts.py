@@ -253,7 +253,6 @@ def parse_dump_to_fasta(tmp_path, dump):
     (tmp_path / "dump.sql").write_text(dump)
     downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
     downloader._process_sql_dump(tmp_path / "dump.sql", ["human"])
-    downloader._write_aliases(["human"])
     return {path.name: path.read_text() for path in (tmp_path / "out").rglob("*.fasta")}
 
 
@@ -300,43 +299,6 @@ def test_process_sql_dump_keeps_only_members_of_a_published_germline_set(tmp_pat
 
 
 @pytest.mark.parametrize(
-    "older_sequence, current_description, expected",
-    [
-        ("TTTTCAGGTGAAAA", "A1", "IGHV1-1*i01\tIGHV1-1*01\trenamed\n"),
-        ("TTTTCAGGAGAAAA", "A1", "IGHV1-1*i01\tIGHV1-1*01\trevised\n"),
-        ("TTTTCAGGTGAAAA", "A2", "IGHV1-1*i01\t\tretired\n"),
-    ],
-    ids=["later_release_same_sequence", "later_release_new_sequence", "no_release_in_a_published_set"],
-)
-def test_write_aliases_points_superseded_archive_label_to_current_release(
-    tmp_path, older_sequence, current_description, expected
-):
-    older = gene_description_dump("IGHV1-1*i01", "IGH", older_sequence, "CAG...GTG", "5", "10", 1, "superceded")
-    current = gene_description_dump(
-        "IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10", 2, description=current_description
-    )
-    parse_dump_to_fasta(tmp_path, older + "\n" + current)
-
-    assert (tmp_path / "out" / "human" / "aliases.tsv").read_text() == "alias\tcurrent\treason\n" + expected
-
-
-def merge_api_sets(tmp_path, monkeypatch, archive, api_sets):
-    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
-    write_fasta(tmp_path / "out" / "human" / "IGKV.fasta", archive)
-    write_fasta(tmp_path / "out" / "human" / "IGKV_gapped.fasta", {n: s + "." for n, s in archive.items()})
-    sets = [{"germline_set_id": str(i), "locus": "IGK"} for i in range(len(api_sets))]
-    monkeypatch.setattr(downloader, "get_germline_sets", lambda _: sets)
-    monkeypatch.setattr(
-        downloader,
-        "get_germline_set_fasta",
-        lambda set_id, gapped=False: "".join(f">{n}\n{s}\n" for n, s in api_sets[int(set_id)].items()),
-    )
-    downloader.supplement_from_api(["human"])
-    downloader._write_aliases(["human"])
-    return downloader
-
-
-@pytest.mark.parametrize(
     "archive, api_sets, expected",
     [
         ({"IGKV-AAAA": "ACGT"}, [{"IGKV0-AAAA*00": "ACGT"}], [("IGKV0-AAAA*00", "ACGT", "ACGT")]),
@@ -362,42 +324,22 @@ def merge_api_sets(tmp_path, monkeypatch, archive, api_sets):
 def test_supplement_from_api_ships_each_allele_once_under_its_api_name(
     tmp_path, monkeypatch, archive, api_sets, expected
 ):
-    downloader = merge_api_sets(tmp_path, monkeypatch, archive, api_sets)
+    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
+    write_fasta(tmp_path / "out" / "human" / "IGKV.fasta", archive)
+    write_fasta(tmp_path / "out" / "human" / "IGKV_gapped.fasta", {n: s + "." for n, s in archive.items()})
+    sets = [{"germline_set_id": str(i), "locus": "IGK"} for i in range(len(api_sets))]
+    monkeypatch.setattr(downloader, "get_germline_sets", lambda _: sets)
+    monkeypatch.setattr(
+        downloader,
+        "get_germline_set_fasta",
+        lambda set_id, gapped=False: "".join(f">{n}\n{s}\n" for n, s in api_sets[int(set_id)].items()),
+    )
+
+    downloader.supplement_from_api(["human"])
 
     out = tmp_path / "out" / "human"
     gapped = dict(downloader.parse_fasta((out / "IGKV_gapped.fasta").read_text()))
     assert [(n, s, gapped[n]) for n, s in downloader.parse_fasta((out / "IGKV.fasta").read_text())] == expected
-
-
-@pytest.mark.parametrize(
-    "archive, api_sets, expected",
-    [
-        ({"IGKV-AAAA": "ACGT"}, [{"IGKV0-AAAA*00": "ACGT"}], "IGKV-AAAA\tIGKV0-AAAA*00\trenamed\n"),
-        (
-            {"IGKV-AAAA": "ACGT"},
-            [{"IGKV0-BBBB*00": "ACGT"}, {"IGKV0-AAAA*00": "ACGT"}],
-            "IGKV-AAAA\tIGKV0-AAAA*00\trenamed\n",
-        ),
-        ({"IGKV-AAAA": "ACGT"}, [{"IGKV0-BBBB*00": "ACGT"}], "IGKV-AAAA\tIGKV0-BBBB*00\trenamed\n"),
-        (
-            {"IGKV-AAAA": "ACGT"},
-            [{"IGKV0-AAAA*00": "TTTT"}, {"IGKV0-AAAA*00": "ACGT"}],
-            "IGKV-AAAA\tIGKV0-AAAA*00\trevised\n",
-        ),
-        ({"IGKV1-1*01": "ACGT"}, [{"IGKV1-1*01": "ACGTA"}], ""),
-    ],
-    ids=[
-        "own_api_name",
-        "own_api_name_over_earlier_set_with_same_sequence",
-        "other_api_name_with_same_sequence",
-        "own_api_name_ships_earlier_set_sequence",
-        "same_name_needs_no_alias",
-    ],
-)
-def test_write_aliases_maps_replaced_archive_label_to_api_name(tmp_path, monkeypatch, archive, api_sets, expected):
-    merge_api_sets(tmp_path, monkeypatch, archive, api_sets)
-
-    assert (tmp_path / "out" / "human" / "aliases.tsv").read_text() == "alias\tcurrent\treason\n" + expected
 
 
 @pytest.mark.parametrize(
@@ -447,3 +389,72 @@ def test_download_replaces_fasta_only_when_archive_and_api_both_succeed(tmp_path
         assert on_disk.read_text() == ">IGHV1-1*01\nAAAA\n>IGHV1-3*01\nGGGG\n"
     assert downloader.output_dir == tmp_path / "out"
     assert (on_disk.parent / "aliases.tsv").exists() is (failing is None)
+
+
+def download_aliases(tmp_path, monkeypatch, dump, api_sets):
+    from sadie.germlines.scripts import download_ogrdb
+
+    downloader = OGRDBDownloader(output_dir=tmp_path / "out", cache_dir=tmp_path / "cache")
+    (tmp_path / "cache" / "ogrdb_archive.tgz").write_bytes(b"cached")
+    sets = [{"germline_set_id": str(i), "locus": "IGK"} for i in range(len(api_sets))]
+    monkeypatch.setattr(downloader, "_get_latest_zenodo_record", lambda: ("1", "http://zenodo.invalid/a.tgz", "v1"))
+    monkeypatch.setattr(download_ogrdb, "urlretrieve", lambda *a, **k: None)
+    monkeypatch.setattr(downloader, "_extract_archive", lambda archive, target: (target / "dump.sql").write_text(dump))
+    monkeypatch.setattr(downloader, "get_germline_sets", lambda _: sets)
+    monkeypatch.setattr(
+        downloader,
+        "get_germline_set_fasta",
+        lambda set_id, gapped=False: "".join(f">{n}\n{s}\n" for n, s in api_sets[int(set_id)].items()),
+    )
+
+    downloader.download(["human"])
+
+    aliases = tmp_path / "out" / "human" / "aliases.tsv"
+    return aliases.read_text() if aliases.exists() else None
+
+
+@pytest.mark.parametrize(
+    "older_sequence, current_description, expected",
+    [
+        ("TTTTCAGGTGAAAA", "A1", "IGHV1-1*i01\tIGHV1-1*01\trenamed\n"),
+        ("TTTTCAGGAGAAAA", "A1", "IGHV1-1*i01\tIGHV1-1*01\trevised\n"),
+        ("TTTTCAGGTGAAAA", "A2", "IGHV1-1*i01\t\tretired\n"),
+    ],
+    ids=["later_release_same_sequence", "later_release_new_sequence", "no_release_in_a_published_set"],
+)
+def test_download_aliases_superseded_archive_label_to_current_release(
+    tmp_path, monkeypatch, older_sequence, current_description, expected
+):
+    older = gene_description_dump("IGHV1-1*i01", "IGH", older_sequence, "CAG...GTG", "5", "10", 1, "superceded")
+    current = gene_description_dump(
+        "IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10", 2, description=current_description
+    )
+
+    aliases = download_aliases(tmp_path, monkeypatch, older + "\n" + current, [])
+
+    assert aliases == "alias\tcurrent\treason\n" + expected
+
+
+@pytest.mark.parametrize(
+    "archive_name, api_sets, expected",
+    [
+        ("IGKV-AAAA", [{"IGKV0-AAAA*00": "ACGT"}], "IGKV-AAAA\tIGKV0-AAAA*00\trenamed\n"),
+        ("IGKV-AAAA", [{"IGKV0-BBBB*00": "ACGT"}, {"IGKV0-AAAA*00": "ACGT"}], "IGKV-AAAA\tIGKV0-AAAA*00\trenamed\n"),
+        ("IGKV-AAAA", [{"IGKV0-BBBB*00": "ACGT"}], "IGKV-AAAA\tIGKV0-BBBB*00\trenamed\n"),
+        ("IGKV-AAAA", [{"IGKV0-AAAA*00": "TTTT"}, {"IGKV0-AAAA*00": "ACGT"}], "IGKV-AAAA\tIGKV0-AAAA*00\trevised\n"),
+        ("IGKV1-1*01", [{"IGKV1-1*01": "ACGTA"}], ""),
+    ],
+    ids=[
+        "own_api_name",
+        "own_api_name_over_earlier_set_with_same_sequence",
+        "other_api_name_with_same_sequence",
+        "own_api_name_ships_earlier_set_sequence",
+        "same_name_needs_no_alias",
+    ],
+)
+def test_download_aliases_replaced_archive_label_to_api_name(tmp_path, monkeypatch, archive_name, api_sets, expected):
+    archive = gene_description_dump(archive_name, "IGK", "ACGT", "ACGT", "1", "4")
+
+    aliases = download_aliases(tmp_path, monkeypatch, archive, api_sets)
+
+    assert aliases == "alias\tcurrent\treason\n" + expected
