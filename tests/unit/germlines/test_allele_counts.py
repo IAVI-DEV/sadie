@@ -283,8 +283,8 @@ def test_process_sql_dump_skips_t_cell_receptor_loci(tmp_path):
 @pytest.mark.parametrize(
     "older_set, current_set, expected",
     [
-        ("superceded", "published", ">IGHV1-1*01\nCAGGTG\n"),
-        ("superceded", "superceded", None),
+        ("superseded", "published", ">IGHV1-1*01\nCAGGTG\n"),
+        ("superseded", "superseded", None),
         (None, None, None),
     ],
     ids=["superseded_release_then_published_set_member", "member_of_superseded_sets_only", "in_no_germline_set"],
@@ -425,7 +425,7 @@ def download_aliases(tmp_path, monkeypatch, dump, api_sets):
 def test_download_aliases_superseded_archive_label_to_current_release(
     tmp_path, monkeypatch, older_sequence, current_description, expected
 ):
-    older = gene_description_dump("IGHV1-1*i01", "IGH", older_sequence, "CAG...GTG", "5", "10", 1, "superceded")
+    older = gene_description_dump("IGHV1-1*i01", "IGH", older_sequence, "CAG...GTG", "5", "10", 1, "superseded")
     current = gene_description_dump(
         "IGHV1-1*01", "IGH", "TTTTCAGGTGAAAA", "CAG...GTG", "5", "10", 2, description=current_description
     )
