@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Tuple
 
 from Bio import SeqIO
 
+from sadie.germlines.builders.blast import CHAINS, BlastDBBuilder
 from sadie.germlines.builders.imgt_positions import (
     alignment_region_columns,
     calculate_imgt_v_positions,
@@ -224,6 +225,10 @@ def build_ndm_file(species: str, germlines_root: Path) -> List[str]:
     """
     normalized_gapped_dir = germlines_root / "normalized" / species / "gapped"
     entries = []
+    # IgBLAST finds a row by the id the database gives the allele, which BlastDBBuilder derives in ungapped order
+    ungapped = [germlines_root / "normalized" / species / "ungapped" / f"IG{chain}V.fasta" for chain in CHAINS]
+    names = [record.id for path in ungapped if path.exists() for record in SeqIO.parse(path, "fasta")]
+    database_id = dict(zip(names, BlastDBBuilder().database_ids(names)))
 
     # Process V genes for each chain
     for chain in ["H", "K", "L"]:
@@ -237,7 +242,9 @@ def build_ndm_file(species: str, germlines_root: Path) -> List[str]:
         gapped = [(record.id, str(record.seq).upper()) for record in SeqIO.parse(gapped_fasta, "fasta")]
         layout_columns = alignment_region_columns(gapped_seq for _, gapped_seq in gapped)
         for gene_name, gapped_seq in gapped:
-            entry = generate_ndm_entry(gene_name, gapped_seq, chain, layout_columns[gap_layout(gapped_seq)])
+            entry = generate_ndm_entry(
+                database_id.get(gene_name, gene_name), gapped_seq, chain, layout_columns[gap_layout(gapped_seq)]
+            )
 
             if entry:
                 entries.append(entry)
