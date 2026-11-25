@@ -527,6 +527,8 @@ class OGRDBDownloader(OGRDBApiClient):
             # Alias each replaced archive label to its own API name (archive IGKV-XXXX is IGKV0-XXXX*00),
             # else to another API name with the same sequence (another strain's label).
             # shortcut: assumes OGRDB's FASTA naming; join on the label in /latest/airr if OGRDB changes it.
+            # shortcut: keyed by label, so a label on two published descriptions keeps the sequence parsed
+            # last (mouse IGKV-KA5D, IGKV-YKPT); key by description id if OGRDB reuses more labels.
             for label, seq in relabeled.items():
                 own = re.sub(r"^(IG[HKL][VDJC])-(\w+)$", r"\g<1>0-\g<2>*00", label)
                 same = api_names_by_seq[seq]

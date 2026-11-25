@@ -5,10 +5,13 @@ Allele Aliases
 Old OGRDB labels and the current name of each, written per species by the OGRDB
 downloader to ``sources/ogrdb/<species>/aliases.tsv``.
 
-Reasons:
-- renamed: the current name holds the identical sequence
-- revised: a later release of the same OGRDB description is current; its sequence changed
-- retired: no published germline set lists the description; no current name
+Reasons, checked against the FASTA files written with the alias file:
+- renamed: the current name ships the sequence the label had
+- revised: the current name ships another sequence
+- retired: no current name ships
+
+The label had the sequence parsed last for it. A label on two published
+descriptions (mouse IGKV-KA5D, IGKV-YKPT) keeps one of the two.
 """
 
 import csv
