@@ -164,7 +164,8 @@ class TestGermlinesStatus:
 
     def test_status_command(self, cli_runner):
         """Test status command shows table."""
-        result = cli_runner.invoke(sadie, ["germlines", "status"])
+        with patch("sadie.germlines.cli.get_upstream_version_string", return_value="release-offline"):
+            result = cli_runner.invoke(sadie, ["germlines", "status"])
         assert result.exit_code == 0
         assert "imgt" in result.output.lower()
         assert "ogrdb" in result.output.lower()
