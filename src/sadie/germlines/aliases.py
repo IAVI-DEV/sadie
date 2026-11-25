@@ -39,6 +39,7 @@ def read_aliases(path: Path) -> Dict[str, Tuple[str, str]]:
         with open(path, newline="", encoding="utf-8") as f:
             return {row["alias"]: (row["current"], row["reason"]) for row in csv.DictReader(f, delimiter="\t")}
     except FileNotFoundError:
+        logger.debug(f"No OGRDB alias file {path}; no aliases used")
         return {}
     except (OSError, UnicodeDecodeError, KeyError, csv.Error) as e:
         logger.warning(f"OGRDB alias file {path} not read ({type(e).__name__}); no aliases used")

@@ -5,6 +5,7 @@ Tests for GermlineManager
 Tests priority-based germline database management.
 """
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -54,7 +55,7 @@ NOT_READ = "OGRDB alias file <tmp>/ogrdb/mouse/aliases.tsv not read ({}); no ali
 
 
 @pytest.mark.parametrize(
-    "providers, aliases, asked_name, expected_gene, expected_warnings",
+    "providers, aliases, asked_name, expected_gene, expected_logs",
     [
         (["ogrdb"], ALIASES, "IGKV0-AAAA*00", ("IGKV0-AAAA*00", "ogrdb"), []),
         (["ogrdb"], ALIASES, "IGKV-AAAA", ("IGKV0-AAAA*00", "ogrdb"), [RENAMED]),
@@ -82,7 +83,7 @@ NOT_READ = "OGRDB alias file <tmp>/ogrdb/mouse/aliases.tsv not read ({}); no ali
         (["ogrdb"], ALIASES, "IGKV9-9*01", None, []),
         (["vdjbase"], ALIASES, "IGKV-AAAA", None, []),
         (None, ALIASES, "IGKV-AAAA", ("IGKV0-AAAA*00", "ogrdb"), [RENAMED]),
-        (["ogrdb"], None, "IGKV-AAAA", None, []),
+        (["ogrdb"], None, "IGKV-AAAA", None, ["No OGRDB alias file <tmp>/ogrdb/mouse/aliases.tsv; no aliases used"]),
         (["ogrdb"], b"name\tto\nIGKV-AAAA\tIGKV0-AAAA*00\n", "IGKV-AAAA", None, [NOT_READ.format("KeyError")]),
         (["ogrdb"], b"\xff\xfe\n", "IGKV-AAAA", None, [NOT_READ.format("UnicodeDecodeError")]),
         (["ogrdb"], "directory", "IGKV-AAAA", None, [NOT_READ.format("IsADirectoryError")]),
@@ -103,10 +104,11 @@ NOT_READ = "OGRDB alias file <tmp>/ogrdb/mouse/aliases.tsv not read ({}); no ali
     ],
 )
 def test_get_gene_by_name_resolves_old_ogrdb_label_only_when_sequence_is_unchanged(
-    tmp_path, caplog, providers, aliases, asked_name, expected_gene, expected_warnings
+    tmp_path, caplog, providers, aliases, asked_name, expected_gene, expected_logs
 ):
     from sadie.germlines.manager import GermlineManager
 
+    caplog.set_level(logging.DEBUG, logger="sadie.germlines.aliases")
     for provider, sequence in [("ogrdb", "GACATTGTGATGACC"), ("vdjbase", "GACATTGTGATGACCA")]:
         (tmp_path / provider / "mouse").mkdir(parents=True)
         (tmp_path / provider / "mouse" / "IGKV.fasta").write_text(f">IGKV0-AAAA*00\n{sequence}\n")
@@ -123,7 +125,7 @@ def test_get_gene_by_name_resolves_old_ogrdb_label_only_when_sequence_is_unchang
         r.getMessage().replace(str(tmp_path), "<tmp>")
         for r in caplog.records
         if r.name in ("sadie.germlines.manager", "sadie.germlines.aliases")
-    ] == expected_warnings
+    ] == expected_logs
 
 
 # TODO: Add more tests
