@@ -4,8 +4,7 @@ on:
     tags:
       - '*'
     branches: ['main']
-  pull_request:
-    branches: ['main', 'update_doc', 'development']
+  pull_request:  # any base branch: integration branches come and go
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
