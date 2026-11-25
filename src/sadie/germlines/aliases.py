@@ -15,6 +15,7 @@ descriptions (mouse IGKV-KA5D, IGKV-YKPT) keeps one of the two.
 """
 
 import csv
+import functools
 import logging
 from pathlib import Path
 from typing import Dict, Tuple
@@ -33,6 +34,7 @@ def write_aliases(path: Path, aliases: Dict[str, Tuple[str, str]]) -> None:
         writer.writerows((alias, *aliases[alias]) for alias in sorted(aliases))
 
 
+@functools.lru_cache(maxsize=None)
 def read_aliases(path: Path) -> Dict[str, Tuple[str, str]]:
     """Return alias -> (current, reason); a missing or unreadable file has no aliases."""
     try:
