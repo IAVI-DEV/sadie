@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Mouse: two API names stand for two sequences each (`IGKV0-YKPT*00`, `IGKV0-KA5D*00`). One
     record ships per name. The PWD/PhJ `IGKV0-KA5D*00` sequence (287 nt) ships under no name, as
     before.
-  - `reference.yml` OGRDB lists: human 732 to 728 names. Mouse keeps 1,176 names, and 840 change.
+  - `reference.yml` OGRDB lists: human 729 to 728 names. Mouse keeps 1,176 names, and 840 change.
   - The Added tables above now give the re-parsed counts. They said human IGHD 53. The shipped
     file had 33, and the API set has 33.
 
