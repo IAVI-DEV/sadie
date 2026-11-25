@@ -12,8 +12,11 @@ Reasons:
 """
 
 import csv
+import logging
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 ALIAS_FILE = "aliases.tsv"
 COLUMNS = ("alias", "current", "reason")
@@ -33,3 +36,14 @@ def read_aliases(path: Path) -> Dict[str, Tuple[str, str]]:
         return {}
     with open(path, newline="") as f:
         return {row["alias"]: (row["current"], row["reason"]) for row in csv.DictReader(f, delimiter="\t")}
+
+
+def resolve_alias(name: str, species: str, sources_dir: Path) -> Optional[str]:
+    """Return the current OGRDB name for an old label when the sequence is unchanged, else None."""
+    current, reason = read_aliases(Path(sources_dir) / "ogrdb" / species / ALIAS_FILE).get(name, ("", ""))
+    if reason == "renamed":
+        logger.warning(f"OGRDB {species} label {name} is now {current} (same sequence); using {current}")
+        return current
+    if reason:
+        logger.warning(f"OGRDB {species} label {name} not resolved: {reason}, current release {current or 'none'}")
+    return None

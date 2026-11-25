@@ -15,6 +15,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .aliases import resolve_alias
 from .models import GermlineGene
 from .providers.base import GermlineProvider
 from .registry import SpeciesRegistry
@@ -299,9 +300,17 @@ class GermlineManager:
         Returns
         -------
         GermlineGene or None
-            Gene if found, None otherwise
+            Gene if found, None otherwise. An old OGRDB label whose sequence now ships
+            under another name returns the gene under its current name.
         """
         species = SpeciesRegistry.normalize(species)
+        gene = self._first_gene_named(name, species)
+        if gene is None and "ogrdb" in self.provider_names:
+            current = resolve_alias(name, species, self.data_dir)
+            gene = self._first_gene_named(current, species) if current else None
+        return gene
+
+    def _first_gene_named(self, name: str, species: str) -> Optional[GermlineGene]:
         for provider in self.providers:
             try:
                 gene = provider.fetch_gene_by_name(name, species)
