@@ -369,7 +369,7 @@ class OGRDBDownloader(OGRDBApiClient):
                     logger.info(f"Processing SQL file: {sql_file}")
                     self._process_sql_dump(sql_file, species)
 
-        # Supplement missing sequences from API (archive is truth, API fills gaps)
+        # Merge the published API sets: API records replace archive records with the same name or sequence
         self.supplement_from_api(species)
 
         duration_ms = int((time.time() - start_time) * 1000)
@@ -380,11 +380,11 @@ class OGRDBDownloader(OGRDBApiClient):
 
     def supplement_from_api(self, species: List[str]) -> None:
         """
-        Supplement archive data with missing alleles from OGRDB API.
+        Merge the alleles of the published OGRDB API sets into the archive data.
 
-        Archive alleles are treated as truth - if an allele exists in both
-        archive and API, the archive version is kept. API only adds alleles
-        that don't exist in the archive.
+        An API record replaces an archive record with the same name or the same
+        sequence, so each allele ships once under its API name. Archive records
+        that no API set carries are kept.
 
         Parameters
         ----------
@@ -392,6 +392,7 @@ class OGRDBDownloader(OGRDBApiClient):
             Species to supplement (e.g., ["human", "mouse"])
         """
         logger.info("Checking API for missing alleles...")
+        from_api: Dict[Path, set] = {}  # FASTA path -> names an API set wrote
 
         for sp in species:
             taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(sp)
@@ -467,13 +468,19 @@ class OGRDBDownloader(OGRDBApiClient):
                         for name, seq in self.parse_fasta(gapped_path.read_text()):
                             archive_gapped[name] = seq
 
-                    # Merge: archive takes priority, API fills gaps
-                    merged_ungapped = dict(archive_ungapped)  # Start with archive
-                    merged_gapped = dict(archive_gapped)
+                    # Merge: the API set is the current release. Its record replaces an archive record
+                    # with the same name, or with the same sequence under another label (mouse archive
+                    # IGKV-XXXX is IGKV0-XXXX*00 in the API). Records an earlier set wrote stay.
+                    api_names = {n for n, _ in api_ungapped}
+                    api_seqs = {s for _, s in api_ungapped}
+                    earlier = from_api.setdefault(ungapped_path, set())
+                    replaced = {
+                        n for n, s in archive_ungapped.items() if n not in earlier and (n in api_names or s in api_seqs)
+                    }
+                    merged_ungapped = {n: s for n, s in archive_ungapped.items() if n not in replaced}
+                    merged_gapped = {n: s for n, s in archive_gapped.items() if n not in replaced}
+                    earlier |= api_names
                     api_added = 0
-                    counts = self.allele_counts.setdefault(sp, {}).setdefault(f"IG{chain}{segment}", {})
-                    counts["api"] = counts.get("api", 0) + len(api_ungapped)
-                    counts["written"] = len(set(merged_ungapped) | {n for n, _ in api_ungapped})
 
                     for name, seq in api_ungapped:
                         if name not in merged_ungapped:
@@ -484,7 +491,11 @@ class OGRDBDownloader(OGRDBApiClient):
                         if name not in merged_gapped:
                             merged_gapped[name] = seq
 
-                    if api_added == 0:
+                    counts = self.allele_counts.setdefault(sp, {}).setdefault(f"IG{chain}{segment}", {})
+                    counts["api"] = counts.get("api", 0) + len(api_ungapped)
+                    counts["written"] = len(merged_ungapped)
+
+                    if api_added == 0 and not replaced:
                         logger.debug(f"No new alleles from API for {ungapped_path.name}")
                         continue
 
@@ -493,7 +504,7 @@ class OGRDBDownloader(OGRDBApiClient):
                         for name, seq in merged_ungapped.items():
                             f.write(f">{name}\n{seq}\n")
                     logger.info(
-                        f"Merged {ungapped_path.name}: {len(archive_ungapped)} archive + "
+                        f"Merged {ungapped_path.name}: {len(archive_ungapped) - len(replaced)} archive + "
                         f"{api_added} API = {len(merged_ungapped)} total"
                     )
 
@@ -707,7 +718,11 @@ class OGRDBDownloader(OGRDBApiClient):
             rows = self._parse_multi_row_insert(values_block)
             all_rows.extend(rows)
 
-        logger.info(f"Found {len(all_rows)} total rows in gene_description table")
+        # The table keeps every release of every description (superseded, withdrawn, draft, and
+        # published ones no germline set includes). Current alleles are the members of a published set.
+        members = self._published_set_members(content)
+        logger.info(f"Found {len(all_rows)} rows in gene_description table, {len(members)} in a published set")
+        all_rows = [row for row in all_rows if row.split(",", 1)[0].strip() in members]
 
         count = 0
         for row in all_rows:
@@ -721,6 +736,20 @@ class OGRDBDownloader(OGRDBApiClient):
 
         # Write FASTA files
         self._write_fasta_files(sequences)
+
+    def _published_set_members(self, content: str) -> set:
+        """Return the gene_description ids that a published germline set lists."""
+
+        def table(name: str) -> List[List[Optional[str]]]:
+            return [
+                [self._clean_sql_string(v) for v in self._split_sql_row(row)]
+                for block in _extract_insert_blocks(content, name)
+                for row in self._parse_multi_row_insert(block)
+            ]
+
+        # germline_set: id (0), status (7); gene_descriptions_germline_sets: gene_descriptions_id, germline_sets_id
+        published = {r[0] for r in table("germline_set") if len(r) > 7 and r[7] == "published"}
+        return {r[0] for r in table("gene_descriptions_germline_sets") if len(r) > 1 and r[1] in published}
 
     def _parse_multi_row_insert(self, values_block: str) -> List[str]:
         """

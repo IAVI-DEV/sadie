@@ -6,7 +6,7 @@
   "description": "human_J",
   "number-of-letters": 1528,
   "number-of-sequences": 34,
-  "last-updated": "2026-11-13T16:06:00",
+  "last-updated": "2026-11-24T14:39:00",
   "number-of-volumes": 1,
   "bytes-total": 200940,
   "bytes-to-cache": 900,

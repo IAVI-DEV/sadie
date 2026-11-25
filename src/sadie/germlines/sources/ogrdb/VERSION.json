@@ -1,6 +1,72 @@
 {
   "version": "release-23947887",
-  "downloaded_at": "2026-11-05T12:12:56.281501",
+  "downloaded_at": "2026-11-24T14:39:01.690433",
   "provider": "ogrdb",
-  "species_count": 3
+  "species_count": 3,
+  "allele_counts": {
+    "human": {
+      "IGHV": {
+        "written": 209,
+        "api": 209
+      },
+      "IGKV": {
+        "written": 82,
+        "api": 82
+      },
+      "IGLV": {
+        "written": 88,
+        "api": 88
+      },
+      "IGHD": {
+        "written": 33,
+        "api": 33
+      },
+      "IGHJ": {
+        "written": 7,
+        "api": 7
+      },
+      "IGKJ": {
+        "written": 7,
+        "api": 7
+      },
+      "IGLJ": {
+        "written": 10,
+        "api": 10
+      },
+      "IGHC": {
+        "written": 338,
+        "api": 338
+      }
+    },
+    "mouse": {
+      "IGHV": {
+        "written": 691,
+        "api": 691
+      },
+      "IGLV": {
+        "written": 63,
+        "api": 63
+      },
+      "IGKV": {
+        "written": 1580,
+        "api": 1582
+      },
+      "IGHD": {
+        "written": 66,
+        "api": 66
+      },
+      "IGHJ": {
+        "written": 28,
+        "api": 28
+      },
+      "IGKJ": {
+        "written": 11,
+        "api": 11
+      },
+      "IGLJ": {
+        "written": 7,
+        "api": 7
+      }
+    }
+  }
 }
