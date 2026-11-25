@@ -50,6 +50,7 @@ from typing import Dict, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
+from ..aliases import ALIAS_FILE, write_aliases
 from ..registry import SpeciesRegistry
 
 logger = logging.getLogger(__name__)
@@ -311,6 +312,8 @@ class OGRDBDownloader(OGRDBApiClient):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         # species dir -> file stem -> {"api": alleles in the published API sets, "written": records written}
         self.allele_counts: Dict[str, Dict[str, Dict[str, int]]] = {}
+        # species dir -> old label -> (candidate current name or "", the label's sequence)
+        self.aliases: Dict[str, Dict[str, Tuple[str, Optional[str]]]] = {}
 
     def download(self, species: List[str], force: bool = False) -> None:
         """Download OGRDB data for species; FASTA files are replaced only when every step succeeded."""
@@ -323,7 +326,7 @@ class OGRDBDownloader(OGRDBApiClient):
                 self._download_staged(species, force)
             finally:
                 self.output_dir = final_dir
-            for staged in Path(staging).rglob("*.fasta"):
+            for staged in [*Path(staging).rglob("*.fasta"), *Path(staging).rglob(ALIAS_FILE)]:
                 target = final_dir / staged.relative_to(staging)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(staged, target)
@@ -371,6 +374,7 @@ class OGRDBDownloader(OGRDBApiClient):
 
         # Merge the published API sets: API records replace archive records with the same name or sequence
         self.supplement_from_api(species)
+        self._write_aliases(species)
 
         duration_ms = int((time.time() - start_time) * 1000)
         logger.info(
@@ -395,6 +399,8 @@ class OGRDBDownloader(OGRDBApiClient):
         from_api: Dict[Path, set] = {}  # FASTA path -> names an API set wrote
 
         for sp in species:
+            api_names_by_seq: Dict[str, set] = {}
+            relabeled: Dict[str, str] = {}  # archive label an API record replaced -> its sequence
             taxonomy_id = TAXONOMY_ID_MAP_REVERSE.get(sp)
             if not taxonomy_id:
                 logger.debug(f"No taxonomy ID for {sp}, skipping API supplement")
@@ -480,6 +486,9 @@ class OGRDBDownloader(OGRDBApiClient):
                     merged_ungapped = {n: s for n, s in archive_ungapped.items() if n not in replaced}
                     merged_gapped = {n: s for n, s in archive_gapped.items() if n not in replaced}
                     earlier |= api_names
+                    relabeled.update((n, archive_ungapped[n]) for n in replaced - api_names)
+                    for n, s in api_ungapped:
+                        api_names_by_seq.setdefault(s, set()).add(n)
                     api_added = 0
 
                     for name, seq in api_ungapped:
@@ -514,6 +523,31 @@ class OGRDBDownloader(OGRDBApiClient):
                             for name, seq in merged_gapped.items():
                                 f.write(f">{name}\n{seq}\n")
                         logger.info(f"Merged {gapped_path.name}: {len(merged_gapped)} total")
+
+            # Alias each replaced archive label to its own API name (archive IGKV-XXXX is IGKV0-XXXX*00),
+            # else to another API name with the same sequence (another strain's label).
+            # shortcut: assumes OGRDB's FASTA naming; join on the label in /latest/airr if OGRDB changes it.
+            for label, seq in relabeled.items():
+                own = re.sub(r"^(IG[HKL][VDJC])-(\w+)$", r"\g<1>0-\g<2>*00", label)
+                same = api_names_by_seq[seq]
+                self.aliases.setdefault(sp, {})[label] = (own if own in same else min(same), seq)
+
+    def _write_aliases(self, species: List[str]) -> None:
+        """Write each species' aliases.tsv, with the reason checked against the FASTA files written."""
+        for sp in species:
+            sp_dir = self.output_dir / sp
+            if not sp_dir.is_dir():
+                continue
+            shipped = {n: s for f in sp_dir.glob("IG??.fasta") for n, s in self.parse_fasta(f.read_text())}
+            aliases = {}
+            for alias, (current, seq) in self.aliases.get(sp, {}).items():
+                if alias in shipped:
+                    continue
+                if current not in shipped:
+                    aliases[alias] = ("", "retired")
+                else:
+                    aliases[alias] = (current, "renamed" if shipped[current] == seq else "revised")
+            write_aliases(sp_dir / ALIAS_FILE, aliases)
 
     def _get_latest_zenodo_record(self) -> Tuple[str, str, str]:
         """
@@ -722,15 +756,29 @@ class OGRDBDownloader(OGRDBApiClient):
         # published ones no germline set includes). Current alleles are the members of a published set.
         members = self._published_set_members(content)
         logger.info(f"Found {len(all_rows)} rows in gene_description table, {len(members)} in a published set")
-        all_rows = [row for row in all_rows if row.split(",", 1)[0].strip() in members]
 
         count = 0
+        kept: Dict[Tuple[str, str], str] = {}  # (species, description id) -> name of the current release
+        dropped = []
         for row in all_rows:
             result = self._parse_gene_description_row(row, species_set)
-            if result:
-                gene_name, sp, locus, seq_type, ungapped, gapped = result
+            if not result:
+                continue
+            gene_name, sp, locus, seq_type, ungapped, gapped = result
+            description_id = self._clean_sql_string(self._split_sql_row(row)[2])
+            if row.split(",", 1)[0].strip() in members:
                 self._add_sequence_to_dict(sequences, gene_name, sp, locus, seq_type, ungapped, gapped)
+                if description_id:
+                    kept[(sp, description_id)] = gene_name
                 count += 1
+            elif locus in ("IGH", "IGK", "IGL"):
+                dropped.append((gene_name, sp, ungapped, description_id))
+
+        # A dropped label points to the current release of its description (human IGHV1-2*i01 is now
+        # IGHV1-2*06), else to nothing. _write_aliases skips labels that still ship.
+        # shortcut: compares the parsed sequence; J files use coding_seq_imgt, so a J alias may read revised.
+        for gene_name, sp, ungapped, description_id in dropped:
+            self.aliases.setdefault(sp, {})[gene_name] = (kept.get((sp, description_id), ""), ungapped)
 
         logger.info(f"Extracted {count} sequences for species: {species}")
 
