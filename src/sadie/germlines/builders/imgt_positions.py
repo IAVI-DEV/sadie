@@ -131,7 +131,7 @@ def alignment_region_columns(gapped_sequences: Iterable[str]) -> Dict[str, Regio
             candidates,
             key=lambda shifts: (
                 support[shifts],
-                0 if support[shifts].is_integer() else -shifts[2],
+                0 if float(support[shifts]).is_integer() else -shifts[2],
                 file_votes[shifts],
                 -sum(shifts),
             ),
