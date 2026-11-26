@@ -15,6 +15,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .aliases import ALIAS_FILE, read_aliases
 from .models import GermlineGene
 from .providers.base import GermlineProvider
 from .registry import SpeciesRegistry
@@ -299,10 +300,31 @@ class GermlineManager:
         Returns
         -------
         GermlineGene or None
-            Gene if found, None otherwise
+            Gene if found, None otherwise. An old OGRDB label whose sequence now ships
+            under another name returns the gene under its current name.
         """
         species = SpeciesRegistry.normalize(species)
-        for provider in self.providers:
+        gene = self._first_gene_named(name, species, self.providers)
+        ogrdb = [p for p in self.providers if p.name == "ogrdb"]
+        if gene is None and ogrdb:
+            gene = self._ogrdb_gene_for_alias(name, species, ogrdb[0])
+        return gene
+
+    def _ogrdb_gene_for_alias(self, name: str, species: str, ogrdb: GermlineProvider) -> Optional[GermlineGene]:
+        current, reason = read_aliases(ogrdb.data_dir / species / ALIAS_FILE).get(name, ("", ""))
+        if not reason:
+            return None
+        # OGRDB only: the alias file checked the sequence against OGRDB's files, not another provider's.
+        gene = self._first_gene_named(current, species, [ogrdb]) if reason == "renamed" else None
+        if gene:
+            logger.warning(f"OGRDB {species} label {name} is now {current}; using {current}")
+        else:
+            why = f"{current} not found" if reason == "renamed" else f"{reason}, current release {current or 'none'}"
+            logger.warning(f"OGRDB {species} label {name} not resolved: {why}")
+        return gene
+
+    def _first_gene_named(self, name: str, species: str, providers: List[GermlineProvider]) -> Optional[GermlineGene]:
+        for provider in providers:
             try:
                 gene = provider.fetch_gene_by_name(name, species)
                 if gene:
