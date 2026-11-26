@@ -1,6 +1,7 @@
 import glob
 import io
 import os
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -186,6 +187,7 @@ def _test_auxilary_file_structure(tmpdir: Path, fixture_setup: SadieFixture) -> 
     return True
 
 
+@pytest.mark.skipif(shutil.which("makeblastdb") is None, reason="makeblastdb not in PATH")
 def test_make_igblast_reference(fixture_setup: SadieFixture, tmp_path_factory: pytest.TempPathFactory):
     """Confirm the CLI works as expected This runs the entire generation pipeline that ships with SADIE and checks that the file structure is exactly the same"""
     # Create runner
