@@ -1,13 +1,13 @@
 import json
 
-import requests
+from sadie.germlines import GermlineManager
+from sadie.germlines.g3_adapter import GermlineToG3Adapter
 
-from sadie.reference import G3Error
+manager = GermlineManager()
+adapter = GermlineToG3Adapter()
 
-url = "https://g3.jordanrwillis.com/api/v1/genes?source=imgt&segment=V&common=human&limit=5"
-response = requests.get(url)
-response_json = response.json()
-if response.status_code != 200:
-    raise G3Error("Error: " + str(response.status_code))
+genes = manager.get_genes("human", "V", "H")[:5]
+response_json = [adapter.to_g3_format(g) for g in genes]
+
 print(json.dumps(response_json, indent=4))
 json.dump(response_json, open("human_v.json", "w"), indent=4)

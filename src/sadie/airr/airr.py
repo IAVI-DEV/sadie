@@ -1,12 +1,11 @@
 """SADIE Airr module"""
+
 from __future__ import annotations
 
 # Std library
 import itertools
 import logging
 import os
-import platform
-import shutil
 import tempfile
 import warnings
 from multiprocessing import cpu_count
@@ -26,6 +25,8 @@ from sadie.airr.airrtable import AirrTable, LinkedAirrTable
 from sadie.airr.exceptions import BadDataSet, BadIgBLASTExe, BadRequstedFileType
 from sadie.airr.igblast import GermlineData, IgBLASTN
 from sadie.reference.reference import References
+from sadie.utility.binaries import find_binary
+from sadie.utility.exception import BinaryNotFoundError
 
 logger = logging.getLogger("AIRR")
 warnings.filterwarnings("ignore", "Partial codon")
@@ -97,6 +98,7 @@ class Airr:
         gap_open: int = 5,
         gap_extend: int = 2,
         coerce: bool = False,
+        database: Optional[str | Path] = None,
     ):
         """Airr constructor
 
@@ -151,6 +153,9 @@ class Airr:
             Gap extension penalty, by default 2
         coerce : bool
             Accept the highest scored allele that exists in the auxiliary files when exact match not found, by default False
+        database : str | Path | None
+            Path to a pre-built IgBLAST germline database directory. When set, skips the References lookup
+            and uses the given directory directly, by default None
         """
 
         # If the temp directory is passed, it is important to keep track of it so we can delete it at the destructory
@@ -169,21 +174,9 @@ class Airr:
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-        # check for package executable, then path igblastn in path
-        if not igblast_exe:
-            try:
-                self.executable = self._get_package_igblast_exe()
-            except BadIgBLASTExe:
-                logger.error(f"Could not find igblast executable {igblast_exe}, searching path")
-                try:
-                    # cast this to string for type checking
-                    self.executable = Path(str(shutil.which("igblastn")))
-                except BadIgBLASTExe as e:
-                    logger.error(f"package igblast and path igblast not working: {os.environ['PATH']}")
-                    raise e
-            logger.debug(f"Using igblastn from {self.executable}")
-        else:
-            self.executable = Path(igblast_exe)
+        # bundled igblastn for this OS and chipset, then igblastn on PATH
+        self.executable = Path(igblast_exe) if igblast_exe else self._get_package_igblast_exe()
+        logger.debug(f"Using igblastn from {self.executable}")
 
         # give executable to IgBLASTN
         self.igblast = IgBLASTN(self.executable)
@@ -241,9 +234,15 @@ class Airr:
 
         # Properties that will be passed to germline Data Class.
         # Pass theese as private since germline class will handle setter logic
+        from sadie.germlines.providers.base import normalize_species
+
         self._name = reference_name
         self.scheme = scheme  # Store scheme as instance attribute
-        if isinstance(references, References):
+        self._database = database
+        if database is not None:
+            # Prebuilt database path: skip References lookup entirely
+            self.germline_data = GermlineData(reference_name, receptor, database)
+        elif isinstance(references, References):
             _custom_avail = list(references.get_dataframe()["name"].unique())
             if self.name not in _custom_avail:
                 raise BadDataSet(self.name, _custom_avail)
@@ -254,6 +253,7 @@ class Airr:
             # set the germline database
             self.germline_data = GermlineData(reference_name, receptor, out_data_path)
         else:
+            reference_name = normalize_species(reference_name)
             self._name = reference_name
 
             # Check if this requested dataset is available
@@ -422,10 +422,13 @@ class Airr:
                 f"{dataframe[dataframe[seq_id_field].duplicated()][seq_id_field]} is duplicated. Nees to be unique"
             )
 
+        # a requested field may be the index; reset_index only then, it warns on fragmented frames
+        _frame = dataframe if {seq_id_field, seq_field} <= set(dataframe.columns) else dataframe.reset_index()
+
         def _get_seq_generator() -> Iterator[SeqRecord]:
             for seq_id, seq in zip(
-                dataframe.reset_index()[seq_id_field],
-                dataframe.reset_index()[seq_field],
+                _frame[seq_id_field],
+                _frame[seq_field],
             ):
                 if not isinstance(seq, str):
                     raise ValueError(f"{seq_id} needs to have string. passed {type(seq)}, drop nan's first")
@@ -572,6 +575,7 @@ class Airr:
                                 adaptable=False,
                                 references=self.references,
                                 debug=self.debug,
+                                database=self._database,
                                 # Pass through IgBLAST parameters
                                 num_alignments_v=self.num_alignments_v,
                                 num_alignments_d=self.num_alignments_d,
@@ -614,6 +618,7 @@ class Airr:
                             adaptable=False,
                             references=self.references,
                             debug=self.debug,
+                            database=self._database,
                             # Pass through IgBLAST parameters
                             num_alignments_v=self.num_alignments_v,
                             num_alignments_d=self.num_alignments_d,
@@ -660,7 +665,7 @@ class Airr:
         remaining_seq = (
             result_a[["sequence", "sequence_alignment"]]
             .fillna("")
-            .apply(lambda x: x[0].replace(x[1].replace("-", ""), ""), axis=1)
+            .apply(lambda x: x.iloc[0].replace(x.iloc[1].replace("-", ""), ""), axis=1)
         )
         # and get those ids
         remaining_id = result_a["sequence_id"]
@@ -732,15 +737,14 @@ class Airr:
         return LinkedAirrTable(linked_table)
 
     def _get_package_igblast_exe(self) -> Path:
-        """Get package igblastn"""
+        """Bundled igblastn for this OS and chipset, else igblastn on PATH"""
 
         # this patch allows us to mock a non-existant igblast that is not in package
-        if "IGBLASTN_MONEKY_PATCH" in os.environ:
-            executable = os.environ["IGBLASTN_MONEKY_PATCH"]
-        else:
-            executable = "igblastn"
-        system = platform.system().lower()
-        return Path(os.path.dirname(os.path.abspath(__file__))) / "bin" / system / executable
+        tool = os.environ.get("IGBLASTN_MONEKY_PATCH", "igblastn")
+        try:
+            return find_binary(tool, Path(__file__).parent / "bin")
+        except BinaryNotFoundError as e:
+            raise BadIgBLASTExe(tool, str(e)) from e
 
     @staticmethod
     def get_available_datasets() -> Set[str]:

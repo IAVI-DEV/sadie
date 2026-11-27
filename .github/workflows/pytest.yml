@@ -4,8 +4,7 @@ on:
     tags:
       - '*'
     branches: ['main']
-  pull_request:
-    branches: ['main', 'update_doc', 'development']
+  pull_request:  # any base branch: integration branches come and go
 jobs:
   pytest:
     runs-on: ${{ matrix.os }}
@@ -34,6 +33,6 @@ jobs:
       - name: PreCommit
         uses: pre-commit/action@v3.0.0
       - name: Unit Testing
-        run: poetry run pytest -xsv tests/unit
+        run: poetry run pytest -xv tests/unit
       - name: Integration Testing
         run: poetry run pytest -xv tests/integration

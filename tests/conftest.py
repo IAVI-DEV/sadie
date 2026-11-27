@@ -59,7 +59,8 @@ class AirrSequences:
         self.fastq_inputs = self.base_datadir / "fastq_inputs/"
         self.airr_table_inputs = self.base_datadir / "airr_tables/"
         self.abi_inputs = self.base_datadir / "ab1_files/"
-        self.single_seqs_json = json.load(open(self.base_datadir / "single-sequences.json"))
+        with open(self.base_datadir / "single-sequences.json") as single_seqs_handle:
+            self.single_seqs_json = json.load(single_seqs_handle)
 
     def get_pg9_heavy_fasta(self) -> Path:
         """get the file path for PG9 heavy chain fasta"""
@@ -368,6 +369,7 @@ class ReferenceFixtures:
         return {
             ("mouse", "IGLJ4*01"): "igblast has wrong number of c-term remaining",
             ("rabbit", "IGHJ3*02"): "igblast has wrong reading frame",
+            ("rat", "IGKJ3*01"): "igblast bundled aux missing cdr3_end and left_over for this gene",
         }
 
     def get_internal_db_excetions(self) -> List[List[str]]:

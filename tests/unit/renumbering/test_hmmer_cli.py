@@ -54,7 +54,7 @@ def test_cli(fixture_setup):
     """Confirm the CLI works as expecte"""
     test_file_heavy = fixture_setup.get_catnap_heavy_aa()
     test_file_light = fixture_setup.get_catnap_light_aa()
-    species = ["human", "mouse", "rat", "rabbit", "rhesus", "pig", "alpaca", "dog", "cat"]
+    species = ["human", "mouse", "rat", "rabbit", "macaque", "pig", "alpaca", "dog", "cat"]
     species = ",".join(species)
     ft = ["csv", "json", "feather"]
     schemes = ["imgt", "kabat", "chothia"]

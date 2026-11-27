@@ -613,7 +613,7 @@ class Numbering:
                     numbering_ = [[int(p[0]), p[1]] for p in positions]
 
                     line = [
-                        sequences[i][0].replace(",", " "),
+                        sequences[i][0],
                         sequences[i][1],
                         str(j),
                         details[i][j].get("species", ""),

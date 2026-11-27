@@ -64,6 +64,7 @@ def test_alignments_file(fixture_setup):
     renumbering_results = renumbering_api.run_file(fixture_setup.fasta_inputs / "catnap_aa_heavy_sample.fasta")
     renumbering_table = renumbering_results.get_alignment_table()
     renumbering_table = renumbering_table.iloc[:, [0, *list(range(3, len(renumbering_table.columns)))]]
+    renumbering_table["Id"] = renumbering_table["Id"].str.replace(",", " ")
 
     anarci_table = anarci_table.sort_values("Id").reset_index(drop=True)
     renumbering_table = renumbering_table.sort_values("Id").reset_index(drop=True)

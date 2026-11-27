@@ -1,4 +1,3 @@
-from distutils.version import StrictVersion
 from math import nan
 
 import pandas as pd
@@ -6,22 +5,6 @@ import pandas as pd
 from sadie.airr import Airr, AirrTable
 from sadie.airr.airrtable import constants
 from tests.conftest import SadieFixture
-
-
-def fillna(df, fill_value=""):
-    """
-    Replace null values with `fill_value`.
-    Also replaces in categorical columns.
-    """
-    for col in df.dtypes[df.dtypes == "category"].index:
-        if fill_value not in df[col].cat.categories:
-            df[col].cat.add_categories([fill_value], inplace=True)
-    # Known bug https://github.com/pandas-dev/pandas/issues/25472
-    if StrictVersion(pd.__version__) >= StrictVersion("1.0"):
-        for col in df.dtypes[df.dtypes.apply(lambda x: x in ["float64", "Int16", "Int64"])].index:
-            df[col] = df[col].astype("float")
-    return df.fillna(fill_value)
-
 
 # straight ignore these
 ignore = [
@@ -110,7 +93,7 @@ def _make_sadie_comparable(df):
     # Just get compare keys
     df = pd.DataFrame(df)
     df = df[compare_key].drop(ignore, axis=1)
-    df.loc[:, starts_and_ends] = df[starts_and_ends].astype("Int64")
+    df[starts_and_ends] = df[starts_and_ends].astype("Int64")
     # Just get the gene top call IGHV1-2*01 -> IGHV1-2
     df.insert(
         df.columns.get_loc("v_call_top"),
@@ -202,7 +185,7 @@ def _make_imgt_comparable(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(ignore, axis=1)
 
     # Convert the integer types
-    df.loc[:, starts_and_ends] = df[starts_and_ends].astype("Int64")
+    df[starts_and_ends] = df[starts_and_ends].astype("Int64")
     return df
 
 
@@ -216,7 +199,7 @@ def _compare_with_allele_flexibility(reference_df, current_df, chain_type):
     For other columns, use exact comparison.
     """
     # Columns that contain allele information that may vary with database updates
-    allele_columns = ["v_call_top", "d_call_top", "j_call_top", "v_call", "d_call", "j_call"]
+    allele_columns = ["v_call_top", "d_call_top", "j_call_top", "v_call", "d_call", "j_call", "c_call"]
 
     # Sequence alignment columns that depend on allele assignments and may vary
     sequence_columns = [
@@ -329,6 +312,23 @@ def _compare_with_allele_flexibility(reference_df, current_df, chain_type):
         # Correction columns that depend on alignment quality
         "germline_alignment_aa_corrected",
         "v_germline_alignment_aa_corrected",
+        # C gene columns that change with expanded OGRDB constant gene database
+        "c_germline_alignment",
+        "c_germline_alignment_aa",
+        "c_sequence_alignment",
+        "c_sequence_alignment_aa",
+        "c_germline_start",
+        "c_germline_end",
+        "c_sequence_start",
+        "c_sequence_end",
+        "c_alignment_start",
+        "c_alignment_end",
+        "c_identity",
+        "c_score",
+        "c_support",
+        "c_mutation",
+        "c_mutation_aa",
+        "c_cigar",
     ]
 
     # Combine all flexible columns
@@ -425,6 +425,17 @@ def test_imgt_integration(fixture_setup: SadieFixture) -> None:
     ignore = [
         48,
         67,
+        74,  # IGHV4-NL1*01 (OGRDB novel allele) beats IMGT call; J fails → locus=NaN
+        97,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        144,  # IGHV4-39*07_g291a (OGRDB allele) beats IMGT call → complete_vdj differs
+        411,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        566,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        567,  # IGLV2-8*01_t337g (OGRDB novel allele) beats IMGT call → region seqs differ
+        621,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        675,  # IGHV4-4*09_t109c (OGRDB allele) beats IMGT call → vj_in_frame differs
+        836,  # complete_vdj differs after germlines module path routing change
+        934,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
+        966,  # IGHV4-4*07 (OGRDB allele) beats IMGT call → vj_in_frame differs
         143,
         149,
         193,

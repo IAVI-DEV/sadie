@@ -5,10 +5,12 @@ import glob
 import io
 import os
 import sys
+from pathlib import Path
 from typing import List
 
 import pandas as pd
 import pytest
+import yaml
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from click.testing import CliRunner
@@ -25,20 +27,35 @@ from tests.conftest import SadieFixture
 def test_yaml(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture) -> None:
     # load the default yaml file
     yaml_object = YamlRef()
-    assert yaml_object.get_names() == {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
-    assert len(yaml_object.get_genes("human", "imgt", "human")) == 479
+    # Core species must be present (OGRDB update added many more species)
+    core_species = {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
+    assert core_species.issubset(yaml_object.get_names())
+    raw = yaml.safe_load(Path(yaml_object.ref_path).read_text())
+    assert len(yaml_object.get_genes("human", "imgt", "human")) == len(raw["human"]["imgt"]["human"])
     v_genes: List[str] = yaml_object.get_gene_segment("human", "imgt", "human", "V")
     assert all([x[3] == "V" for x in v_genes])
     assert isinstance(yaml_object.get_yaml_as_dataframe(), pd.DataFrame)
     assert yaml_object.__repr__()
-    assert set([i for i in yaml_object]) == {"clk", "dog", "human", "mouse", "rabbit", "se09", "rat", "macaque"}
+    assert core_species.issubset(set([i for i in yaml_object]))
     assert yaml_object["human"]
-    assert len(yaml_object) == 4977
+    assert len(yaml_object) == len(
+        {(n, sp, g) for n, srcs in raw.items() for s in srcs.values() for sp, gs in s.items() for g in gs}
+    )
 
     with pytest.raises(ValueError):
         YamlRef(fixture_setup.get_duplicated_yaml())
-    with pytest.raises(ValueError):
-        YamlRef(fixture_setup.get_duplicated_diff_source_yaml())
+    # Cross-provider duplicates (same gene in both custom and imgt) are now deduplicated
+    # silently via first-come-first-serve instead of raising ValueError
+    deduped = YamlRef(fixture_setup.get_duplicated_diff_source_yaml())
+    assert deduped.get_names() == {"clk"}  # still loads, just deduped
+
+
+@pytest.mark.parametrize("species", ["human", "mouse", "macaque"])
+def test_yaml_ogrdb_matches_provider(species: str) -> None:
+    from sadie.reference.generate import _get_all_alleles_for_provider
+
+    listed = yaml.safe_load(Path(YamlRef().ref_path).read_text())[species]["ogrdb"][species]
+    assert sorted(listed) == _get_all_alleles_for_provider("ogrdb", species)
 
 
 def test_check_models(fixture_setup: SadieFixture) -> None:
@@ -118,19 +135,27 @@ def test_reference_class(tmp_path_factory: pytest.TempPathFactory) -> None:
     dataframe = references.get_dataframe()
     assert len(dataframe) == 3
 
+    json_path = tmp_path_factory.mktemp("test_reference_class") / "references.json"
+    dataframe.to_json(json_path, orient="records")
+    assert set(References.from_json(json_path).get_dataframe()["gene"]) == set(dataframe["gene"])
+
 
 def test_make_from_empty(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test when we create reference without pasing any data, it uses yaml"""
     tmpdir = tmp_path_factory.mktemp("test_creation_from_empty_reference")
     ref_class = References()
     output = ref_class.make_airr_database(tmpdir)
-    assert sorted([i.name for i in output.glob("*")]) == sorted([".references_dataframe.csv.gz", "aux_db", "Ig"])
+    assert sorted([i.name for i in output.glob("*")]) == sorted(
+        [".references_dataframe.csv.gz", ".allele_name_mapping.json", "aux_db", "Ig"]
+    )
+    # igblastn opens {name}_D for every query, so D-less names (camel, cat, goat) need one too
+    assert [d.name for d in output.glob("Ig/blastdb/*") if not (d / f"{d.name}_D.ndb").exists()] == []
 
 
 def test_G3_errors() -> None:
     """Test G3 errors"""
     with pytest.raises(G3Error):
-        Reference(endpoint="https://mock.codes/202")
+        Reference(endpoint="https://mock.codes/202", use_germlines=False)
 
 
 def test_missing_makeblast_df(tmp_path_factory: pytest.TempPathFactory, fixture_setup: SadieFixture) -> None:
@@ -144,6 +169,36 @@ def test_missing_makeblast_df(tmp_path_factory: pytest.TempPathFactory, fixture_
         write_blast_db(fasta, tmpdir.joinpath("missing.fasta"), "some_bogus_makeblastdb")
     with pytest.raises(RuntimeError):
         write_blast_db(bogus_file, tmpdir.joinpath("missing.fasta"))
+
+
+def test_write_blast_db_titles_database_by_name(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The title is the database name, so the output does not depend on where it was built"""
+    import shutil
+    import subprocess
+
+    from sadie.reference.util import write_blast_db
+
+    commands = []
+    monkeypatch.setattr(shutil, "which", lambda _: "makeblastdb")
+    monkeypatch.setattr(
+        subprocess, "run", lambda cmd, **_: commands.append(cmd) or subprocess.CompletedProcess(cmd, 0, b"", b"")
+    )
+
+    write_blast_db(tmp_path / "input.fasta", tmp_path / "human_V")
+
+    assert commands[0][commands[0].index("-title") + 1] == "human_V"
+
+
+def test_make_hmm_files_writes_no_command_line(tmp_path) -> None:
+    """A built HMM has no COM line, so the output does not depend on where it was built"""
+    ref_class = Reference()
+    ref_class.add_genes("human", "imgt", ["IGHV1-69*01", "IGHJ6*01"])
+    references = References()
+    references.add_reference("human", ref_class)
+
+    references._make_hmm_files(tmp_path)
+
+    assert b"\nCOM " not in (tmp_path / "hmms" / "human_H.hmm").read_bytes()
 
 
 def test_cli(tmp_path_factory: pytest.TempPathFactory):
