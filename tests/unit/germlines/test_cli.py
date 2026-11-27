@@ -7,6 +7,7 @@ Tests the `sadie germlines populate` and `sadie germlines status` CLI commands.
 import json
 import os
 import re
+import time as _time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -106,6 +107,7 @@ class TestGermlinesPopulateFailure:
 
         provider = MagicMock(data_dir=tmp_path)
         provider.download.side_effect = fetch
+        t0 = _time.time() - 1  # 1 second in the past: written files are always "fresh"
         with (
             patch("sadie.germlines.cli.get_provider_data_dir", return_value=tmp_path),
             patch("sadie.germlines.cli.get_provider", return_value=provider),
@@ -114,7 +116,9 @@ class TestGermlinesPopulateFailure:
             patch("sadie.germlines.cli.run_post_download_build") as build,
             patch("sadie.germlines.cli.validate_provider_data", return_value=True) as validate,
             patch("sadie.germlines.cli.logger"),  # live logging closes the CliRunner stream
+            patch("sadie.germlines.cli.time") as mock_time,
         ):
+            mock_time.time.return_value = t0
             imgt.return_value.download.side_effect = fetch
             imgt._IG_UNAVAILABLE_REASONS = {"tr_only": "TR-only"}
             imgt.return_value.check_ig_unavailable_reason.return_value = f"chimpanzee: {imgt_answer}"
